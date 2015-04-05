@@ -1,16 +1,42 @@
-<div class="container">
-  <div class="container">
-    <div class="alert alert-success">
-      <h1>Status Report</h1>
-      {{#each feature in features}}
-        <p><i {{bind-attr class=":fa feature.ok:fa-check-circle"}}></i> {{feature.name}}</p>
-      {{/each}}<br/>
-      <p>Go {{#link-to "setup"}}here{{/link-to}} to setup your first user</p><br/>
-      {{#if session.isAuthenticated}}
-      <p>Logged in as {{session.email}}. <a {{ action 'invalidateSession' }}>Logout</a></p>
-      {{else}}
-      <p>{{#link-to "login"}}Login{{/link-to}}</p>
-      {{/if}}
-    </div>
+<div class="container hide-on-small-and-down">
+  <br/>
+  <div class="row">
+    {{#each}}
+      <div class="col m12 l6">
+        {{#link-to "beam" this.id}}
+        <div class="beam-card">
+          <div class="card-content">
+            <div class="row">
+              <div class="col m9 s12">
+                <div class="row">
+                  <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{host}}</div>
+                  <div class="col s12"><i class="mdi-device-access-time"></i> {{to-abs-time start}}</div>
+                  <div class="col s12"><i class="mdi-device-data-usage"></i> {{capacity-display size}}</div>
+                  <div class="col s12"><i class="mdi-file-folder-open"></i> {{directory}}</div>
+                </div>
+              </div>
+              <div class="col m3 s12">
+                <div align="center"><img {{bind-attr class="completed:folder-regular:folder-beaming :responsive-img"}}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {{/link-to}}
+      </div>
+    {{/each}}
   </div>
 </div>
+
+<div class="hide-on-med-and-up white">
+  <div class="collection">
+    {{#each}}
+      {{#link-to beam class="collection-item short-link"}}{{host}}<br/>{{directory}}{{/link-to}}
+    {{/each}}
+  </div>
+</div>
+
+<div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
+   {{#link-to "new-beam" class="btn-floating btn-large"}}
+     <i class="large mdi-action-backup"></i>
+   {{/link-to}}
+ </div>

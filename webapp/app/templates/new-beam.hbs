@@ -1,0 +1,52 @@
+<div class="container">
+  <br/>
+  <a class="waves-effect waves-light btn" href="#"><i class="mdi-navigation-arrow-back left"></i>back</a>
+  <div class="page-card">
+    <div class="card-content">
+      <div class="card-title grey-text">
+        <div class="row">
+          <div class="col s8">New Beam</div>
+          <div class="col s4">
+            <a id="beam-submit" {{action 'beam'}} {{bind-attr class=":waves-effect :waves-light :btn submitting:disabled"}}><i class="mdi-action-backup left"></i>beam it up, scotty</a>
+          </div>
+        </div>
+      </div>
+      <form class="col s12">
+        <div class="row">
+          <div class="col s12">
+            {{#if submitting}}
+            <div class="progress">
+              <div class="indeterminate"></div>
+            </div>
+            {{/if}}
+            <p id="error" class="error">{{error}}</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input-field col s3">
+            <i class="mdi-social-person prefix"></i>
+            {{input id="user" type="text" class="validate valid" value=user}}
+            <label for="user">SSH user</label>
+          </div>
+          <div class="input-field col s3">
+            <i class="mdi-hardware-desktop-windows prefix"></i>
+            {{input id="host" type="text" class="validate" value=host}}
+            <label for="icon_prefix">Host</label>
+          </div>
+          <div class="input-field col s6">
+            <i class="mdi-file-folder-open prefix"></i>
+            {{input id="directory" type="text" class="validate" value=directory}}
+            <label for="directory">Directory</label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input-field col s12">
+            <i class="mdi-communication-vpn-key prefix"></i>
+            {{textarea id="ssh_key" class="materialize-textarea validate" value=ssh_key}}
+            <label for="ssh_key">SSH key</label>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

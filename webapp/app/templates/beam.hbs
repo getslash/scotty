@@ -1,0 +1,24 @@
+<div class="container">
+  <br/>
+  <a class="waves-effect waves-light btn" href="#"><i class="mdi-navigation-arrow-back left"></i>back</a>
+  <div class="page-card">
+    <div class="card-content">
+      <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{host}}</div>
+      <div class="col s12"><i class="mdi-device-access-time"></i> {{to-abs-time start}}</div>
+      <div class="col s12"><i class="mdi-device-data-usage"></i> {{capacity-display size}}</div>
+      <div class="col s12"><i class="mdi-file-folder-open"></i> {{directory}}</div>
+
+
+      {{#if files.length}}
+        <h4>Files</h4>
+        <div class="collection">
+          {{#each file in files}}
+            <a class="collection-item file-link" {{bind-attr href=file.link}}>{{file.path}}<span class="badge">{{capacity-display file.size}}</span></a>
+          {{/each}}
+        </div>
+      {{else}}
+        <br/><p>No files were beamed yet.</p>
+      {{/if}}
+    </div>
+  </div>
+</div>

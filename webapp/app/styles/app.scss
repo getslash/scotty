@@ -1,5 +1,77 @@
-@import '../../bower_components/bootstrap-sass-official/assets/stylesheets/bootstrap';
+@import '../../bower_components/materialize/sass/components/_color.scss';
+$secondary-color: color("blue", "darken-2");
+@import '../../bower_components/materialize/sass/materialize.scss';
 
-html, body {
-  margin: 20px;
+body {
+  background-color: #e0e0e0;
+}
+
+#top-navbar {
+  background-color: $secondary-color;
+}
+
+#starfleet {
+   position: fixed;
+   top: 50%;
+   left: 50%;
+   width: 600px;
+   height: 600px;
+   opacity: 0.2;
+   z-index: -1;
+   margin-top: -300px; /* Half the height */
+   margin-left: -300px; /* Half the width */
+}
+
+#portrait {
+  height: 100%;
+  padding-top: 0.3em;
+  padding-right: 1.5em
+}
+
+.folder-regular {
+  content: url("/static/assets/img/folder-regular.gif")
+}
+
+.folder-beaming {
+  content: url("/static/assets/img/folder-beaming.gif")
+}
+
+.file-link {
+  text-transform: none !important;
+}
+
+.file-link:hover {
+  color: $secondary-color !important;
+}
+
+#beam-submit {
+  color: #ffffff;
+  font-size: 15px;
+  float: right;
+  margin-right: 0px;
+}
+
+.beam-card {
+  @extend .card;
+  height: 140px;
+  color: #000000 !important;
+  // @include opacity(0.9);
+  @extend .z-depth-2;
+}
+
+.page-card {
+  @extend .card;
+  // @include opacity(0.9);
+  @extend .z-depth-2;
+}
+
+.short-link {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+#error {
+  color: $error-color;
+  font-weight: bold;
 }

@@ -25,3 +25,30 @@ class User(db.Model, UserMixin):
     confirmed_at = db.Column(db.DateTime())
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
+
+
+class Beam(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    start = db.Column(db.DateTime)
+    size = db.Column(db.BigInteger)
+    host = db.Column(db.String)
+    directory = db.Column(db.String)
+    pending_deletion = db.Column(db.Boolean)
+    completed = db.Column(db.Boolean)
+
+    def __repr__(self):
+        return "<Beam(id='%s')>" % (self.id, )
+
+
+class File(db.Model):
+    __table_args__ = (db.UniqueConstraint('beam_id', 'file_name', name='uix_1'), ) # Index
+
+    id = db.Column(db.Integer, primary_key=True)
+    file_name = db.Column(db.String)
+    beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
+    status = db.Column(db.String(25))
+    size = db.Column(db.BigInteger)
+    beam = db.relationship("Beam", backref=db.backref('files', order_by=id))
+
+    def __repr__(self):
+        return "<File(id='%s', name='%s', beam='%s')>" % (self.id, self.file_name, self.beam_id)
