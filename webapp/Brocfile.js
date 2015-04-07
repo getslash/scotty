@@ -32,6 +32,11 @@ var fontTree = pickFiles('bower_components/fontawesome/fonts', {
   destDir: '/assets/fonts'
 });
 
+var robotoTree = pickFiles('bower_components/materialize/font', {
+  srcDir: '/',
+  destDir: '/font'
+});
+
 var cssTree = pickFiles('bower_components/fontawesome/css', {
   srcDir: '/',
   files: ['font-awesome.min.css'],
@@ -39,4 +44,4 @@ var cssTree = pickFiles('bower_components/fontawesome/css', {
 });
 
 
-module.exports = mergeTrees([app.toTree(), fontTree, cssTree]);
+module.exports = mergeTrees([app.toTree(), fontTree, cssTree, robotoTree], {overwrite: true});
