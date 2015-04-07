@@ -35,6 +35,7 @@ class Beam(db.Model):
     directory = db.Column(db.String)
     pending_deletion = db.Column(db.Boolean)
     completed = db.Column(db.Boolean)
+    files = db.relationship("File", backref="parent")
 
     def __repr__(self):
         return "<Beam(id='%s')>" % (self.id, )
@@ -48,7 +49,6 @@ class File(db.Model):
     beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
     status = db.Column(db.String(25))
     size = db.Column(db.BigInteger)
-    beam = db.relationship("Beam", backref=db.backref('files', order_by=id))
 
     def __repr__(self):
         return "<File(id='%s', name='%s', beam='%s')>" % (self.id, self.file_name, self.beam_id)
