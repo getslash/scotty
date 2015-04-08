@@ -1,10 +1,10 @@
 import Ember from "ember";
 
 export default Ember.Controller.extend({
-  user: "root",
-  host: "asd",
-  directory: "asd",
-  ssh_key: "asd",
+  user: "",
+  host: "",
+  directory: "",
+  ssh_key: "",
   submitting: false,
 
   actions: {
