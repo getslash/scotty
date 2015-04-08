@@ -1,12 +1,12 @@
 import {
-  toAbsTime
-} from '../../../helpers/to-abs-time';
+  formatDate
+} from '../../../helpers/format-date';
 import { module, test } from 'qunit';
 
-module('ToAbsTimeHelper');
+module('FormatDateHelper');
 
 // Replace this with your real tests.
 test('it works', function(assert) {
-  var result = toAbsTime(42);
+  var result = formatDate(42);
   assert.ok(result);
 });

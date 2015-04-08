@@ -1,4 +1,5 @@
 import DS from 'ember-data';
+/* global moment */
 
 export default DS.Model.extend({
   beam: DS.belongsTo("beam"),
@@ -8,5 +9,5 @@ export default DS.Model.extend({
 
   link: function() {
     return '/file_contents/' + this.get('id');
-  }.property('id')
+  }.property('id'),
 });

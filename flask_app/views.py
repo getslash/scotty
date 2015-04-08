@@ -13,7 +13,7 @@ def _jsonify_beam(beam):
         'id': beam.id,
         'host': beam.host,
         'completed': beam.completed,
-        'start': beam.start.replace(tzinfo=timezone.utc).timestamp(),
+        'start': beam.start.isoformat(),
         'size': beam.size,
         'directory': beam.directory
     }
@@ -46,7 +46,7 @@ def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     return jsonify(
         {'beam':
-            {'id': beam.id, 'host': beam.host, 'completed': beam.completed, 'start': beam.start, 'size': beam.size,
+            {'id': beam.id, 'host': beam.host, 'completed': beam.completed, 'start': beam.start.isoformat(), 'size': beam.size,
              'directory': beam.directory,
              'files': [f.id for f in beam.files]},
          'files':
