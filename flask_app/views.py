@@ -44,12 +44,14 @@ def create_beam():
 @app.route('/beams/<int:beam_id>', methods=['GET'])
 def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
-    files = db.session.query(File).filter_by(beam_id=beam_id)
     return jsonify(
         {'beam':
             {'id': beam.id, 'host': beam.host, 'completed': beam.completed, 'start': beam.start, 'size': beam.size,
              'directory': beam.directory,
-             'files': [{'id': f.id, 'path': f.file_name, 'size': f.size, 'status': f.status} for f in files]}})
+             'files': [f.id for f in beam.files]},
+         'files':
+            [{"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id}
+             for f in beam.files]})
 
 
 @app.route('/beams/<int:beam_id>', methods=['PUT'])
