@@ -3,16 +3,16 @@
   <a class="waves-effect waves-light btn" href="#"><i class="mdi-navigation-arrow-back left"></i>back</a>
   <div class="page-card">
     <div class="card-content">
-      <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{host}}</div>
-      <div class="col s12"><i class="mdi-device-access-time"></i> {{format-date start}}</div>
-      <div class="col s12"><i class="mdi-device-data-usage"></i> {{capacity-display size}}</div>
-      <div class="col s12"><i class="mdi-file-folder-open"></i> {{directory}}</div>
+      <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{model.host}}</div>
+      <div class="col s12"><i class="mdi-device-access-time"></i> {{format-date model.start}}</div>
+      <div class="col s12"><i class="mdi-device-data-usage"></i> {{capacity-display model.size}}</div>
+      <div class="col s12"><i class="mdi-file-folder-open"></i> {{model.directory}}</div>
 
 
-      {{#if files.length}}
+      {{#if model.files.length}}
         <h4>Files</h4>
         <div class="collection">
-          {{#each file in files}}
+          {{#each file in model.files}}
             <a class="collection-item file-link" {{bind-attr href=file.link}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
           {{/each}}
         </div>

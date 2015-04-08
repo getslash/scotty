@@ -1,36 +1,28 @@
 <div class="container hide-on-small-and-down">
   <br/>
   <div class="row">
-    {{#each}}
+    {{#each beam in this}}
       <div class="col m12 l6">
-        {{#link-to "beam" this.id}}
+        {{#link-to "beam" beam}}
         <div class="beam-card">
           <div class="card-content">
             <div class="row">
               <div class="col m9 s12">
                 <div class="row">
-                  <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{host}}</div>
-                  <div class="col s12"><i class="mdi-device-access-time"></i> {{format-date start}}</div>
-                  <div class="col s12"><i class="mdi-device-data-usage"></i> {{capacity-display size}}</div>
-                  <div class="col s12"><i class="mdi-file-folder-open"></i> {{directory}}</div>
+                  <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{beam.host}}</div>
+                  <div class="col s12"><i class="mdi-device-access-time"></i> {{format-date beam.start}}</div>
+                  <div class="col s12"><i class="mdi-device-data-usage"></i> {{capacity-display beam.size}}</div>
+                  <div class="col s12"><i class="mdi-file-folder-open"></i> {{beam.directory}}</div>
                 </div>
               </div>
               <div class="col m3 s12">
-                <div align="center"><img {{bind-attr class="completed:folder-regular:folder-beaming :responsive-img"}}></div>
+                <div align="center"><img {{bind-attr class="beam.completed:folder-regular:folder-beaming :responsive-img"}}></div>
               </div>
             </div>
           </div>
         </div>
         {{/link-to}}
       </div>
-    {{/each}}
-  </div>
-</div>
-
-<div class="hide-on-med-and-up white">
-  <div class="collection">
-    {{#each}}
-      {{#link-to beam class="collection-item short-link"}}{{host}}<br/>{{directory}}{{/link-to}}
     {{/each}}
   </div>
 </div>
