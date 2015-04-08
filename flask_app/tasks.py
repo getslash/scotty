@@ -1,4 +1,5 @@
 import os
+from io import StringIO
 from celery import Celery
 from paramiko import SSHClient
 from paramiko.client import AutoAddPolicy
@@ -12,13 +13,22 @@ queue.conf.update(
     CELERY_ENABLE_UTC=True,
 )
 
+_TRANSPORTER_HOST = os.environ.get('TRANSPORTER_HOST', 'scotty')
+
+def create_key(s):
+    f = StringIO()
+    f.write(s)
+    f.seek(0)
+    return RSAKey.from_private_key(file_obj=f, password=None)
+
 
 with open(os.path.join(os.path.dirname(__file__), "../scripts/combadge.py"), "r") as f:
     _COMBADGE = f.read()
 
 
 @queue.task
-def beam_up(host, directory, username, pkey):
+def beam_up(beam_id, host, directory, username, pkey):
+    pkey = create_key(pkey)
     ssh_client = SSHClient()
     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
     ssh_client.connect(host, username=username, pkey=pkey, look_for_keys=False)
@@ -29,7 +39,10 @@ def beam_up(host, directory, username, pkey):
     retcode = stdout.channel.recv_exit_status()
     assert retcode == 0
 
-    #_, stdout, stderr = ssh_client.exec_command("")
+    _, stdout, stderr = ssh_client.exec_command(
+        '/tmp/combadge.py {} "{}" "{}"'.format(str(beam_id), directory, _TRANSPORTER_HOST))
+    retcode = stdout.channel.recv_exit_status()
+    assert retcode == 0, (stderr.read(), stdout.read())
 
 
 

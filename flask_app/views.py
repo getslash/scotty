@@ -5,6 +5,7 @@ from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone
 from .models import Beam, db, File
 from .app import app
+from .tasks import beam_up, create_key
 
 
 def _jsonify_beam(beam):
@@ -26,6 +27,8 @@ def get_beams():
 
 @app.route('/beams', methods=['POST'])
 def create_beam():
+    create_key(request.json['beam']['ssh_key'])
+
     beam = Beam(
         start=datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
@@ -33,6 +36,8 @@ def create_beam():
         pending_deletion=False, completed=False)
     db.session.add(beam)
     db.session.commit()
+    beam_up.delay(
+        beam.id, beam.host, beam.directory, request.json['beam']['user'], request.json['beam']['ssh_key'])
     return jsonify({'beam': _jsonify_beam(beam)})
 
 
