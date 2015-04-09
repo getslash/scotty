@@ -38,9 +38,9 @@ def generate_nginx_config(path):
        rewrite ^/$ /static/index.html;
     }}
 
-    location /file_contents {
+    location /file_contents {{
        alias /mnt/storage;
-    }
+    }}
 
     location / {{
        	 include uwsgi_params;

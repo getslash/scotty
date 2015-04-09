@@ -4,6 +4,7 @@ from celery import Celery
 from paramiko import SSHClient
 from paramiko.client import AutoAddPolicy
 from paramiko.rsakey import RSAKey
+import socket
 
 queue = Celery('tasks', broker='redis://localhost')
 queue.conf.update(
@@ -13,7 +14,8 @@ queue.conf.update(
     CELERY_ENABLE_UTC=True,
 )
 
-_TRANSPORTER_HOST = os.environ.get('TRANSPORTER_HOST', 'scotty')
+_TRANSPORTER_HOST = os.environ.get('TRANSPORTER_HOST', socket.gethostname())
+print("Transporter host: %s" % (_TRANSPORTER_HOST, ))
 
 def create_key(s):
     f = StringIO()
