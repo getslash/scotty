@@ -49,6 +49,7 @@ class File(db.Model):
     beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
     status = db.Column(db.String(25))
     size = db.Column(db.BigInteger)
+    storage_name = db.Column(db.String)
 
     def __repr__(self):
         return "<File(id='%s', name='%s', beam='%s')>" % (self.id, self.file_name, self.beam_id)

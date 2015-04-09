@@ -50,7 +50,8 @@ def get_beam(beam_id):
              'directory': beam.directory,
              'files': [f.id for f in beam.files]},
          'files':
-            [{"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id}
+            [{"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id,
+              "storage_name": f.storage_name}
              for f in beam.files]})
 
 
@@ -80,10 +81,12 @@ def register_file():
         beam.size += size
         db.session.add(f)
         db.session.commit()
+        f.storage_name = "{}-{}".format(f.id, f.file_name.replace("/", "__").replace("\\", "__"))
+        db.session.commit()
     else:
         logging.info("Got upload request for a existing file: %s @ %d (%s)", file_name, beam_id, f.status)
 
-    return jsonify({'file_id': str(f.id), 'should_beam': f.status != 'uploaded'})
+    return jsonify({'file_id': str(f.id), 'should_beam': f.status != 'uploaded', 'storage_name': f.storage_name})
 
 
 @app.route('/files/<int:file_id>', methods=['PUT'])

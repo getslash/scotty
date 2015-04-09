@@ -5,8 +5,9 @@ export default DS.Model.extend({
   file_name: DS.attr("string"),
   status: DS.attr("string"),
   size: DS.attr("number"),
+  storage_name: DS.attr("string"),
 
   link: function() {
-    return '/file_contents/' + this.get('id');
+    return '/file_contents/' + this.get('storage_name');
   }.property('id'),
 });
