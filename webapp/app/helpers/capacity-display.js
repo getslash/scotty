@@ -1,4 +1,5 @@
 import Ember from 'ember';
+/* global numeral */
 
 var units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
 
