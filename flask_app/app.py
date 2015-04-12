@@ -17,6 +17,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.path.expandvars(
         os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://localhost/scotty'))
     app.config['TRANSPORTER_HOST'] = '192.168.50.1'
+    app.config['STORAGE_PATH'] = '/mnt/storage'
 
     _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "conf.d"))
 

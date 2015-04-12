@@ -35,7 +35,7 @@ class Beam(db.Model):
     pending_deletion = db.Column(db.Boolean)
     deleted = db.Column(db.Boolean)
     completed = db.Column(db.Boolean)
-    files = db.relationship("File", backref="parent")
+    files = db.relationship("File", backref="beam")
 
     def __repr__(self):
         return "<Beam(id='%s')>" % (self.id, )
