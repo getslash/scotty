@@ -45,11 +45,3 @@ def beam_up(beam_id, host, directory, username, pkey):
         '/tmp/combadge.py {} "{}" "{}"'.format(str(beam_id), directory, _TRANSPORTER_HOST))
     retcode = stdout.channel.recv_exit_status()
     assert retcode == 0, (stderr.read(), stdout.read())
-
-
-
-if __name__ == '__main__':
-    import os
-    with open(os.path.expanduser("~/.ssh/qa-io.id_rsa"), 'r') as f:
-        key = RSAKey.from_private_key(file_obj=f, password=None)
-        beam_up("roeyd-ubuntu", "/home/roey", "roeyd", key)
