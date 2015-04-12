@@ -10,6 +10,7 @@ Router.map(function() {
   this.resource('login', function() {});
   this.resource('beam', { path: '/beam/:beam_id' });
   this.resource('new-beam', function() {});
+  this.resource('changelog', function() {});
 });
 
 export default Router;
