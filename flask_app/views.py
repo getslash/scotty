@@ -105,6 +105,13 @@ def update_file(file_id):
     return '{}'
 
 
+@views.route("/info")
+def info():
+    return jsonify({
+        'version': current_app.config['APP_VERSION']
+    })
+
+
 @views.route("/")
 def index():
     if not os.path.isdir(current_app.static_folder):
