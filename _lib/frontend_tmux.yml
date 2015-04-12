@@ -17,3 +17,6 @@ windows:
   - window_name: cmd
     panes:
       - pwd
+  - window_name: livereload
+    panes:
+      - .env/bin/livereload static/assets/webapp.js
