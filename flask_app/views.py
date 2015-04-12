@@ -22,7 +22,7 @@ def _jsonify_beam(beam):
 
 @views.route('/beams', methods=['GET'])
 def get_beams():
-    beams = [_jsonify_beam(b) for b in db.session.query(Beam)]
+    beams = [_jsonify_beam(b) for b in db.session.query(Beam).filter(Beam.pending_deletion == False, Beam.deleted == False)]
     return jsonify({'beams': beams})
 
 
@@ -34,7 +34,7 @@ def create_beam():
         start=datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
         directory=request.json['beam']['directory'],
-        pending_deletion=False, completed=False)
+        pending_deletion=False, completed=False, deleted=False)
     db.session.add(beam)
     db.session.commit()
     beam_up.delay(
@@ -42,9 +42,20 @@ def create_beam():
     return jsonify({'beam': _jsonify_beam(beam)})
 
 
+@views.route('/beams/<int:beam_id>', methods=['DELETE'])
+def delete_beam(beam_id):
+    beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    beam.pending_deletion = True
+    db.session.commit()
+    return '{}'
+
+
 @views.route('/beams/<int:beam_id>', methods=['GET'])
 def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    if beam.pending_deletion or beam.deleted:
+        return '', http.client.FORBIDDEN
+
     return jsonify(
         {'beam':
             {'id': beam.id, 'host': beam.host, 'completed': beam.completed, 'start': beam.start.isoformat(), 'size': beam.size,
@@ -59,6 +70,9 @@ def get_beam(beam_id):
 @views.route('/beams/<int:beam_id>', methods=['PUT'])
 def update_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    if beam.pending_deletion or beam.deleted:
+        return '', http.client.FORBIDDEN
+
     beam.completed = request.json['completed']
     db.session.commit()
 
@@ -72,6 +86,9 @@ def register_file():
     if not beam:
         logging.error('Transporter attempted to post to unknown beam id %d', beam_id)
         return '', http.client.BAD_REQUEST
+
+    if beam.pending_deletion or beam.deleted:
+        return '', http.client.FORBIDDEN
 
     size = request.json['file_size']
     file_name = request.json['file_name']

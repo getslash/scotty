@@ -33,6 +33,7 @@ class Beam(db.Model):
     host = db.Column(db.String)
     directory = db.Column(db.String)
     pending_deletion = db.Column(db.Boolean)
+    deleted = db.Column(db.Boolean)
     completed = db.Column(db.Boolean)
     files = db.relationship("File", backref="parent")
 
