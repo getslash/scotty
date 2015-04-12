@@ -7,7 +7,7 @@ windows:
       - python manage.py testserver --no-tmux
   - window_name: celery worker
     panes:
-      - TRANSPORTER_HOST=192.168.50.1 .env/bin/celery -A flask_app.tasks worker --loglevel=info
+      - .env/bin/celery -A flask_app.tasks worker --loglevel=info
   - window_name: database
     panes:
       - pgcli scotty
