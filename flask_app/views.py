@@ -4,9 +4,10 @@ from contextlib import closing
 from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone
 from .models import Beam, db, File
-from .app import app
 from .tasks import beam_up, create_key
+from flask import Blueprint, current_app
 
+views = Blueprint("views", __name__, template_folder="templates")
 
 def _jsonify_beam(beam):
     return {
@@ -19,13 +20,13 @@ def _jsonify_beam(beam):
     }
 
 
-@app.route('/beams', methods=['GET'])
+@views.route('/beams', methods=['GET'])
 def get_beams():
     beams = [_jsonify_beam(b) for b in db.session.query(Beam)]
     return jsonify({'beams': beams})
 
 
-@app.route('/beams', methods=['POST'])
+@views.route('/beams', methods=['POST'])
 def create_beam():
     create_key(request.json['beam']['ssh_key'])
 
@@ -41,7 +42,7 @@ def create_beam():
     return jsonify({'beam': _jsonify_beam(beam)})
 
 
-@app.route('/beams/<int:beam_id>', methods=['GET'])
+@views.route('/beams/<int:beam_id>', methods=['GET'])
 def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     return jsonify(
@@ -55,7 +56,7 @@ def get_beam(beam_id):
              for f in beam.files]})
 
 
-@app.route('/beams/<int:beam_id>', methods=['PUT'])
+@views.route('/beams/<int:beam_id>', methods=['PUT'])
 def update_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     beam.completed = request.json['completed']
@@ -64,7 +65,7 @@ def update_beam(beam_id):
     return '{}'
 
 
-@app.route('/files', methods=['POST'])
+@views.route('/files', methods=['POST'])
 def register_file():
     beam_id = request.json['beam_id']
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
@@ -89,7 +90,7 @@ def register_file():
     return jsonify({'file_id': str(f.id), 'should_beam': f.status != 'uploaded', 'storage_name': f.storage_name})
 
 
-@app.route('/files/<int:file_id>', methods=['PUT'])
+@views.route('/files/<int:file_id>', methods=['PUT'])
 def update_file(file_id):
     success = request.json['success']
     error_string = request.json['error']
@@ -104,9 +105,8 @@ def update_file(file_id):
     return '{}'
 
 
-
-@app.route("/")
+@views.route("/")
 def index():
-    if not os.path.isdir(app.static_folder):
+    if not os.path.isdir(current_app.static_folder):
         return send_from_directory(os.path.join(os.path.dirname(__file__), '..', 'webapp', 'app'), 'index.html')
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory(current_app.static_folder, 'index.html')
