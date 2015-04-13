@@ -39,7 +39,7 @@ def generate_nginx_config(path):
     }}
 
     location /file_contents {{
-       alias /mnt/storage;
+       alias /var/scotty;
     }}
 
     location / {{
