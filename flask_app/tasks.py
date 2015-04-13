@@ -10,6 +10,9 @@ from .app import create_app
 from .models import Beam, db
 from celery.utils.log import get_task_logger
 from celery.schedules import crontab
+from celery.signals import worker_init, task_failure
+from raven.contrib.celery import register_signal
+
 
 logger = get_task_logger(__name__)
 
@@ -88,3 +91,9 @@ def vacuum():
             except Exception:
                 logger.error("Vacuuming {} failed: {}".format(beam.id, traceback.format_exc()))
     logger.info("Vacuum done")
+
+
+@worker_init.connect
+def on_init(**kwargs):
+    app = create_app()
+    register_signal(app.raven.client)

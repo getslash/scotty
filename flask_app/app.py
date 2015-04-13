@@ -3,8 +3,11 @@ import logging
 import os
 import sys
 import yaml
+from functools import wraps
+from raven.contrib.flask import Sentry
 from flask.ext.security import Security
 from flask.ext.mail import Mail
+from flask import current_app
 
 import logbook
 
@@ -18,6 +21,8 @@ def create_app():
         os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://localhost/scotty'))
     app.config['TRANSPORTER_HOST'] = '192.168.50.1'
     app.config['STORAGE_PATH'] = '/mnt/storage'
+    app.config['SENTRY_DSN'] = ''
+
 
     _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "conf.d"))
 
@@ -39,6 +44,8 @@ def create_app():
     logbook.info("Started")
 
     Mail(app)
+
+    app.raven = Sentry(app, dsn=app.config['SENTRY_DSN'])
 
     from . import models
 
