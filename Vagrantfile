@@ -6,7 +6,7 @@ Vagrant.configure(2) do |config|
     server.vm.box = "trusty64"
     server.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
     server.vm.host_name = "server"
-    server.vm.forward_port 80, 8000
+    server.vm.network "forwarded_port", guest: 80, host: 8080
     server.vm.provision "ansible" do |ansible|
       ansible.groups = {
         "webapp" => ["server"],
@@ -14,7 +14,8 @@ Vagrant.configure(2) do |config|
       }
       ansible.playbook = "ansible/site.yml"
       ansible.extra_vars = {
-        install_with_debug: true
+        install_with_debug: false,
+        production: false
       }
       ansible.sudo = true
     end
