@@ -4,9 +4,10 @@ from contextlib import closing
 from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone
 from .models import Beam, db, File
-from .app import app
 from .tasks import beam_up, create_key
+from flask import Blueprint, current_app
 
+views = Blueprint("views", __name__, template_folder="templates")
 
 def _jsonify_beam(beam):
     return {
@@ -19,13 +20,13 @@ def _jsonify_beam(beam):
     }
 
 
-@app.route('/beams', methods=['GET'])
+@views.route('/beams', methods=['GET'])
 def get_beams():
-    beams = [_jsonify_beam(b) for b in db.session.query(Beam)]
+    beams = [_jsonify_beam(b) for b in db.session.query(Beam).filter(Beam.pending_deletion == False, Beam.deleted == False)]
     return jsonify({'beams': beams})
 
 
-@app.route('/beams', methods=['POST'])
+@views.route('/beams', methods=['POST'])
 def create_beam():
     create_key(request.json['beam']['ssh_key'])
 
@@ -33,7 +34,7 @@ def create_beam():
         start=datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
         directory=request.json['beam']['directory'],
-        pending_deletion=False, completed=False)
+        pending_deletion=False, completed=False, deleted=False)
     db.session.add(beam)
     db.session.commit()
     beam_up.delay(
@@ -41,35 +42,53 @@ def create_beam():
     return jsonify({'beam': _jsonify_beam(beam)})
 
 
-@app.route('/beams/<int:beam_id>', methods=['GET'])
+@views.route('/beams/<int:beam_id>', methods=['DELETE'])
+def delete_beam(beam_id):
+    beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    beam.pending_deletion = True
+    db.session.commit()
+    return '{}'
+
+
+@views.route('/beams/<int:beam_id>', methods=['GET'])
 def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    if beam.pending_deletion or beam.deleted:
+        return '', http.client.FORBIDDEN
+
     return jsonify(
         {'beam':
             {'id': beam.id, 'host': beam.host, 'completed': beam.completed, 'start': beam.start.isoformat(), 'size': beam.size,
              'directory': beam.directory,
              'files': [f.id for f in beam.files]},
          'files':
-            [{"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id}
+            [{"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id,
+              "storage_name": f.storage_name}
              for f in beam.files]})
 
 
-@app.route('/beams/<int:beam_id>', methods=['PUT'])
+@views.route('/beams/<int:beam_id>', methods=['PUT'])
 def update_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    if beam.pending_deletion or beam.deleted:
+        return '', http.client.FORBIDDEN
+
     beam.completed = request.json['completed']
     db.session.commit()
 
     return '{}'
 
 
-@app.route('/files', methods=['POST'])
+@views.route('/files', methods=['POST'])
 def register_file():
     beam_id = request.json['beam_id']
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
         logging.error('Transporter attempted to post to unknown beam id %d', beam_id)
         return '', http.client.BAD_REQUEST
+
+    if beam.pending_deletion or beam.deleted:
+        return '', http.client.FORBIDDEN
 
     size = request.json['file_size']
     file_name = request.json['file_name']
@@ -80,13 +99,15 @@ def register_file():
         beam.size += size
         db.session.add(f)
         db.session.commit()
+        f.storage_name = "{}-{}".format(f.id, f.file_name.replace("/", "__").replace("\\", "__"))
+        db.session.commit()
     else:
         logging.info("Got upload request for a existing file: %s @ %d (%s)", file_name, beam_id, f.status)
 
-    return jsonify({'file_id': str(f.id), 'should_beam': f.status != 'uploaded'})
+    return jsonify({'file_id': str(f.id), 'should_beam': f.status != 'uploaded', 'storage_name': f.storage_name})
 
 
-@app.route('/files/<int:file_id>', methods=['PUT'])
+@views.route('/files/<int:file_id>', methods=['PUT'])
 def update_file(file_id):
     success = request.json['success']
     error_string = request.json['error']
@@ -101,9 +122,15 @@ def update_file(file_id):
     return '{}'
 
 
+@views.route("/info")
+def info():
+    return jsonify({
+        'version': current_app.config['APP_VERSION']
+    })
 
-@app.route("/")
+
+@views.route("/")
 def index():
-    if not os.path.isdir(app.static_folder):
+    if not os.path.isdir(current_app.static_folder):
         return send_from_directory(os.path.join(os.path.dirname(__file__), '..', 'webapp', 'app'), 'index.html')
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory(current_app.static_folder, 'index.html')

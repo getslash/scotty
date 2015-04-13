@@ -8,3 +8,16 @@ windows:
   - window_name: celery worker
     panes:
       - .env/bin/celery -A flask_app.tasks worker --loglevel=info
+      - .env/bin/celery -A flask_app.tasks beat --loglevel=info
+  - window_name: database
+    panes:
+      - pgcli scotty
+  - window_name: transporter
+    panes:
+      - z transporter && cargo run example/transporter.conf
+  - window_name: cmd
+    panes:
+      - pwd
+  - window_name: livereload
+    panes:
+      - .env/bin/livereload static/assets/webapp.js

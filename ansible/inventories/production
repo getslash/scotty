@@ -1,5 +1,5 @@
 [webapp]
-scotty ansible_ssh_user=root
+scotty ansible_ssh_user=root production=true transporter_host="scotty"
 
 [db]
-scotty ansible_ssh_user=root
+scotty ansible_ssh_user=root production=true

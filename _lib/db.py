@@ -19,15 +19,7 @@ def db():
 
 
 def _create_sqlite(path):
-    from flask_app.models import db
-
-    if os.path.exists(path):
-        logbook.info("{} exists. Not doing anything", path)
-        return
-
-    db.create_all()
-    logbook.info("successfully created the tables")
-
+    pass
 
 def _create_postgres(match):
     import sqlalchemy
@@ -44,16 +36,16 @@ def _create_postgres(match):
         conn.execute("create database {} with encoding = 'UTF8'".format(db_name))
         conn.close()
         logbook.info("Database {} successfully created on {}.", db_name, uri)
-        db.create_all()
-        logbook.info("successfully created the tables")
     else:
-        logbook.info("Database exists. Not doing anything.")
+        logbook.info("Database {} exists.", db_name)
 
 
 @db.command()
 @requires_env("app")
 def ensure():
-    from flask_app.app import app
+    from flask_app.app import create_app
+    from flask_app.models import db
+    app = create_app()
 
     uri = app.config['SQLALCHEMY_DATABASE_URI']
     match = _DATABASE_URI_RE.match(uri)
@@ -62,16 +54,22 @@ def ensure():
         sys.exit(-1)
 
     if match.group('db_type') == 'sqlite':
-        return _create_sqlite(match.group('db'))
+        _create_sqlite(match.group('db'))
     elif match.group('db_type') == 'postgresql':
-        return _create_postgres(match)
+        _create_postgres(match)
+
+    with app.app_context():
+        db.create_all()
+    logbook.info("DB successfully created")
+
 
 
 @db.command()
 def wait(num_retries=60, retry_sleep_seconds=1):
     import sqlalchemy
 
-    from flask_app.app import app
+    from flask_app.app import create_app
+    app = create_app()
 
     uri = app.config['SQLALCHEMY_DATABASE_URI']
     for retry in xrange(num_retries):
@@ -95,10 +93,12 @@ def wait(num_retries=60, retry_sleep_seconds=1):
 @db.command()
 @requires_env("app")
 def drop():
-    from flask_app.app import app
+    from flask_app.app import create_app
     from flask_app.models import db
-    db.drop_all()
-    db.engine.execute('DROP TABLE IF EXISTS alembic_version')
+    app = create_app()
+    with app.app_context():
+        db.drop_all()
+        db.engine.execute('DROP TABLE IF EXISTS alembic_version')
 
 
 @db.command()
@@ -118,9 +118,10 @@ def upgrade():
 
 @contextmanager
 def _migrate_context():
-    from flask_app.app import app
+    from flask_app.app import create_app
     from flask_app.models import db
     from flask.ext import migrate
+    app = create_app()
 
     migrate.Migrate(app, db)
 
