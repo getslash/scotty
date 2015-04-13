@@ -1,5 +1,5 @@
 [webapp]
-scotty-staging ansible_ssh_user=root production=false
+scotty-staging ansible_ssh_user=root production=false transporter_host="scotty-staging"
 
 [db]
 scotty-staging ansible_ssh_user=root production=false
