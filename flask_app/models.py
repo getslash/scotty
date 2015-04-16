@@ -34,7 +34,7 @@ class Beam(db.Model):
     pending_deletion = db.Column(db.Boolean)
     deleted = db.Column(db.Boolean)
     completed = db.Column(db.Boolean)
-    initiator_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    initiator = db.Column(db.Integer, db.ForeignKey('user.id'))
     files = db.relationship("File", backref="beam")
 
     def __repr__(self):

@@ -1,9 +1,10 @@
 import os
 import logging
+import http.client
 from contextlib import closing
 from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone
-from .models import Beam, db, File
+from .models import Beam, db, File, User
 from .tasks import beam_up, create_key
 from .auth import require_user
 from flask import Blueprint, current_app
@@ -17,6 +18,7 @@ def _jsonify_beam(beam):
         'completed': beam.completed,
         'start': beam.start.isoformat(),
         'size': beam.size,
+        'initiator': beam.initiator,
         'directory': beam.directory
     }
 
@@ -36,7 +38,7 @@ def create_beam(user):
         start=datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
         directory=request.json['beam']['directory'],
-        initiator_id=user.id,
+        initiator=user.id,
         pending_deletion=False, completed=False, deleted=False)
     db.session.add(beam)
     db.session.commit()
@@ -53,6 +55,15 @@ def delete_beam(beam_id):
     return '{}'
 
 
+@views.route('/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = db.session.query(User).filter_by(id=user_id).first()
+    if not user:
+        return '', http.client.NOT_FOUND
+
+    return jsonify({'user': {'id': user.id, 'email': user.email, 'name': user.name}})
+
+
 @views.route('/beams/<int:beam_id>', methods=['GET'])
 def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
@@ -62,7 +73,7 @@ def get_beam(beam_id):
     return jsonify(
         {'beam':
             {'id': beam.id, 'host': beam.host, 'completed': beam.completed, 'start': beam.start.isoformat(), 'size': beam.size,
-             'directory': beam.directory,
+             'directory': beam.directory, 'initiator': beam.initiator,
              'files': [f.id for f in beam.files]},
          'files':
             [{"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id,

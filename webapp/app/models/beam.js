@@ -9,6 +9,7 @@ export default DS.Model.extend({
     directory: DS.attr('string'),
     pending_deletion: DS.attr('boolean'),
     completed: DS.attr('boolean'),
+    initiator: DS.belongsTo('user', {async: true}),
     files: DS.hasMany('file'),
 
     img: function() {

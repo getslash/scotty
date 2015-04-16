@@ -45,7 +45,7 @@ body {
 
 .beam-card {
   @extend .card;
-  height: 140px;
+  height: 160px;
   color: #000000 !important;
   // @include opacity(0.9);
   @extend .z-depth-2;
