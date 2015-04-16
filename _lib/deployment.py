@@ -30,6 +30,11 @@ def generate_nginx_config(path):
     with open(path, "w") as f:
         f.write("""server {{
 
+    include    mime.types;
+    types {{
+        text/plain log;
+    }}
+
     location /static {{
        alias {static_root};
     }}
