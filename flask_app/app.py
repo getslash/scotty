@@ -52,7 +52,7 @@ def create_app():
     models.db.init_app(app)
 
     from . import auth
-    Security(app, auth.user_datastore)
+    Security(app, auth.user_datastore, register_blueprint=False)
 
     from .auth import auth
     from .views import views

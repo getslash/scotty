@@ -4,11 +4,24 @@
     <div class="nav-wrapper container">
       <a href="#"><img src="/static/assets/img/scotty.png" id="portrait"><div id="logo-container" class="brand-logo">Scotty</div></a>
       <ul id="nav-mobile" class="right hide-on-med-and-down">
+        {{#if session.isAuthenticated}}
+          <li><a href="#" {{ action 'invalidate_session' }}>{{session.name}} (Log Out)</a></li>
+        {{else}}
+          <li><a href="#" {{action "login"}}>Log In</a></li>
+        {{/if}}
         <li><a href="http://en.memory-alpha.org/wiki/Montgomery_Scott">About</a></li>
         <li>{{#link-to "changelog"}}v{{model.version}}{{/link-to}}</li>
       </ul>
     </div>
   </nav>
 
+</div>
+ <div id="appmodal" class="modal">
+  <div class="modal-content">
+    <p>{{modal_content}}</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">OK</a>
+  </div>
 </div>
 {{outlet}}
