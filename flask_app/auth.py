@@ -2,6 +2,7 @@ import random
 import string
 import os
 import http.client
+from functools import wraps
 from httplib2 import Http
 import logbook
 from oauth2client.client import flow_from_clientsecrets
@@ -12,6 +13,7 @@ from flask_security.utils import verify_and_update_password, login_user
 from flask_security.decorators import auth_token_required
 from .app import create_app
 from .models import Role, User, db
+
 
 FLOW = flow_from_clientsecrets(
     os.path.join(os.path.dirname(__file__), 'client_secret.json'),
@@ -82,3 +84,17 @@ def restore():
 
     assert user_info['email'] == request.json['email']
     return jsonify(request.json)
+
+
+def require_user(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        auth_token = request.headers.get('Authentication-Token')
+        user = _USERS.get(auth_token)
+        if not user:
+            return "", http.client.FORBIDDEN
+
+        kwargs['user'] = user
+        return f(*args, **kwargs)
+
+    return wrapper
