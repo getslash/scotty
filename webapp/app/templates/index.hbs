@@ -7,7 +7,7 @@
         <div class="beam-card">
           <div class="card-content">
             <div class="row">
-              <div class="col m9 s12">
+              <div class="col m8 s12">
                 <div class="row">
                   <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{beam.host}}</div>
                   <div class="col s12"><i class="mdi-device-access-time"></i> {{format-date beam.start}}</div>
@@ -15,8 +15,8 @@
                   <div class="col s12"><i class="mdi-file-folder-open"></i> {{beam.directory}}</div>
                 </div>
               </div>
-              <div class="col m3 s12">
-                <div align="center"><img {{bind-attr class="beam.completed:folder-regular:folder-beaming :responsive-img"}}></div>
+              <div class="col m4 s12">
+                <div align="center"><img src="{{beam.img}}" class="responsive-img"></div>
               </div>
             </div>
           </div>

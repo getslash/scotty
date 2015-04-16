@@ -3,11 +3,19 @@
   <a class="waves-effect waves-light btn" href="#"><i class="mdi-navigation-arrow-back left"></i>back</a>
   <div class="page-card">
     <div class="card-content">
-      <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{model.host}}</div>
-      <div class="col s12"><i class="mdi-device-access-time"></i> {{format-date model.start}}</div>
-      <div class="col s12"><i class="mdi-device-data-usage"></i> {{capacity-display model.size}}</div>
-      <div class="col s12"><i class="mdi-file-folder-open"></i> {{model.directory}}</div>
-
+      <table class="layout-table">
+        <tr>
+          <td style="vertical-align: top">
+            <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{model.host}}</div>
+            <div class="col s12"><i class="mdi-device-access-time"></i> {{format-date model.start}}</div>
+            <div class="col s12"><i class="mdi-device-data-usage"></i> {{capacity-display model.size}}</div>
+            <div class="col s12"><i class="mdi-file-folder-open"></i> {{model.directory}}</div>
+          </td>
+          <td style="text-align: right">
+            <img src="{{model.img}}">
+          </td>
+        </tr>
+      </table>
 
       {{#if model.files.length}}
         <h4>Files</h4>

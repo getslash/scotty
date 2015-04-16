@@ -28,14 +28,6 @@ body {
   padding-right: 1.5em
 }
 
-.folder-regular {
-  content: url("/static/assets/img/folder-regular.gif")
-}
-
-.folder-beaming {
-  content: url("/static/assets/img/folder-beaming.gif")
-}
-
 .file-link {
   text-transform: none !important;
 }
@@ -74,4 +66,12 @@ body {
 #error {
   color: $error-color;
   font-weight: bold;
+}
+
+.layout-table {
+  tr {
+    td {
+      padding: 0px;
+    }
+  }
 }
