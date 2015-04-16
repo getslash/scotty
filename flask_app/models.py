@@ -19,9 +19,8 @@ class Role(db.Model, RoleMixin):
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True)
-    password = db.Column(db.String(255))
+    name = db.Column(db.String(255))
     active = db.Column(db.Boolean())
-    confirmed_at = db.Column(db.DateTime())
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
 
@@ -35,6 +34,7 @@ class Beam(db.Model):
     pending_deletion = db.Column(db.Boolean)
     deleted = db.Column(db.Boolean)
     completed = db.Column(db.Boolean)
+    initiator_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     files = db.relationship("File", backref="beam")
 
     def __repr__(self):

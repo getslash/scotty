@@ -5,6 +5,7 @@ from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone
 from .models import Beam, db, File
 from .tasks import beam_up, create_key
+from .auth import require_user
 from flask import Blueprint, current_app
 
 views = Blueprint("views", __name__, template_folder="templates")
@@ -27,13 +28,15 @@ def get_beams():
 
 
 @views.route('/beams', methods=['POST'])
-def create_beam():
+@require_user
+def create_beam(user):
     create_key(request.json['beam']['ssh_key'])
 
     beam = Beam(
         start=datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
         directory=request.json['beam']['directory'],
+        initiator_id=user.id,
         pending_deletion=False, completed=False, deleted=False)
     db.session.add(beam)
     db.session.commit()
