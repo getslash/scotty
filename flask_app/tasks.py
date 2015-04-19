@@ -83,13 +83,15 @@ def vacuum_beam(beam, storage_path):
 def vacuum():
     logger.info("Vacuum intiated")
     app = create_app()
+
+    # Make sure that the storage folder is accessable. Whenever deploying scotty to somewhere, one
+    # must create this empty file in the storage directory
+    os.stat(os.path.join(app.config['STORAGE_PATH'], ".test"))
+
     with app.app_context():
         to_delete = db.session.query(Beam).filter(Beam.pending_deletion == True, Beam.deleted == False)
         for beam in to_delete:
-            try:
-                vacuum_beam(beam, app.config['STORAGE_PATH'])
-            except Exception:
-                logger.error("Vacuuming {} failed: {}".format(beam.id, traceback.format_exc()))
+            vacuum_beam(beam, app.config['STORAGE_PATH'])
     logger.info("Vacuum done")
 
 
