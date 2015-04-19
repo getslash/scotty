@@ -2,6 +2,6 @@ SQLALCHEMY_DATABASE_URI: "postgresql://{{app_name}}:{{app_name}}@localhost/{{app
 DEBUG: {% if install_with_debug is defined and install_with_debug %}true{% else %}false{% endif %}
 
 STORAGE_PATH: /var/scotty
-SENTRY_DSN: {% if production %}http://da99721dc2e14a0bb12debb7447efb44:69007f54ceb04ca8acb85aa86c8d3db9@sentry.infinidat.com/21{% else %}"http://9f1425b3fa18437b8a222a83e9c4ace0:80ea921f214245f3a050213b122ec26c@sentry.infinidat.com/20"{% endif %}
+SENTRY_DSN: "{{sentry_dsn}}"
 
 TRANSPORTER_HOST: "{{transporter_host}}"

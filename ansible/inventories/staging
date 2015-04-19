@@ -1,5 +1,5 @@
 [webapp]
-scotty-staging ansible_ssh_user=root production=false transporter_host="scotty-staging"
+scotty-staging ansible_ssh_user=root production=false transporter_host="scotty-staging" sentry_dsn="http://9f1425b3fa18437b8a222a83e9c4ace0:80ea921f214245f3a050213b122ec26c@sentry.infinidat.com/20"
 
 [db]
-scotty-staging ansible_ssh_user=root production=false
+scotty-staging ansible_ssh_user=root
