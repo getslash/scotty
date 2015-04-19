@@ -10,6 +10,15 @@ roles_users = db.Table('roles_users',
     db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
 
 
+class Pin(db.Model):
+    __table_args__ = (db.UniqueConstraint('beam_id', 'user_id', name='uix_pin'), ) # Index
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
+
+
+
 class Role(db.Model, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
@@ -36,6 +45,7 @@ class Beam(db.Model):
     completed = db.Column(db.Boolean)
     initiator = db.Column(db.Integer, db.ForeignKey('user.id'))
     files = db.relationship("File", backref="beam")
+    pins = db.relationship("Pin", backref="beam")
 
     def __repr__(self):
         return "<Beam(id='%s')>" % (self.id, )

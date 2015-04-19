@@ -3,26 +3,36 @@
   <div class="row">
     {{#each beam in this}}
       <div class="col m12 l6">
-        {{#link-to "beam" beam}}
         <div class="beam-card">
           <div class="card-content">
             <div class="row">
               <div class="col m8 s12">
-                <div class="row">
-                <div class="col s12"><i class="mdi-social-person"></i> {{#if beam.initiator.name}}{{beam.initiator.name}}{{else}}...{{/if}}</div>
-                  <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{beam.host}}</div>
-                  <div class="col s12"><i class="mdi-device-access-time"></i> {{format-date beam.start}}</div>
-                  <div class="col s12"><i class="mdi-device-data-usage"></i> {{capacity-display beam.size}}</div>
-                  <div class="col s12"><i class="mdi-file-folder-open"></i> {{beam.directory}}</div>
-                </div>
+                <table class="layout-table">
+                  <tr><td style="text-align: center"><i class="fa fa-user"></i></td><td>{{#if beam.model.initiator.name}}{{beam.model.initiator.name}}{{else}}...{{/if}}</td></tr>
+                  <tr><td style="text-align: center"><i class="fa fa-desktop" alt="user"></i></td><td>{{beam.model.host}}</td></tr>
+                  <tr><td style="text-align: center"><i class="fa fa-clock-o"></i></td><td>{{format-date beam.model.start}}</td></tr>
+                  <tr><td style="text-align: center"><i class="fa fa-database"></i></td><td>{{capacity-display beam.model.size}}</td></tr>
+                  <tr><td style="text-align: center"><i class="fa fa-folder"></i></td><td>{{beam.model.directory}}</td></tr>
+                  <tr>
+                    <td style="text-align: center"><i class="fa fa-thumb-tack"></i></td>
+                    <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{beam.model.pinners}}">{{beam.model.num_of_pins}} users</a></td>
+                  </tr>
+               </table>
               </div>
               <div class="col m4 s12">
-                <div align="center"><img src="{{beam.img}}" class="responsive-img"></div>
+                {{#link-to "beam" beam.model}}
+                <div align="center"><img src="{{beam.model.img}}" class="responsive-img"></div>
+                {{/link-to}}
               </div>
             </div>
+            {{#unless beam.model.has_pinners}}
+              <p style='font-style: italic'>Marked for deletion.</p><br/>
+            {{/unless}}
+            {{#if session.isAuthenticated}}
+              <a {{action "pin" beam.pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if beam.pinned}}Unpin{{else}}Pin{{/if}}</a>
+            {{/if}}
           </div>
         </div>
-        {{/link-to}}
       </div>
     {{/each}}
   </div>

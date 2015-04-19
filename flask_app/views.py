@@ -1,10 +1,11 @@
 import os
 import logging
+import logbook
 import http.client
 from contextlib import closing
 from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone
-from .models import Beam, db, File, User
+from .models import Beam, db, File, User, Pin
 from .tasks import beam_up, create_key
 from .auth import require_user
 from flask import Blueprint, current_app
@@ -19,7 +20,8 @@ def _jsonify_beam(beam):
         'start': beam.start.isoformat(),
         'size': beam.size,
         'initiator': beam.initiator,
-        'directory': beam.directory
+        'directory': beam.directory,
+        'pins': [u.user_id for u in beam.pins]
     }
 
 
@@ -42,6 +44,10 @@ def create_beam(user):
         pending_deletion=False, completed=False, deleted=False)
     db.session.add(beam)
     db.session.commit()
+
+    db.session.add(Pin(user_id=user.id, beam_id=beam.id))
+    db.session.commit()
+
     beam_up.delay(
         beam.id, beam.host, beam.directory, request.json['beam']['user'], request.json['beam']['ssh_key'])
     return jsonify({'beam': _jsonify_beam(beam)})
@@ -70,11 +76,10 @@ def get_beam(beam_id):
     if beam.pending_deletion or beam.deleted:
         return '', http.client.FORBIDDEN
 
+    beam_json = _jsonify_beam(beam)
+    beam_json['files'] = [f.id for f in beam.files]
     return jsonify(
-        {'beam':
-            {'id': beam.id, 'host': beam.host, 'completed': beam.completed, 'start': beam.start.isoformat(), 'size': beam.size,
-             'directory': beam.directory, 'initiator': beam.initiator,
-             'files': [f.id for f in beam.files]},
+        {'beam': beam_json,
          'files':
             [{"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id,
               "storage_name": f.storage_name}
@@ -134,6 +139,26 @@ def update_file(file_id):
     db.session.commit()
 
     return '{}'
+
+
+@views.route('/pin', methods=['PUT'])
+@require_user
+def pin(user):
+    beam = db.session.query(Beam).filter_by(id=int(request.json['beam_id'])).first()
+    if not beam:
+        return '', NOT_FOUND
+
+    logbook.info("hio")
+    pin = db.session.query(Pin).filter_by(user_id=user.id, beam_id=beam.id).first()
+    if request.json['should_pin'] and not pin:
+        logbook.info("{} is pinning {}", user.name, beam.id)
+        db.session.add(Pin(user_id=user.id, beam_id=beam.id))
+    elif not request.json['should_pin'] and pin:
+        logbook.info("{} is unpinning {}", user.name, beam.id)
+        db.session.delete(pin)
+
+    db.session.commit()
+    return ''
 
 
 @views.route("/info")

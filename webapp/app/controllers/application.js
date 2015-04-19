@@ -15,5 +15,8 @@ export default Ember.Controller.extend({
     invalidate_session: function() {
       this.get('session').invalidate();
     }
-  }
+  },
+  me: function() {
+    return this.store.find("user", this.get("session.id"));
+  }.property("session.id"),
 });
