@@ -53,14 +53,6 @@ def create_beam(user):
     return jsonify({'beam': _jsonify_beam(beam)})
 
 
-@views.route('/beams/<int:beam_id>', methods=['DELETE'])
-def delete_beam(beam_id):
-    beam = db.session.query(Beam).filter_by(id=beam_id).first()
-    beam.pending_deletion = True
-    db.session.commit()
-    return '{}'
-
-
 @views.route('/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     user = db.session.query(User).filter_by(id=user_id).first()
