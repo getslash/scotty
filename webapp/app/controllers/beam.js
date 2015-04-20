@@ -25,7 +25,7 @@ export default Ember.Controller.extend({
   },
 
   actions: {
-    pin: function(pinned, force) {
+    pin: function(pinned) {
       var self = this;
       Ember.$.ajax({
         type: "put",
