@@ -89,6 +89,10 @@ def vacuum():
     os.stat(os.path.join(app.config['STORAGE_PATH'], ".test"))
 
     with app.app_context():
+        db.engine.execute(
+            "update beam set pending_deletion=true where not beam.pending_deletion and not beam.deleted and beam.id not in (select beam_id from pin)")
+        db.session.commit()
+
         to_delete = db.session.query(Beam).filter(Beam.pending_deletion == True, Beam.deleted == False)
         for beam in to_delete:
             vacuum_beam(beam, app.config['STORAGE_PATH'])

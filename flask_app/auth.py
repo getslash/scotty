@@ -64,8 +64,7 @@ def login():
 
     login_user(user)
     return jsonify({
-        'email': user.email,
-        'name': user.name,
+        'id': user.id,
         'secret': secret,
     })
 
@@ -75,6 +74,7 @@ def restore():
     user = _USERS.get(request.json['secret'])
     if not user:
         return '', http.client.FORBIDDEN
+    assert user.id == request.json['id']
 
     user_info = _get_info(user.credentials)
     if user.name != user_info['name']:
@@ -82,7 +82,6 @@ def restore():
         request.json['name'] = user.name
         user_datastore.db.session.commit()
 
-    assert user_info['email'] == request.json['email']
     return jsonify(request.json)
 
 

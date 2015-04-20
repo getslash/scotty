@@ -1,0 +1,29 @@
+<table class="layout-table">
+  <tr>
+    <td>
+      <table class="layout-table">
+        <tr><td style="text-align: center"><i class="fa fa-user"></i></td><td>{{#if beam.model.initiator.name}}{{beam.model.initiator.name}}{{else}}...{{/if}}</td></tr>
+        <tr><td style="text-align: center"><i class="fa fa-desktop" alt="user"></i></td><td>{{beam.model.host}}</td></tr>
+        <tr><td style="text-align: center"><i class="fa fa-clock-o"></i></td><td>{{format-date beam.model.start}}</td></tr>
+        <tr><td style="text-align: center"><i class="fa fa-database"></i></td><td>{{capacity-display beam.model.size}}</td></tr>
+        <tr><td style="text-align: center"><i class="fa fa-folder"></i></td><td>{{beam.model.directory}}</td></tr>
+        <tr>
+          <td style="text-align: center"><i class="fa fa-thumb-tack"></i></td>
+          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{beam.model.pinners}}">{{beam.model.num_of_pins}} users</a></td>
+        </tr>
+     </table>
+    </td>
+    <td style="text-align: right">
+      {{#link-to "beam" beam.model}}
+      <img src="{{beam.model.img}}" class="responsive-img">
+      {{/link-to}}
+    </td>
+  </tr>
+</table>
+<br/>
+{{#unless beam.model.has_pinners}}
+  <p style='font-style: italic'>Marked for deletion.</p><br/>
+{{/unless}}
+{{#if beam.session.isAuthenticated}}
+  <a {{action "pin" beam.pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if beam.pinned}}Unpin{{else}}Pin{{/if}}</a>
+{{/if}}
