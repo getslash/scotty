@@ -9,6 +9,7 @@
         {{else}}
           <li><a href="#" {{action "login"}}>Log In</a></li>
         {{/if}}
+        <li>{{#link-to "api"}}API{{/link-to}}</li>
         <li><a href="http://en.memory-alpha.org/wiki/Montgomery_Scott">About</a></li>
         <li>{{#link-to "changelog"}}v{{model.version}}{{/link-to}}</li>
       </ul>
