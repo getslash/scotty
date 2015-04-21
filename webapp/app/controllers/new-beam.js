@@ -5,7 +5,17 @@ export default Ember.Controller.extend({
   host: "",
   directory: "",
   ssh_key: "",
+  password: "",
   submitting: false,
+  auth_rsa: true,
+  auth_password: false,
+
+  disable_all: function() {
+    this.set("auth_rsa", false);
+    this.set("ssh_key", "");
+    this.set("auth_password", false);
+    this.set("password", "");
+  },
 
   actions: {
     beam: function() {
@@ -31,7 +41,7 @@ export default Ember.Controller.extend({
         return;
       }
 
-      if (!this.get("ssh_key")) {
+      if (this.get("auth_rsa") && (!this.get("ssh_key"))) {
         this.set("error", "SSH key field cannot be empty");
         Ember.$("#ssh_key").focus();
         return;
@@ -40,9 +50,20 @@ export default Ember.Controller.extend({
       this.set("error", "");
       this.set("submitting", true);
 
+      var auth_method = "";
+      if (this.get("auth_rsa")) {
+        auth_method = "rsa";
+      } else if (this.get("auth_password")) {
+        auth_method = "password";
+      } else {
+        throw "Invalid mode";
+      }
+
       var beam = this.store.createRecord("beam", {
         host: this.get("host"),
         ssh_key: this.get("ssh_key"),
+        password: this.get("password"),
+        auth_method: auth_method,
         user: this.get("user"),
         directory: this.get("directory"),
       });
@@ -60,6 +81,14 @@ export default Ember.Controller.extend({
             self.set("error", response.statusText);
           }
       );
+    },
+    method_rsa: function() {
+      this.disable_all();
+      this.set("auth_rsa", true);
+    },
+    method_password: function() {
+      this.disable_all();
+      this.set("auth_password", true);
     }
   }
 });

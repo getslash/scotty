@@ -34,7 +34,8 @@ def get_beams():
 @views.route('/beams', methods=['POST'])
 @require_user
 def create_beam(user):
-    create_key(request.json['beam']['ssh_key'])
+    if request.json['beam']['auth_method'] == 'rsa':
+        create_key(request.json['beam']['ssh_key'])
 
     beam = Beam(
         start=datetime.utcnow(), size=0,
@@ -49,7 +50,9 @@ def create_beam(user):
     db.session.commit()
 
     beam_up.delay(
-        beam.id, beam.host, beam.directory, request.json['beam']['user'], request.json['beam']['ssh_key'])
+        beam.id, beam.host, beam.directory, request.json['beam']['user'], request.json['beam']['auth_method'],
+        request.json['beam'].get('ssh_key', None), request.json['beam'].get('password', ''))
+
     return jsonify({'beam': _jsonify_beam(beam)})
 
 

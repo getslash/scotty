@@ -42,14 +42,23 @@ with open(os.path.join(os.path.dirname(__file__), "../scripts/combadge.py"), "r"
 
 
 @queue.task
-def beam_up(beam_id, host, directory, username, pkey):
+def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
     app = create_app()
     transporter = app.config.get('TRANSPORTER_HOST', 'scotty')
-    logger.info('Beaming up {}@{}:{} ({}) to transporter {}'.format(username, host, directory, beam_id, transporter))
-    pkey = create_key(pkey)
+    logger.info('Beaming up {}@{}:{} ({}) to transporter {}. Auth method: {}'.format(
+        username, host, directory, beam_id, transporter, auth_method))
     ssh_client = SSHClient()
     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-    ssh_client.connect(host, username=username, pkey=pkey, look_for_keys=False)
+
+    kwargs = {'username': username, 'look_for_keys': False}
+    if auth_method == 'rsa':
+        kwargs['pkey'] = create_key(pkey)
+    elif auth_method == 'password':
+        kwargs['password'] = password
+    else:
+        raise Exception('Invalid auth method')
+
+    ssh_client.connect(host, **kwargs)
     logger.info('{}: Connected to {}. Uploading combadge'.format(beam_id, host))
 
     stdin, stdout ,stderr = ssh_client.exec_command("cat > /tmp/combadge.py && chmod +x /tmp/combadge.py")

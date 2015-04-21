@@ -6,6 +6,8 @@ export default DS.Model.extend({
     size: DS.attr('number'),
     host: DS.attr('string'),
     ssh_key: DS.attr('string'),
+    auth_method: DS.attr('string'),
+    password: DS.attr('string'),
     user: DS.attr('string'),
     directory: DS.attr('string'),
     pending_deletion: DS.attr('boolean'),
