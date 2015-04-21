@@ -76,13 +76,6 @@ def restore():
     if not user:
         return '', http.client.FORBIDDEN
     assert user.id == request.json['id']
-
-    user_info = _get_info(user.credentials)
-    if user.name != user_info['name']:
-        user.name = user_info['name']
-        request.json['name'] = user.name
-        user_datastore.db.session.commit()
-
     return jsonify(request.json)
 
 
