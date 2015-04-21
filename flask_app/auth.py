@@ -15,11 +15,6 @@ from .app import create_app
 from .models import Role, User, db
 
 
-FLOW = flow_from_clientsecrets(
-    os.path.join(os.path.dirname(__file__), 'client_secret.json'),
-    scope="https://www.googleapis.com/auth/userinfo.profile",
-    redirect_uri="http://localhost:8000")
-
 auth = Blueprint("auth", __name__, template_folder="templates")
 
 # Setup Flask-Security
@@ -40,7 +35,11 @@ def _get_info(credentials):
 
 @auth.route("/login", methods=['POST'])
 def login():
-    credentials = FLOW.step2_exchange(request.json['authorizationCode'])
+    flow = flow_from_clientsecrets(
+        os.path.join(os.path.dirname(__file__), 'client_secret.json'),
+        scope="https://www.googleapis.com/auth/userinfo.profile",
+        redirect_uri=request.host_url[:-1])
+    credentials = flow.step2_exchange(request.json['authorizationCode'])
 
     user_info = _get_info(credentials)
     if user_info.get('hd') != 'infinidat.com':
