@@ -83,7 +83,13 @@ def require_user(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         auth_token = request.headers.get('Authentication-Token')
-        user = _USERS.get(auth_token)
+        email = request.headers.get('X-Authentication-Email')
+        user = None
+        if auth_token:
+            user = _USERS.get(auth_token)
+        elif email:
+            user = user_datastore.get_user(email)
+
         if not user:
             return "", http.client.FORBIDDEN
 

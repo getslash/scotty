@@ -6,7 +6,7 @@ from contextlib import closing
 from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone
 from .models import Beam, db, File, User, Pin
-from .tasks import beam_up, create_key
+from .tasks import beam_up, create_key, _COMBADGE
 from .auth import require_user
 from flask import Blueprint, current_app
 
@@ -49,11 +49,26 @@ def create_beam(user):
     db.session.add(Pin(user_id=user.id, beam_id=beam.id))
     db.session.commit()
 
-    beam_up.delay(
-        beam.id, beam.host, beam.directory, request.json['beam']['user'], request.json['beam']['auth_method'],
-        request.json['beam'].get('ssh_key', None), request.json['beam'].get('password', ''))
+    if request.json['beam']['auth_method'] != 'independent':
+        beam_up.delay(
+            beam.id, beam.host, beam.directory, request.json['beam']['user'], request.json['beam']['auth_method'],
+            request.json['beam'].get('ssh_key', None), request.json['beam'].get('password', ''))
 
     return jsonify({'beam': _jsonify_beam(beam)})
+
+
+
+def _dictify_user(user):
+    return {'user': {'id': user.id, 'email': user.email, 'name': user.name}}
+
+
+@views.route('/users/by_email/<email>', methods=['GET'])
+def get_user_by_email(email):
+    user = db.session.query(User).filter_by(email=email).first()
+    if not user:
+        return '', http.client.NOT_FOUND
+
+    return jsonify(_dictify_user(user))
 
 
 @views.route('/users/<int:user_id>', methods=['GET'])
@@ -62,7 +77,7 @@ def get_user(user_id):
     if not user:
         return '', http.client.NOT_FOUND
 
-    return jsonify({'user': {'id': user.id, 'email': user.email, 'name': user.name}})
+    return jsonify(_dictify_user(user))
 
 
 @views.route('/beams/<int:beam_id>', methods=['GET'])
@@ -159,8 +174,15 @@ def pin(user):
 @views.route("/info")
 def info():
     return jsonify({
-        'version': current_app.config['APP_VERSION']
+        'version': current_app.config['APP_VERSION'],
+        'transporter': current_app.config['TRANSPORTER_HOST']
     })
+
+
+
+@views.route("/combadge")
+def get_combadge():
+    return _COMBADGE
 
 
 @views.route("/")
