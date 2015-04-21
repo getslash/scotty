@@ -50,6 +50,19 @@ body {
   @extend .z-depth-2;
 }
 
+.beams-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.beam-container {
+  flex-basis: 480px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
 .page-card {
   @extend .card;
   // @include opacity(0.9);

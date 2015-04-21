@@ -1,16 +1,14 @@
-<div class="container hide-on-small-and-down">
-  <br/>
-  <div class="row">
-    {{#each beam in this}}
-      <div class="col m12 l6">
-        <div class="beam-card">
-          <div class="card-content">
-           {{beam-info beam=beam}}
-          </div>
+<br/>
+<div class="container beams-container">
+  {{#each beam in this}}
+    <div class="beam-container">
+      <div class="beam-card">
+        <div class="card-content">
+         {{beam-info beam=beam}}
         </div>
       </div>
-    {{/each}}
-  </div>
+    </div>
+  {{/each}}
 </div>
 
 <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
