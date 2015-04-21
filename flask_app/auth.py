@@ -31,6 +31,8 @@ _SECRETS = {}
 
 def _get_info(credentials):
     http_client = Http()
+    if credentials.access_token_expired:
+        credentials.refresh(http_client)
     credentials.authorize(http_client)
     service = build('oauth2', 'v2', http=http_client)
     return service.userinfo().get().execute()
