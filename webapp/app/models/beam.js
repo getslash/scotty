@@ -32,7 +32,7 @@ export default DS.Model.extend({
     join_pinners: function() {
       var self = this;
       this.get("pins").then(function(pins) {
-        self.set("pinners", pins.map(function(p) { return p.get("name"); }).toArray().join());
+        self.set("pinners", pins.map(function(p) { return p.get("name"); }).toArray().join(", "));
       });
     },
 
