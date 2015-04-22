@@ -24,7 +24,7 @@
 </table>
 <br/>
 {{#unless beam.model.has_pinners}}
-  <p style='font-style: italic'>Marked for deletion.</p><br/>
+  <p style='font-style: italic'>Will be deleted soon.</p><br/>
 {{/unless}}
 {{#if beam.session.isAuthenticated}}
   <a {{action "pin" beam.pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if beam.pinned}}Unpin{{else}}Pin{{/if}}</a>
