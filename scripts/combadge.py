@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
+import logging
 import os
 import sys
 import socket
 import struct
+
+logger = logging.getLogger("combadge")
 
 
 class ClientMessages(object):
@@ -19,17 +22,17 @@ class ServerMessages:
 
 def _beam_file(transporter, path):
     file_size = os.stat(path).st_size
-    print("Uploading {0} ({1} bytes)".format(path, file_size))
+    logger.info("Uploading {0} ({1} bytes)".format(path, file_size))
 
     transporter.sendall(struct.pack('!BQ', ClientMessages.StartBeamingFile, file_size))
     transporter.sendall(struct.pack('!H{0}s'.format(len(path)), len(path), path.encode('UTF-8')))
 
     answer = struct.unpack('!B', transporter.recv(1))[0]
     if answer == ServerMessages.SkipFile:
-        print("Server asks us to skip this file")
+        logger.info("Server asks us to skip this file")
         return
     elif answer == ServerMessages.BeamFile:
-        print("Server asks us to beam this file")
+        logger.info("Server asks us to beam this file")
     else:
         raise Exception("Unexpected server response: {0}".format(answer))
 
@@ -42,10 +45,10 @@ def _beam_file(transporter, path):
 
     answer = struct.unpack('!B', transporter.recv(1))[0]
     if answer == ServerMessages.FileBeamed:
-        print("Server reports that the file was beamed")
+        logger.info("Server reports that the file was beamed")
         return
     elif answer == ServerMessages.BeamFile:
-        print("Server asks us to beam this file")
+        logger.info("Server asks us to beam this file")
     else:
         raise Exception("Unexpected server response: {0}".format(answer))
 
@@ -77,6 +80,7 @@ def main():
         print("Usage: combadge [beam id] [path] [transporter hostname]")
         return 1
 
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     beam_up(beam_id, path, transporter_addr)
 
 
