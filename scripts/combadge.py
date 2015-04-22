@@ -22,7 +22,7 @@ def _beam_file(transporter, path):
     print("Uploading {0} ({1} bytes)".format(path, file_size))
 
     transporter.sendall(struct.pack('!BQ', ClientMessages.StartBeamingFile, file_size))
-    transporter.sendall(struct.pack('!H{0}s'.format(len(path)), len(path), path))
+    transporter.sendall(struct.pack('!H{0}s'.format(len(path)), len(path), path.encode('UTF-8')))
 
     answer = struct.unpack('!B', transporter.recv(1))[0]
     if answer == ServerMessages.SkipFile:
