@@ -29,6 +29,8 @@ def _get_paths_to_tar(include_frontend):
         raise RuntimeError("git ls-files failed")
     if include_frontend:
         returned.add('static')
+
+    returned.add('flask_app/client_secret.json')
     return returned
 
 def prepare_source_package(include_frontend=True):
