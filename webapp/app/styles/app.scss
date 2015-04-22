@@ -28,14 +28,6 @@ body {
   padding-right: 1.5em
 }
 
-.folder-regular {
-  content: url("/static/assets/img/folder-regular.gif")
-}
-
-.folder-beaming {
-  content: url("/static/assets/img/folder-beaming.gif")
-}
-
 .file-link {
   text-transform: none !important;
 }
@@ -53,10 +45,22 @@ body {
 
 .beam-card {
   @extend .card;
-  height: 140px;
   color: #000000 !important;
   // @include opacity(0.9);
   @extend .z-depth-2;
+}
+
+.beams-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.beam-container {
+  flex-basis: 475px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .page-card {
@@ -74,4 +78,22 @@ body {
 #error {
   color: $error-color;
   font-weight: bold;
+}
+
+.layout-table {
+  tr {
+    td {
+      padding: 0px;
+    }
+  }
+
+}
+
+.icon-td {
+  text-align: center;
+  width: 25px;
+}
+
+.pin-btn {
+  cursor: pointer;
 }

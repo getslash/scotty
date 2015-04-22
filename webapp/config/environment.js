@@ -16,7 +16,17 @@ module.exports = function(environment) {
     APP: {
       // Here you can pass flags/options to your application instance
       // when it is created
-    }
+    },
+    torii: {
+      providers: {
+        'google-oauth2': {
+          redirectUri: '',
+          apiKey:      '825485764208-hqk1p0nv7e03kf7a415tki9f8ttooeig.apps.googleusercontent.com',
+          scope: 'email profile'
+        }
+      }
+    },
+
   };
 
   ENV['simple-auth'] = {

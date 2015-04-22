@@ -40,10 +40,24 @@
           </div>
         </div>
         <div class="row">
-          <div class="input-field col s12">
-            <i class="mdi-communication-vpn-key prefix"></i>
-            {{textarea id="ssh_key" class="materialize-textarea validate" value=ssh_key}}
-            <label for="ssh_key">SSH key</label>
+          <div class="col s3">
+          <p>Authentication:</p>
+            <div class="collection">
+              <a href="#" {{action "method_rsa"}} {{bind-attr class=":collection-item auth_rsa:active"}}>RSA Key</a>
+              <a href="#" {{action "method_password"}} {{bind-attr class=":collection-item auth_password:active"}}>Password</a>
+            </div>
+          </div>
+          <div class="input-field col s9">
+            {{#if auth_rsa}}
+              <i class="mdi-communication-vpn-key prefix"></i>
+              {{textarea id="ssh_key" class="materialize-textarea validate" value=ssh_key}}
+              <label for="ssh_key">RSA key</label>
+            {{/if}}
+            {{#if auth_password}}
+              <i class="mdi-communication-vpn-key prefix"></i>
+              {{input id="password" type="password" class="validate" value=password}}
+              <label for="password">Password</label>
+            {{/if}}
           </div>
         </div>
       </form>

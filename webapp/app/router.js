@@ -11,6 +11,7 @@ Router.map(function() {
   this.resource('beam', { path: '/beam/:beam_id' });
   this.resource('new-beam', function() {});
   this.resource('changelog', function() {});
+  this.resource('api', function() {});
 });
 
 export default Router;

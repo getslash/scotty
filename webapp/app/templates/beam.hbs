@@ -3,11 +3,7 @@
   <a class="waves-effect waves-light btn" href="#"><i class="mdi-navigation-arrow-back left"></i>back</a>
   <div class="page-card">
     <div class="card-content">
-      <div class="col s12"><i class="mdi-hardware-desktop-windows"></i> {{model.host}}</div>
-      <div class="col s12"><i class="mdi-device-access-time"></i> {{format-date model.start}}</div>
-      <div class="col s12"><i class="mdi-device-data-usage"></i> {{capacity-display model.size}}</div>
-      <div class="col s12"><i class="mdi-file-folder-open"></i> {{model.directory}}</div>
-
+      {{beam-info beam=this}}
 
       {{#if model.files.length}}
         <h4>Files</h4>

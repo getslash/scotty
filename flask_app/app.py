@@ -20,7 +20,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.path.expandvars(
         os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://localhost/scotty'))
     app.config['TRANSPORTER_HOST'] = '192.168.50.1'
-    app.config['STORAGE_PATH'] = '/mnt/storage'
+    app.config['STORAGE_PATH'] = '/var/scotty'
     app.config['SENTRY_DSN'] = ''
 
 
@@ -52,7 +52,7 @@ def create_app():
     models.db.init_app(app)
 
     from . import auth
-    Security(app, auth.user_datastore)
+    Security(app, auth.user_datastore, register_blueprint=False)
 
     from .auth import auth
     from .views import views

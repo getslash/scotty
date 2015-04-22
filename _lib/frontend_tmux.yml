@@ -8,13 +8,13 @@ windows:
   - window_name: celery worker
     panes:
       - .env/bin/celery -A flask_app.tasks worker --loglevel=info
-      - .env/bin/celery -A flask_app.tasks beat --loglevel=info
+      - .env/bin/celery -A flask_app.tasks shell
   - window_name: database
     panes:
       - pgcli scotty
   - window_name: transporter
     panes:
-      - z transporter && cargo run example/transporter.conf
+      - z transporter && RUST_LOG=transporter=debug cargo run example/transporter.conf
   - window_name: cmd
     panes:
       - pwd

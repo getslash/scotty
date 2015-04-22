@@ -50,13 +50,7 @@ def _beam_file(transporter, path):
         raise Exception("Unexpected server response: {0}".format(answer))
 
 
-def main():
-    try:
-        _, beam_id, path, transporter_addr = sys.argv
-    except ValueError:
-        print("Usage: combadge [beam id] [path] [transporter hostname]")
-        return 1
-
+def beam_up(beam_id, path, transporter_addr):
     transporter = socket.socket()
     transporter.connect((transporter_addr, 9000))
 
@@ -74,6 +68,16 @@ def main():
 
     transporter.sendall(struct.pack('!B', ClientMessages.BeamComplete))
     transporter.close()
+
+
+def main():
+    try:
+        _, beam_id, path, transporter_addr = sys.argv
+    except ValueError:
+        print("Usage: combadge [beam id] [path] [transporter hostname]")
+        return 1
+
+    beam_up(beam_id, path, transporter_addr)
 
 
 if __name__ == '__main__':
