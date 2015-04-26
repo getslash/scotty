@@ -118,7 +118,7 @@ def register_file():
     beam_id = request.json['beam_id']
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
-        logbook.error('Transporter attempted to post to unknown beam id %d', beam_id)
+        logbook.error('Transporter attempted to post to unknown beam id {}', beam_id)
         return '', http.client.BAD_REQUEST
 
     if beam.pending_deletion or beam.deleted:
@@ -128,7 +128,7 @@ def register_file():
     file_name = request.json['file_name']
     f = db.session.query(File, File.status, File.id).filter_by(beam_id=beam_id, file_name=file_name).first()
     if not f:
-        logbook.info("Got upload request for a new file: %s @ %d", file_name, beam_id)
+        logbook.info("Got upload request for a new file: {} @ {}", file_name, beam_id)
         f = File(beam_id=beam_id, file_name=file_name, size=size, status="pending")
         beam.size += size
         db.session.add(f)
@@ -136,7 +136,7 @@ def register_file():
         f.storage_name = "{}-{}".format(f.id, f.file_name.replace("/", "__").replace("\\", "__"))
         db.session.commit()
     else:
-        logbook.info("Got upload request for a existing file: %s @ %d (%s)", file_name, beam_id, f.status)
+        logbook.info("Got upload request for a existing file: {} @ {} ({})", file_name, beam_id, f.status)
 
     return jsonify({'file_id': str(f.id), 'should_beam': f.status != 'uploaded', 'storage_name': f.storage_name})
 
@@ -147,7 +147,7 @@ def update_file(file_id):
     error_string = request.json['error']
     f = db.session.query(File).filter_by(id=file_id).first()
     if not f:
-        logbook.error('Transporter attempted to update an unknown file id %d', file_id)
+        logbook.error('Transporter attempted to update an unknown file id {}', file_id)
         return '', http.client.BAD_REQUEST
 
     f.status = "uploaded" if success else "failed"
