@@ -1,20 +1,14 @@
-<div class="container">
-  <br/>
-  <a class="waves-effect waves-light btn" href="#"><i class="mdi-navigation-arrow-back left"></i>back</a>
-  <div class="page-card">
-    <div class="card-content">
-      {{beam-info beam=this}}
+{{#page-card}}
+  {{beam-info beam=this}}
 
-      {{#if model.files.length}}
-        <h4>Files</h4>
-        <div class="collection">
-          {{#each file in model.files}}
-            <a class="collection-item file-link" {{bind-attr href=file.link}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
-          {{/each}}
-        </div>
-      {{else}}
-        <br/><p>No files were beamed yet.</p>
-      {{/if}}
+  {{#if model.files.length}}
+    <h4>Files</h4>
+    <div class="collection">
+      {{#each file in model.files}}
+        <a class="collection-item file-link" {{bind-attr href=file.link}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
+      {{/each}}
     </div>
-  </div>
-</div>
+  {{else}}
+    <br/><p>No files were beamed yet.</p>
+  {{/if}}
+{{/page-card}}
