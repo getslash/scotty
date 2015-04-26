@@ -12,6 +12,7 @@ Router.map(function() {
   this.resource('new-beam', function() {});
   this.resource('changelog', function() {});
   this.resource('api', function() {});
+  this.resource('about', function() {});
 });
 
 export default Router;
