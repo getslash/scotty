@@ -20,6 +20,7 @@ def _jsonify_beam(beam):
         'start': beam.start.isoformat(),
         'size': beam.size,
         'initiator': beam.initiator,
+        'error': beam.error,
         'directory': beam.directory,
         'pins': [u.user_id for u in beam.pins]
     }
@@ -45,6 +46,7 @@ def create_beam(user):
         host=request.json['beam']['host'],
         directory=request.json['beam']['directory'],
         initiator=user.id,
+        error=None,
         pending_deletion=False, completed=False, deleted=False)
     db.session.add(beam)
     db.session.commit()

@@ -1,6 +1,11 @@
 {{#page-card}}
   {{beam-info beam=this}}
 
+  {{#if model.error}}
+  <br/>
+  <p class="red-text text-darken-2">{{newlines-text model.error}}</p>
+  {{/if}}
+
   {{#if model.files.length}}
     <h4>Files</h4>
     <div class="collection">

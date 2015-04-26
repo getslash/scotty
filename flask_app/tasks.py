@@ -44,35 +44,46 @@ with open(os.path.join(os.path.dirname(__file__), "../scripts/combadge.py"), "r"
 @queue.task
 def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
     app = create_app()
-    transporter = app.config.get('TRANSPORTER_HOST', 'scotty')
-    logger.info('Beaming up {}@{}:{} ({}) to transporter {}. Auth method: {}'.format(
-        username, host, directory, beam_id, transporter, auth_method))
-    ssh_client = SSHClient()
-    ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+    try:
+        transporter = app.config.get('TRANSPORTER_HOST', 'scotty')
+        logger.info('Beaming up {}@{}:{} ({}) to transporter {}. Auth method: {}'.format(
+            username, host, directory, beam_id, transporter, auth_method))
+        ssh_client = SSHClient()
+        ssh_client.set_missing_host_key_policy(AutoAddPolicy())
 
-    kwargs = {'username': username, 'look_for_keys': False}
-    if auth_method == 'rsa':
-        kwargs['pkey'] = create_key(pkey)
-    elif auth_method == 'password':
-        kwargs['password'] = password
-    else:
-        raise Exception('Invalid auth method')
+        kwargs = {'username': username, 'look_for_keys': False}
+        if auth_method == 'rsa':
+            kwargs['pkey'] = create_key(pkey)
+        elif auth_method == 'password':
+            kwargs['password'] = password
+        else:
+            raise Exception('Invalid auth method')
 
-    ssh_client.connect(host, **kwargs)
-    logger.info('{}: Connected to {}. Uploading combadge'.format(beam_id, host))
+        ssh_client.connect(host, **kwargs)
+        logger.info('{}: Connected to {}. Uploading combadge'.format(beam_id, host))
 
-    stdin, stdout ,stderr = ssh_client.exec_command("cat > /tmp/combadge.py && chmod +x /tmp/combadge.py")
-    stdin.write(_COMBADGE)
-    stdin.channel.shutdown_write()
-    retcode = stdout.channel.recv_exit_status()
-    assert retcode == 0
+        stdin, stdout ,stderr = ssh_client.exec_command("cat > /tmp/combadge.py && chmod +x /tmp/combadge.py")
+        stdin.write(_COMBADGE)
+        stdin.channel.shutdown_write()
+        retcode = stdout.channel.recv_exit_status()
+        if retcode != 0:
+            raise Exception(stderr.read().decode("ascii"))
 
-    logger.info('{}: Running combadge'.format(beam_id))
-    _, stdout, stderr = ssh_client.exec_command(
-        '/tmp/combadge.py {} "{}" "{}"'.format(str(beam_id), directory, transporter))
-    retcode = stdout.channel.recv_exit_status()
-    assert retcode == 0, (stderr.read(), stdout.read())
-    logger.info('{}: Beam completed'.format(beam_id))
+        logger.info('{}: Running combadge'.format(beam_id))
+        _, stdout, stderr = ssh_client.exec_command(
+            '/tmp/combadge.py {} "{}" "{}"'.format(str(beam_id), directory, transporter))
+        retcode = stdout.channel.recv_exit_status()
+        if retcode != 0:
+            raise Exception(stderr.read().decode("ascii"))
+
+        logger.info('{}: Beam completed'.format(beam_id))
+    except Exception as e:
+        with app.app_context():
+            beam = db.session.query(Beam).filter_by(id=beam_id).first()
+            beam.error = str(e)
+            beam.completed = True
+            db.session.commit()
+        raise
 
 
 def vacuum_beam(beam, storage_path):

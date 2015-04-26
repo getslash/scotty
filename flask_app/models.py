@@ -41,6 +41,7 @@ class Beam(db.Model):
     host = db.Column(db.String)
     directory = db.Column(db.String)
     pending_deletion = db.Column(db.Boolean)
+    error = db.Column(db.String)
     deleted = db.Column(db.Boolean)
     completed = db.Column(db.Boolean)
     initiator = db.Column(db.Integer, db.ForeignKey('user.id'))

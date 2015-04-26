@@ -11,6 +11,7 @@ export default DS.Model.extend({
     user: DS.attr('string'),
     directory: DS.attr('string'),
     pending_deletion: DS.attr('boolean'),
+    error: DS.attr('string'),
     completed: DS.attr('boolean'),
     initiator: DS.belongsTo('user', {async: true}),
     files: DS.hasMany('file'),
@@ -37,6 +38,6 @@ export default DS.Model.extend({
     },
 
     img: function() {
-      return this.get("completed") ? "/static/assets/img/folder-regular.gif" : "/static/assets/img/folder-beaming.gif";
-    }.property("completed")
+      return (this.get("completed") ? (this.get("error") != null ? "/static/assets/img/folder-error.gif" : "/static/assets/img/folder-regular.gif") : "/static/assets/img/folder-beaming.gif");
+    }.property("completed", "error")
 });
