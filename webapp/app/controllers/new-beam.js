@@ -78,7 +78,22 @@ export default Ember.Controller.extend({
           },
           function(response) {
             self.set("submitting", false);
-            self.set("error", response.statusText);
+            var msg = '';
+            switch (response.status) {
+            case 0:
+              msg = "Could not contact Scotty. Are you connected to the Infindiat network?";
+              break;
+            case 409:
+              msg = response.responseText;
+              break;
+            case 403:
+              msg = "Your session logged out. Please refresh the application.";
+              break;
+            default:
+              msg = response.statusText;
+            }
+            self.set("error", msg);
+            beam.deleteRecord();
           }
       );
     },

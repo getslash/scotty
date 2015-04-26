@@ -2,6 +2,7 @@ import os
 import logbook
 import http.client
 from contextlib import closing
+from paramiko.ssh_exception import SSHException
 from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone
 from .models import Beam, db, File, User, Pin
@@ -34,7 +35,10 @@ def get_beams():
 @require_user
 def create_beam(user):
     if request.json['beam']['auth_method'] == 'rsa':
-        create_key(request.json['beam']['ssh_key'])
+        try:
+            create_key(request.json['beam']['ssh_key'])
+        except SSHException as e:
+            return 'Invalid RSA key', 409
 
     beam = Beam(
         start=datetime.utcnow(), size=0,
