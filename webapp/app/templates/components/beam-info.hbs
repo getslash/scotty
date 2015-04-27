@@ -40,7 +40,7 @@
     <h4>Files</h4>
     <div class="collection">
       {{#each file in beam.model.files}}
-        <a class="collection-item file-link" {{bind-attr href=file.link}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
+        <a class="collection-item file-link" target="_blank" {{bind-attr href=file.link}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
       {{/each}}
     </div>
   {{else}}
