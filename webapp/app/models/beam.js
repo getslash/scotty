@@ -1,5 +1,6 @@
 import Ember from 'ember';
 import DS from 'ember-data';
+/* global moment */
 
 export default DS.Model.extend({
     start: DS.attr('date'),
@@ -17,6 +18,15 @@ export default DS.Model.extend({
     files: DS.hasMany('file'),
     pins: DS.hasMany('user', {async: true}),
     pinners: "",
+    relative_time: "",
+
+    start_observer: function() {
+      Ember.run.once(this, "update_relative_time");
+    }.observes("start"),
+
+    update_relative_time: function() {
+      this.set("relative_time", moment(this.get("start")).fromNow());
+    },
 
     num_of_pins: function () {
       return this.get("pins").get("length");

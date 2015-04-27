@@ -14,7 +14,7 @@ var App = Ember.Application.extend({
 App.Pollster = Ember.Object.extend({
   interval: function() {
     return 5000; // Time between polls (in ms)
-  }.property().readOnly(),
+  }.property(),
 
   // Schedules the function `f` to be executed every `interval` time.
   schedule: function(f) {
@@ -37,6 +37,25 @@ App.Pollster = Ember.Object.extend({
 
   onPoll: function(){
     // Issue JSON request and add data to the store
+  }
+});
+
+App.initializer({
+  name: "relative_time_update",
+
+  initialize: function(container) {
+    App.update_reltime = App.Pollster.create({
+      onPoll: function() {
+        var beams = container.lookup("store:main").all("beam").content;
+        for (var i = 0; i < beams.length; i++) {
+          var beam = beams[i];
+          Ember.run.once(beam, "update_relative_time");
+        }
+        return true;
+      }
+    });
+    App.update_reltime.set("interval", 60000);
+    App.update_reltime.start();
   }
 });
 

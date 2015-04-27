@@ -4,7 +4,9 @@
       <table class="layout-table">
         <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{#if beam.model.initiator.name}}{{beam.model.initiator.name}}{{else}}...{{/if}}</td></tr>
         <tr><td class="icon-td"><i class="fa fa-desktop" alt="user"></i></td><td>{{beam.model.host}}</td></tr>
-        <tr><td class="icon-td"><i class="fa fa-clock-o"></i></td><td>{{format-date beam.model.start}}</td></tr>
+        <tr>
+          <td class="icon-td"><i class="fa fa-clock-o"></i></td>
+          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{format-date beam.model.start}}">{{beam.model.relative_time}}</a></td></tr>
         <tr><td class="icon-td"><i class="fa fa-database"></i></td><td>{{capacity-display beam.model.size}}</td></tr>
         <tr>
           <td class="icon-td"><i class="fa fa-thumb-tack"></i></td>
