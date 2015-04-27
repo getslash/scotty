@@ -17,7 +17,7 @@ def _jsonify_beam(beam):
         'id': beam.id,
         'host': beam.host,
         'completed': beam.completed,
-        'start': beam.start.isoformat(),
+        'start': beam.start.isoformat() + 'Z',
         'size': beam.size,
         'initiator': beam.initiator,
         'error': beam.error,
