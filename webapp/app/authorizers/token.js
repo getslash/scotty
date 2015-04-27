@@ -7,11 +7,11 @@ export default Base.extend({
       return;
     }
 
-    var auth_token = session.content.secret;
+    var auth_token = session.content.auth_token;
     if (requestOptions.headers === undefined) {
       requestOptions.headers = {};
     }
 
-    requestOptions.headers['Authentication-Token'] = auth_token;
+    requestOptions.headers['X-Authentication-Token'] = auth_token;
   }
 });
