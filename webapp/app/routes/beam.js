@@ -11,6 +11,7 @@ export default Ember.Route.extend(Materialize, {
     this.get('pollster').stop();
   },
   afterModel: function(model) {
+    this._super();
     var self = this;
 
     if (Ember.isNone(this.get('pollster'))) {
