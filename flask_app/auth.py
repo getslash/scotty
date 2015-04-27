@@ -5,6 +5,7 @@ import http.client
 from functools import wraps
 from httplib2 import Http
 import logbook
+from redis import StrictRedis
 from oauth2client.client import flow_from_clientsecrets
 from apiclient.discovery import build
 from flask import request, jsonify, Blueprint
@@ -19,9 +20,6 @@ auth = Blueprint("auth", __name__, template_folder="templates")
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-
-_USERS = {}
-_SECRETS = {}
 
 
 def _get_info(credentials):
@@ -53,28 +51,37 @@ def login():
         user_datastore.db.session.commit()
 
     user.credentials = credentials
-
-    if user.id not in _SECRETS:
-        secret = "".join([random.choice(string.ascii_letters) for i in range(50)])
-        assert secret not in _USERS
-        _USERS[secret] = user
-        _SECRETS[user.id] = secret
+    redis = StrictRedis(host='localhost', port=6379, db=0)
+    auth_token = redis.get("auth_tokens:{}".format(user.id))
+    if not auth_token:
+        auth_token = "".join([random.choice(string.ascii_letters) for i in range(50)])
+        redis.set("auth_tokens:{}".format(user.id), auth_token)
+        redis.set("users:{}".format(auth_token), user.id)
     else:
-        secret = _SECRETS[user.id]
-        assert _USERS[secret].id == user.id
+        auth_token = auth_token.decode("ASCII")
+        assert int(redis.get("users:{}".format(auth_token))) == user.id
 
     login_user(user)
     return jsonify({
         'id': user.id,
-        'secret': secret,
+        'auth_token': auth_token,
     })
+
+
+def _get_user_from_auth_token(auth_token):
+    redis = StrictRedis(host='localhost', port=6379, db=0)
+    uid = int(redis.get("users:{}".format(auth_token)))
+    if not uid:
+        return None
+    return user_datastore.get_user(uid)
 
 
 @auth.route("/restore", methods=['POST'])
 def restore():
-    user = _USERS.get(request.json['secret'])
+    user = _get_user_from_auth_token(request.json['auth_token'])
     if not user:
         return '', http.client.FORBIDDEN
+
     assert user.id == request.json['id']
     return jsonify(request.json)
 
@@ -82,11 +89,11 @@ def restore():
 def require_user(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        auth_token = request.headers.get('Authentication-Token')
+        auth_token = request.headers.get('X-Authentication-Token')
         email = request.headers.get('X-Authentication-Email')
         user = None
         if auth_token:
-            user = _USERS.get(auth_token)
+            user = _get_user_from_auth_token(auth_token)
         elif email:
             user = user_datastore.get_user(email)
 
