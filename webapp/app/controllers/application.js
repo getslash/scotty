@@ -1,7 +1,14 @@
 import Ember from 'ember';
 
 export default Ember.Controller.extend({
+  queryParams: ['view'],
+  view: "",
   modal_content: "",
+
+  iframe: function() {
+    return this.get("view") == "iframe";
+  }.property("view"),
+
   actions: {
     login_error: function(error) {
       if (error === 401) {

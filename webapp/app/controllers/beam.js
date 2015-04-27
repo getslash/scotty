@@ -2,6 +2,7 @@ import Ember from 'ember';
 
 export default Ember.Controller.extend({
   pinned: false,
+  needs: "application",
 
   reloadModel: function() {
     this.get("model").reload();

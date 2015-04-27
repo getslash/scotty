@@ -1,0 +1,39 @@
+<table class="layout-table">
+  <tr>
+    <td style="width: 10%; vertical-align: top">
+      <table class="layout-table">
+        <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{#if beam.model.initiator.name}}{{beam.model.initiator.name}}{{else}}...{{/if}}</td></tr>
+        <tr><td class="icon-td"><i class="fa fa-desktop" alt="user"></i></td><td>{{beam.model.host}}</td></tr>
+        <tr>
+          <td class="icon-td"><i class="fa fa-clock-o"></i></td>
+          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{format-date beam.model.start}}">{{beam.model.relative_time}}</a></td></tr>
+        <tr><td class="icon-td"><i class="fa fa-database"></i></td><td>{{capacity-display beam.model.size}}</td></tr>
+        <tr>
+          <td class="icon-td"><i class="fa fa-thumb-tack"></i></td>
+          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{beam.model.pinners}}">{{beam.model.num_of_pins}} users</a></td>
+        </tr>
+        <td class="icon-td"><i class="fa fa-folder"></i></td><td>{{beam.model.directory}}</td>
+     </table>
+     {{#unless beam.model.has_pinners}}
+       <br/><p style='font-style: italic'>Will be deleted soon.</p>
+     {{/unless}}
+
+     {{#if beam.model.error}}
+     <br/><p class="red-text text-darken-2">{{newlines-text beam.model.error}}</p>
+     {{/if}}
+    </td>
+    <td style="width: 90%; padding-left: 20px; vertical-align: top">
+      {{#if beam.model.files.length}}
+        <div class="collection">
+          {{#each file in beam.model.files}}
+            <a class="collection-item file-link" target="_blank" {{bind-attr href=file.link}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
+          {{/each}}
+        </div>
+      {{else}}
+        <p>No files were beamed yet.</p>
+      {{/if}}
+    </td>
+  </tr>
+</table>
+
+
