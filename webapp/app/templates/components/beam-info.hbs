@@ -24,10 +24,26 @@
 <table class="layout-table">
   <tr><td class="icon-td"><i class="fa fa-folder"></i></td><td>{{beam.model.directory}}</td></tr>
 </table>
-<br/>
 {{#unless beam.model.has_pinners}}
-  <p style='font-style: italic'>Will be deleted soon.</p><br/>
+  <br/><p style='font-style: italic'>Will be deleted soon.</p>
 {{/unless}}
 {{#if beam.session.isAuthenticated}}
-  <a {{action "pin" beam.pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if beam.pinned}}Unpin{{else}}Pin{{/if}}</a>
+  <br/><p><a {{action "pin" beam.pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if beam.pinned}}Unpin{{else}}Pin{{/if}}</a></p>
+{{/if}}
+
+{{#if extended}}
+  {{#if beam.model.error}}
+  <br/><p class="red-text text-darken-2">{{newlines-text beam.model.error}}</p>
+  {{/if}}
+
+  {{#if beam.model.files.length}}
+    <h4>Files</h4>
+    <div class="collection">
+      {{#each file in beam.model.files}}
+        <a class="collection-item file-link" {{bind-attr href=file.link}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
+      {{/each}}
+    </div>
+  {{else}}
+    <br/><p>No files were beamed yet.</p>
+  {{/if}}
 {{/if}}
