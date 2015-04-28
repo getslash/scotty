@@ -23,6 +23,7 @@ def _jsonify_beam(beam):
         'initiator': beam.initiator,
         'error': beam.error,
         'directory': beam.directory,
+        'deleted': beam.pending_deletion or beam.deleted,
         'pins': [u.user_id for u in beam.pins]
     }
 
@@ -89,9 +90,6 @@ def get_user(user_id):
 @views.route('/beams/<int:beam_id>', methods=['GET'])
 def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
-    if beam.pending_deletion or beam.deleted:
-        return '', http.client.FORBIDDEN
-
     beam_json = _jsonify_beam(beam)
     beam_json['files'] = [f.id for f in beam.files]
     return jsonify(

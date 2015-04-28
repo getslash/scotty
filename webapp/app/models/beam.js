@@ -11,7 +11,7 @@ export default DS.Model.extend({
     password: DS.attr('string'),
     user: DS.attr('string'),
     directory: DS.attr('string'),
-    pending_deletion: DS.attr('boolean'),
+    deleted: DS.attr('boolean'),
     error: DS.attr('string'),
     completed: DS.attr('boolean'),
     initiator: DS.belongsTo('user', {async: true}),

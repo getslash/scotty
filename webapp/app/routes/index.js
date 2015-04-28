@@ -4,7 +4,12 @@ import App from '../app';
 
 export default Ember.Route.extend(Materialize, {
   model: function() {
-    return this.store.find('beam');
+    var self = this;
+    return this.store.find('beam').then(function() {
+      return self.store.filter('beam', function(beam) {
+        return !beam.get("deleted");
+      });
+    });
   },
 
   afterModel: function() {

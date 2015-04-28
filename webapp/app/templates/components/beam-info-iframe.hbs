@@ -14,9 +14,13 @@
         </tr>
         <td class="icon-td"><i class="fa fa-folder"></i></td><td>{{beam.model.directory}}</td>
      </table>
-     {{#unless beam.model.has_pinners}}
-       <br/><p style='font-style: italic'>Will be deleted soon.</p>
-     {{/unless}}
+     {{#if beam.model.deleted}}
+       <br/><p style='font-style: italic'>Deleted.</p>
+     {{else}}
+       {{#unless beam.model.has_pinners}}
+         <br/><p style='font-style: italic'>Will be deleted soon.</p>
+       {{/unless}}
+     {{/if}}
 
      {{#if beam.model.error}}
      <br/><p class="red-text text-darken-2">{{newlines-text beam.model.error}}</p>
@@ -26,7 +30,11 @@
       {{#if beam.model.files.length}}
         <div class="collection">
           {{#each file in beam.model.files}}
-            <a class="collection-item file-link" target="_blank" {{bind-attr href=file.link}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
+            {{#if beam.model.deleted}}
+              <li class="collection-item">{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></li>
+            {{else}}
+              <a class="collection-item file-link" target="_blank" {{bind-attr href=file.link}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
+            {{/if}}
           {{/each}}
         </div>
       {{else}}
