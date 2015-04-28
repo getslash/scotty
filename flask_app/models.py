@@ -52,6 +52,11 @@ class Beam(db.Model):
         return "<Beam(id='%s')>" % (self.id, )
 
 
+class Alias(db.Model):
+    id = db.Column(db.String, primary_key=True)
+    beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
+
+
 class File(db.Model):
     __table_args__ = (db.UniqueConstraint('beam_id', 'file_name', name='uix_1'), ) # Index
 

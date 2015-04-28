@@ -7,7 +7,7 @@ from contextlib import closing
 from paramiko.ssh_exception import SSHException
 from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone
-from .models import Beam, db, File, User, Pin
+from .models import Beam, db, File, User, Pin, Alias
 from .tasks import beam_up, create_key, _COMBADGE
 from .auth import require_user
 from flask import Blueprint, current_app
@@ -109,6 +109,41 @@ def update_beam(beam_id):
     db.session.commit()
 
     return '{}'
+
+
+@views.route('/aliases', methods=['POST'])
+def create_alias():
+    alias = request.json['alias']
+    beam = db.session.query(Beam).filter_by(id=request.json['beam_id']).first()
+    if not beam:
+        return '', http.client.BAD_REQUEST
+
+    alias = Alias(beam_id=beam.id, id=alias)
+    db.session.add(alias)
+    db.session.commit()
+
+    return ""
+
+
+@views.route('/alias/<alias_name>', methods=['GET'])
+def get_alias(alias_name):
+    alias = db.session.query(Alias).filter_by(id=alias_name).first()
+    if not alias:
+        return '', http.client.NOT_FOUND
+
+    return jsonify({'beam_id': alias.beam_id})
+
+
+@views.route('/alias/<alias_name>', methods=['DELETE'])
+def delete_alias(alias_name):
+    alias = db.session.query(Alias).filter_by(id=alias_name).first()
+    if not alias:
+        return '', http.client.NOT_FOUND
+
+    db.session.delete(alias)
+    db.session.commit()
+
+    return ""
 
 
 @views.route('/files', methods=['POST'])
