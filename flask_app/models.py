@@ -36,13 +36,13 @@ class User(db.Model, UserMixin):
 
 class Beam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    start = db.Column(db.DateTime)
+    start = db.Column(db.DateTime, index=True)
     size = db.Column(db.BigInteger)
     host = db.Column(db.String)
     directory = db.Column(db.String)
-    pending_deletion = db.Column(db.Boolean)
+    pending_deletion = db.Column(db.Boolean, index=True)
     error = db.Column(db.String)
-    deleted = db.Column(db.Boolean)
+    deleted = db.Column(db.Boolean, index=True)
     completed = db.Column(db.Boolean)
     initiator = db.Column(db.Integer, db.ForeignKey('user.id'))
     files = db.relationship("File", backref="beam")

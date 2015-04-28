@@ -1,6 +1,7 @@
 import os
 import logbook
 import http.client
+from sqlalchemy.sql import func
 from contextlib import closing
 from paramiko.ssh_exception import SSHException
 from flask import send_from_directory, jsonify, request
@@ -180,6 +181,18 @@ def info():
     return jsonify({
         'version': current_app.config['APP_VERSION'],
         'transporter': current_app.config['TRANSPORTER_HOST']
+    })
+
+
+@views.route("/summary")
+def summary():
+    beams = db.session.query(Beam).filter(Beam.pending_deletion == False, Beam.deleted == False)
+    size = int(db.session.query(func.sum(Beam.size)).filter(Beam.pending_deletion == False, Beam.deleted == False)[0][0] or 0)
+    oldest = beams.order_by(Beam.start).first()
+    return jsonify({
+        "space_usage": size,
+        "oldest_beam": oldest.id if oldest else None,
+        "number_of_beams":  beams.count()
     })
 
 

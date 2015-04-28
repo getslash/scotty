@@ -13,6 +13,7 @@ Router.map(function() {
   this.resource('changelog', function() {});
   this.resource('api', function() {});
   this.resource('about', function() {});
+  this.resource('summary', function() {});
 });
 
 export default Router;
