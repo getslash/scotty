@@ -86,21 +86,34 @@ def restore():
     return jsonify(request.json)
 
 
-def require_user(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        auth_token = request.headers.get('X-Authentication-Token')
-        email = request.headers.get('X-Authentication-Email')
-        user = None
-        if auth_token:
-            user = _get_user_from_auth_token(auth_token)
-        elif email:
-            user = user_datastore.get_user(email)
+def _get_anonymous_user():
+    user = user_datastore.get_user("anonymous@infinidat.com")
+    if not user:
+        user = user_datastore.create_user(
+            email="anonymous@infinidat.com",
+            name="Anonymous")
+        user_datastore.db.session.commit()
 
-        if not user:
-            return "", http.client.FORBIDDEN
+    return user
 
-        kwargs['user'] = user
-        return f(*args, **kwargs)
 
-    return wrapper
+def require_user(allow_anonymous):
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            auth_token = request.headers.get('X-Authentication-Token')
+            user = None
+            if auth_token:
+                user = _get_user_from_auth_token(auth_token)
+
+            if not user:
+                if not allow_anonymous:
+                    return "", http.client.FORBIDDEN
+                else:
+                    user = _get_anonymous_user()
+
+            kwargs['user'] = user
+            return f(*args, **kwargs)
+
+        return wrapper
+    return decorator

@@ -35,7 +35,7 @@ def get_beams():
 
 
 @views.route('/beams', methods=['POST'])
-@require_user
+@require_user(allow_anonymous=True)
 def create_beam(user):
     if request.json['beam']['auth_method'] == 'rsa':
         try:
@@ -156,7 +156,7 @@ def update_file(file_id):
 
 
 @views.route('/pin', methods=['PUT'])
-@require_user
+@require_user(allow_anonymous=False)
 def pin(user):
     beam = db.session.query(Beam).filter_by(id=int(request.json['beam_id'])).first()
     if not beam:
