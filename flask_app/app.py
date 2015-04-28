@@ -22,7 +22,7 @@ def create_app():
     app.config['TRANSPORTER_HOST'] = '192.168.50.1'
     app.config['STORAGE_PATH'] = '/var/scotty'
     app.config['SENTRY_DSN'] = ''
-
+    app.config['VACUUM_THRESHOLD'] = 4
 
     _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "conf.d"))
 

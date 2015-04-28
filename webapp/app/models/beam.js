@@ -12,6 +12,7 @@ export default DS.Model.extend({
     user: DS.attr('string'),
     directory: DS.attr('string'),
     deleted: DS.attr('boolean'),
+    purge_time: DS.attr('number'),
     error: DS.attr('string'),
     completed: DS.attr('boolean'),
     initiator: DS.belongsTo('user', {async: true}),
@@ -19,6 +20,22 @@ export default DS.Model.extend({
     pins: DS.hasMany('user', {async: true}),
     pinners: "",
     relative_time: "",
+
+    purge_str: function() {
+      var purge_time = this.get("purge_time");
+
+      if (purge_time === 0) {
+        return "today";
+      } else if (purge_time === 1) {
+        return "in 1 day";
+      } else {
+        return "in " + purge_time + " days";
+      }
+    }.property("purge_today").readOnly(),
+
+    should_display_purge_str: function() {
+      return this.get("completed") && !this.get("has_pinners");
+    }.property("has_pinners", "completed").readOnly(),
 
     start_observer: function() {
       Ember.run.once(this, "update_relative_time");

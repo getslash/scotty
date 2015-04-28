@@ -17,9 +17,9 @@
      {{#if beam.model.deleted}}
        <br/><p style='font-style: italic'>Deleted.</p>
      {{else}}
-       {{#unless beam.model.has_pinners}}
-         <br/><p style='font-style: italic'>Will be deleted soon.</p>
-       {{/unless}}
+       {{#if beam.model.should_display_purge_str}}
+         <br/><p style='font-style: italic'>Will be deleted {{beam.model.purge_str}}.</p>
+       {{/if}}
      {{/if}}
 
      {{#if beam.model.error}}

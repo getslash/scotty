@@ -1,6 +1,7 @@
 import os
 import logbook
 import http.client
+from datetime import datetime
 from sqlalchemy.sql import func
 from contextlib import closing
 from paramiko.ssh_exception import SSHException
@@ -21,6 +22,7 @@ def _jsonify_beam(beam):
         'start': beam.start.isoformat() + 'Z',
         'size': beam.size,
         'initiator': beam.initiator,
+        'purge_time': max(0, current_app.config['VACUUM_THRESHOLD'] - (datetime.utcnow() - beam.start).days) if beam.files else 0,
         'error': beam.error,
         'directory': beam.directory,
         'deleted': beam.pending_deletion or beam.deleted,
@@ -51,9 +53,6 @@ def create_beam(user):
         error=None,
         pending_deletion=False, completed=False, deleted=False)
     db.session.add(beam)
-    db.session.commit()
-
-    db.session.add(Pin(user_id=user.id, beam_id=beam.id))
     db.session.commit()
 
     if request.json['beam']['auth_method'] != 'independent':
