@@ -6,7 +6,7 @@ export default Ember.Controller.extend({
   modal_content: "",
 
   iframe: function() {
-    return this.get("view") == "iframe";
+    return this.get("view") === "iframe";
   }.property("view"),
 
   actions: {
