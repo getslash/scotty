@@ -5,7 +5,6 @@ import ApplicationRouteMixin from 'simple-auth/mixins/application-route-mixin';
 export default Ember.Route.extend(ApplicationRouteMixin, {
   actions: {
     login: function() {
-      Ember.Logger.info("Logging");
       var self = this;
 
       this.get('torii').open('google-oauth2').then(function(authorization) {

@@ -1,5 +1,6 @@
 import Ember from 'ember';
 import DS from 'ember-data';
+/* global moment */
 
 export default DS.Model.extend({
     start: DS.attr('date'),
@@ -10,12 +11,39 @@ export default DS.Model.extend({
     password: DS.attr('string'),
     user: DS.attr('string'),
     directory: DS.attr('string'),
-    pending_deletion: DS.attr('boolean'),
+    deleted: DS.attr('boolean'),
+    purge_time: DS.attr('number'),
+    error: DS.attr('string'),
     completed: DS.attr('boolean'),
     initiator: DS.belongsTo('user', {async: true}),
     files: DS.hasMany('file'),
     pins: DS.hasMany('user', {async: true}),
     pinners: "",
+    relative_time: "",
+
+    purge_str: function() {
+      var purge_time = this.get("purge_time");
+
+      if (purge_time === 0) {
+        return "today";
+      } else if (purge_time === 1) {
+        return "in 1 day";
+      } else {
+        return "in " + purge_time + " days";
+      }
+    }.property("purge_today").readOnly(),
+
+    should_display_purge_str: function() {
+      return this.get("completed") && !this.get("has_pinners");
+    }.property("has_pinners", "completed").readOnly(),
+
+    start_observer: function() {
+      Ember.run.once(this, "update_relative_time");
+    }.observes("start"),
+
+    update_relative_time: function() {
+      this.set("relative_time", moment(this.get("start")).fromNow());
+    },
 
     num_of_pins: function () {
       return this.get("pins").get("length");
@@ -37,6 +65,6 @@ export default DS.Model.extend({
     },
 
     img: function() {
-      return this.get("completed") ? "/static/assets/img/folder-regular.gif" : "/static/assets/img/folder-beaming.gif";
-    }.property("completed")
+      return (this.get("completed") ? (this.get("error") != null ? "/static/assets/img/folder-error.gif" : "/static/assets/img/folder-regular.gif") : "/static/assets/img/folder-beaming.gif");
+    }.property("completed", "error")
 });

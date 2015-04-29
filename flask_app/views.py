@@ -1,11 +1,13 @@
 import os
-import logging
 import logbook
 import http.client
+from datetime import datetime
+from sqlalchemy.sql import func
 from contextlib import closing
+from paramiko.ssh_exception import SSHException
 from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone
-from .models import Beam, db, File, User, Pin
+from .models import Beam, db, File, User, Pin, Alias
 from .tasks import beam_up, create_key, _COMBADGE
 from .auth import require_user
 from flask import Blueprint, current_app
@@ -17,10 +19,13 @@ def _jsonify_beam(beam):
         'id': beam.id,
         'host': beam.host,
         'completed': beam.completed,
-        'start': beam.start.isoformat(),
+        'start': beam.start.isoformat() + 'Z',
         'size': beam.size,
         'initiator': beam.initiator,
+        'purge_time': max(0, current_app.config['VACUUM_THRESHOLD'] - (datetime.utcnow() - beam.start).days) if beam.files else 0,
+        'error': beam.error,
         'directory': beam.directory,
+        'deleted': beam.pending_deletion or beam.deleted,
         'pins': [u.user_id for u in beam.pins]
     }
 
@@ -32,21 +37,22 @@ def get_beams():
 
 
 @views.route('/beams', methods=['POST'])
-@require_user
+@require_user(allow_anonymous=True)
 def create_beam(user):
     if request.json['beam']['auth_method'] == 'rsa':
-        create_key(request.json['beam']['ssh_key'])
+        try:
+            create_key(request.json['beam']['ssh_key'])
+        except SSHException as e:
+            return 'Invalid RSA key', 409
 
     beam = Beam(
         start=datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
         directory=request.json['beam']['directory'],
         initiator=user.id,
+        error=None,
         pending_deletion=False, completed=False, deleted=False)
     db.session.add(beam)
-    db.session.commit()
-
-    db.session.add(Pin(user_id=user.id, beam_id=beam.id))
     db.session.commit()
 
     if request.json['beam']['auth_method'] != 'independent':
@@ -83,9 +89,6 @@ def get_user(user_id):
 @views.route('/beams/<int:beam_id>', methods=['GET'])
 def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
-    if beam.pending_deletion or beam.deleted:
-        return '', http.client.FORBIDDEN
-
     beam_json = _jsonify_beam(beam)
     beam_json['files'] = [f.id for f in beam.files]
     return jsonify(
@@ -108,12 +111,47 @@ def update_beam(beam_id):
     return '{}'
 
 
+@views.route('/aliases', methods=['POST'])
+def create_alias():
+    alias = request.json['alias']
+    beam = db.session.query(Beam).filter_by(id=request.json['beam_id']).first()
+    if not beam:
+        return '', http.client.BAD_REQUEST
+
+    alias = Alias(beam_id=beam.id, id=alias)
+    db.session.add(alias)
+    db.session.commit()
+
+    return ""
+
+
+@views.route('/alias/<alias_name>', methods=['GET'])
+def get_alias(alias_name):
+    alias = db.session.query(Alias).filter_by(id=alias_name).first()
+    if not alias:
+        return '', http.client.NOT_FOUND
+
+    return jsonify({'beam_id': alias.beam_id})
+
+
+@views.route('/alias/<alias_name>', methods=['DELETE'])
+def delete_alias(alias_name):
+    alias = db.session.query(Alias).filter_by(id=alias_name).first()
+    if not alias:
+        return '', http.client.NOT_FOUND
+
+    db.session.delete(alias)
+    db.session.commit()
+
+    return ""
+
+
 @views.route('/files', methods=['POST'])
 def register_file():
     beam_id = request.json['beam_id']
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
-        logging.error('Transporter attempted to post to unknown beam id %d', beam_id)
+        logbook.error('Transporter attempted to post to unknown beam id {}', beam_id)
         return '', http.client.BAD_REQUEST
 
     if beam.pending_deletion or beam.deleted:
@@ -123,7 +161,7 @@ def register_file():
     file_name = request.json['file_name']
     f = db.session.query(File, File.status, File.id).filter_by(beam_id=beam_id, file_name=file_name).first()
     if not f:
-        logging.info("Got upload request for a new file: %s @ %d", file_name, beam_id)
+        logbook.info("Got upload request for a new file: {} @ {}", file_name, beam_id)
         f = File(beam_id=beam_id, file_name=file_name, size=size, status="pending")
         beam.size += size
         db.session.add(f)
@@ -131,7 +169,7 @@ def register_file():
         f.storage_name = "{}-{}".format(f.id, f.file_name.replace("/", "__").replace("\\", "__"))
         db.session.commit()
     else:
-        logging.info("Got upload request for a existing file: %s @ %d (%s)", file_name, beam_id, f.status)
+        logbook.info("Got upload request for a existing file: {} @ {} ({})", file_name, beam_id, f.status)
 
     return jsonify({'file_id': str(f.id), 'should_beam': f.status != 'uploaded', 'storage_name': f.storage_name})
 
@@ -142,7 +180,7 @@ def update_file(file_id):
     error_string = request.json['error']
     f = db.session.query(File).filter_by(id=file_id).first()
     if not f:
-        logging.error('Transporter attempted to update an unknown file id %d', file_id)
+        logbook.error('Transporter attempted to update an unknown file id {}', file_id)
         return '', http.client.BAD_REQUEST
 
     f.status = "uploaded" if success else "failed"
@@ -152,13 +190,12 @@ def update_file(file_id):
 
 
 @views.route('/pin', methods=['PUT'])
-@require_user
+@require_user(allow_anonymous=False)
 def pin(user):
     beam = db.session.query(Beam).filter_by(id=int(request.json['beam_id'])).first()
     if not beam:
         return '', NOT_FOUND
 
-    logbook.info("hio")
     pin = db.session.query(Pin).filter_by(user_id=user.id, beam_id=beam.id).first()
     if request.json['should_pin'] and not pin:
         logbook.info("{} is pinning {}", user.name, beam.id)
@@ -176,6 +213,18 @@ def info():
     return jsonify({
         'version': current_app.config['APP_VERSION'],
         'transporter': current_app.config['TRANSPORTER_HOST']
+    })
+
+
+@views.route("/summary")
+def summary():
+    beams = db.session.query(Beam).filter(Beam.pending_deletion == False, Beam.deleted == False)
+    size = int(db.session.query(func.sum(Beam.size)).filter(Beam.pending_deletion == False, Beam.deleted == False)[0][0] or 0)
+    oldest = beams.order_by(Beam.start).first()
+    return jsonify({
+        "space_usage": size,
+        "oldest_beam": oldest.id if oldest else None,
+        "number_of_beams":  beams.count()
     })
 
 

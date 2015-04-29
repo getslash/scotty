@@ -4,7 +4,9 @@
       <table class="layout-table">
         <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{#if beam.model.initiator.name}}{{beam.model.initiator.name}}{{else}}...{{/if}}</td></tr>
         <tr><td class="icon-td"><i class="fa fa-desktop" alt="user"></i></td><td>{{beam.model.host}}</td></tr>
-        <tr><td class="icon-td"><i class="fa fa-clock-o"></i></td><td>{{format-date beam.model.start}}</td></tr>
+        <tr>
+          <td class="icon-td"><i class="fa fa-clock-o"></i></td>
+          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{format-date beam.model.start}}">{{beam.model.relative_time}}</a></td></tr>
         <tr><td class="icon-td"><i class="fa fa-database"></i></td><td>{{capacity-display beam.model.size}}</td></tr>
         <tr>
           <td class="icon-td"><i class="fa fa-thumb-tack"></i></td>
@@ -22,10 +24,36 @@
 <table class="layout-table">
   <tr><td class="icon-td"><i class="fa fa-folder"></i></td><td>{{beam.model.directory}}</td></tr>
 </table>
-<br/>
-{{#unless beam.model.has_pinners}}
-  <p style='font-style: italic'>Will be deleted soon.</p><br/>
-{{/unless}}
+{{#if beam.model.deleted}}
+  <br/><p style='font-style: italic'>Deleted.</p>
+{{else}}
+  {{#if beam.model.should_display_purge_str}}
+    <br/><p style='font-style: italic'>Will be deleted {{beam.model.purge_str}}.</p>
+  {{/if}}
+{{/if}}
 {{#if beam.session.isAuthenticated}}
-  <a {{action "pin" beam.pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if beam.pinned}}Unpin{{else}}Pin{{/if}}</a>
+  {{#unless beam.model.deleted}}
+    <br/><p><a {{action "pin" beam.pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if beam.pinned}}Unpin{{else}}Pin{{/if}}</a></p>
+  {{/unless}}
+{{/if}}
+
+{{#if extended}}
+  {{#if beam.model.error}}
+  <br/><p class="red-text text-darken-2">{{newlines-text beam.model.error}}</p>
+  {{/if}}
+
+  {{#if beam.model.files.length}}
+    <h4>Files</h4>
+    <div class="collection">
+      {{#each file in beam.model.files}}
+        {{#if beam.model.deleted}}
+          <li class="collection-item">{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></li>
+        {{else}}
+          <a class="collection-item file-link" target="_blank" {{bind-attr href=file.link}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
+        {{/if}}
+      {{/each}}
+    </div>
+  {{else}}
+    <br/><p>No files were beamed yet.</p>
+  {{/if}}
 {{/if}}

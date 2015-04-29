@@ -1,3 +1,4 @@
+{{#unless iframe}}
 <img id="starfleet" src="/static/assets/img/starfleet.png" class="hide-on-small-and-down"/>
 <div class="navbar-fixed">
   <nav id="top-navbar" role="navigation">
@@ -5,12 +6,14 @@
       <a href="#"><img src="/static/assets/img/scotty.png" id="portrait"><div id="logo-container" class="brand-logo">Scotty</div></a>
       <ul id="nav-mobile" class="right hide-on-med-and-down">
         {{#if session.isAuthenticated}}
-          <li><a href="#" {{ action 'invalidate_session' }}>{{me.name}} (Log Out)</a></li>
+          <li><a href="#" {{ action 'nothing' }}>{{me.name}}</a></li>
+          <li><a href="#" {{ action 'invalidate_session' }}>Log Out</a></li>
         {{else}}
           <li><a href="#" {{action "login"}}>Log In</a></li>
         {{/if}}
+        <li>{{#link-to "summary"}}Summary{{/link-to}}</li>
         <li>{{#link-to "api"}}API{{/link-to}}</li>
-        <li><a href="http://en.memory-alpha.org/wiki/Montgomery_Scott">About</a></li>
+        <li>{{#link-to "about"}}About{{/link-to}}</li>
         <li>{{#link-to "changelog"}}v{{model.version}}{{/link-to}}</li>
       </ul>
     </div>
@@ -25,4 +28,5 @@
     <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">OK</a>
   </div>
 </div>
+{{/unless}}
 {{outlet}}

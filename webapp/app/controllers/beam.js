@@ -2,18 +2,17 @@ import Ember from 'ember';
 
 export default Ember.Controller.extend({
   pinned: false,
+  needs: "application",
 
   reloadModel: function() {
     this.get("model").reload();
   }.observes("model"),
 
   monitor_pins: function() {
-    Ember.Logger.info("Observerd " + this.get("model.id"));
     Ember.run.once(this, "update_pinned");
   }.observes("model.pins", "session.id").on("init"),
 
   update_pinned: function() {
-    Ember.Logger.info("Checking pin state for " + this.get("model.id"));
     if (this.get("session.id") === undefined) {
       this.set("pinned", false);
     } else {

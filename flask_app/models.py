@@ -36,12 +36,13 @@ class User(db.Model, UserMixin):
 
 class Beam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    start = db.Column(db.DateTime)
+    start = db.Column(db.DateTime, index=True)
     size = db.Column(db.BigInteger)
     host = db.Column(db.String)
     directory = db.Column(db.String)
-    pending_deletion = db.Column(db.Boolean)
-    deleted = db.Column(db.Boolean)
+    pending_deletion = db.Column(db.Boolean, index=True)
+    error = db.Column(db.String)
+    deleted = db.Column(db.Boolean, index=True)
     completed = db.Column(db.Boolean)
     initiator = db.Column(db.Integer, db.ForeignKey('user.id'))
     files = db.relationship("File", backref="beam")
@@ -49,6 +50,11 @@ class Beam(db.Model):
 
     def __repr__(self):
         return "<Beam(id='%s')>" % (self.id, )
+
+
+class Alias(db.Model):
+    id = db.Column(db.String, primary_key=True)
+    beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
 
 
 class File(db.Model):

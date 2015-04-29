@@ -23,8 +23,8 @@ export default Base.extend({
         contentType : 'application/json',
         data: JSON.stringify(auth_code)
       }).then(
-        function(data) { Ember.Logger.info("Resolving"); resolve(data); },
-        function(reason) { Ember.Logger.info("rejecting"); reject(reason.status); }
+        function(data) { resolve(data); },
+        function(reason) { reject(reason.status); }
       );
     });
   }
