@@ -54,6 +54,7 @@ def _beam_file(transporter, path):
 
 
 def beam_up(beam_id, path, transporter_addr):
+    logger.info("Contacting transporter %s", transporter_addr)
     transporter = socket.socket()
     transporter.connect((transporter_addr, 9000))
 
