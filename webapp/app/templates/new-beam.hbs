@@ -22,17 +22,17 @@
       <div class="input-field col s3">
         <i class="mdi-social-person prefix"></i>
         {{input id="user" type="text" class="validate valid" value=user}}
-        <label for="user">SSH user</label>
+        <label class="active" for="user">SSH user</label>
       </div>
       <div class="input-field col s3">
         <i class="mdi-hardware-desktop-windows prefix"></i>
         {{input id="host" type="text" class="validate" value=host}}
-        <label for="icon_prefix">Host</label>
+        <label class="active" for="icon_prefix">Host</label>
       </div>
       <div class="input-field col s6">
         <i class="mdi-file-folder-open prefix"></i>
         {{input id="directory" type="text" class="validate" value=directory}}
-        <label for="directory">Directory</label>
+        <label class="active" for="directory">Directory</label>
       </div>
     </div>
     <div class="row">
@@ -47,12 +47,12 @@
         {{#if auth_rsa}}
           <i class="mdi-communication-vpn-key prefix"></i>
           {{textarea id="ssh_key" class="materialize-textarea validate" value=ssh_key}}
-          <label for="ssh_key">RSA key</label>
+          <label class="active" for="ssh_key">RSA key</label>
         {{/if}}
         {{#if auth_password}}
           <i class="mdi-communication-vpn-key prefix"></i>
           {{input id="password" type="password" class="validate" value=password}}
-          <label for="password">Password</label>
+          <label class="active" for="password">Password</label>
         {{/if}}
       </div>
     </div>
