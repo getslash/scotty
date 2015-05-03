@@ -6,7 +6,7 @@ from sqlalchemy.sql import func
 from contextlib import closing
 from paramiko.ssh_exception import SSHException
 from flask import send_from_directory, jsonify, request
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time
 from .models import Beam, db, File, User, Pin, Alias
 from .tasks import beam_up, create_key, _COMBADGE
 from .auth import require_user
@@ -22,7 +22,7 @@ def _jsonify_beam(beam):
         'start': beam.start.isoformat() + 'Z',
         'size': beam.size,
         'initiator': beam.initiator,
-        'purge_time': max(0, current_app.config['VACUUM_THRESHOLD'] - (datetime.utcnow() - beam.start).days) if beam.files else 0,
+        'purge_time': max(0, current_app.config['VACUUM_THRESHOLD'] - (datetime.utcnow() - datetime.combine(beam.start, time(0,0))).days) if beam.files else 0,
         'error': beam.error,
         'directory': beam.directory,
         'deleted': beam.pending_deletion or beam.deleted,
