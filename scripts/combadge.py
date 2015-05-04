@@ -12,6 +12,8 @@ logger = logging.getLogger("combadge")
 class ClientMessages(object):
     BeamComplete = 0
     StartBeamingFile = 1
+    FileChunk = 2
+    FileDone = 3
 
 
 class ServerMessages:
@@ -24,7 +26,7 @@ def _beam_file(transporter, path):
     file_size = os.stat(path).st_size
     logger.info("Uploading {0} ({1} bytes)".format(path, file_size))
 
-    transporter.sendall(struct.pack('!BQ', ClientMessages.StartBeamingFile, file_size))
+    transporter.sendall(struct.pack('!B', ClientMessages.StartBeamingFile))
     transporter.sendall(struct.pack('!H{0}s'.format(len(path)), len(path), path.encode('UTF-8')))
 
     answer = struct.unpack('!B', transporter.recv(1))[0]
@@ -41,14 +43,15 @@ def _beam_file(transporter, path):
             chunk = f.read(2 ** 12)
             if not chunk:
                 break
+
+            transporter.sendall(struct.pack('!BL', ClientMessages.FileChunk, len(chunk)))
             transporter.sendall(chunk)
 
+    transporter.sendall(struct.pack('!B', ClientMessages.FileDone))
     answer = struct.unpack('!B', transporter.recv(1))[0]
     if answer == ServerMessages.FileBeamed:
         logger.info("Server reports that the file was beamed")
         return
-    elif answer == ServerMessages.BeamFile:
-        logger.info("Server asks us to beam this file")
     else:
         raise Exception("Unexpected server response: {0}".format(answer))
 
