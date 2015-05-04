@@ -106,6 +106,7 @@ def update_beam(beam_id):
         return '', http.client.FORBIDDEN
 
     beam.completed = request.json['completed']
+    beam.error = request.json.get('error', None)
     db.session.commit()
 
     return '{}'
