@@ -106,6 +106,7 @@ def update_beam(beam_id):
         return '', http.client.FORBIDDEN
 
     beam.completed = request.json['completed']
+    beam.error = request.json.get('error', None)
     db.session.commit()
 
     return '{}'
@@ -157,13 +158,11 @@ def register_file():
     if beam.pending_deletion or beam.deleted:
         return '', http.client.FORBIDDEN
 
-    size = request.json['file_size']
     file_name = request.json['file_name']
     f = db.session.query(File, File.status, File.id).filter_by(beam_id=beam_id, file_name=file_name).first()
     if not f:
         logbook.info("Got upload request for a new file: {} @ {}", file_name, beam_id)
-        f = File(beam_id=beam_id, file_name=file_name, size=size, status="pending")
-        beam.size += size
+        f = File(beam_id=beam_id, file_name=file_name, size=None, status="pending")
         db.session.add(f)
         db.session.commit()
         f.storage_name = "{}-{}".format(f.id, f.file_name.replace("/", "__").replace("\\", "__"))
@@ -177,13 +176,15 @@ def register_file():
 @views.route('/files/<int:file_id>', methods=['PUT'])
 def update_file(file_id):
     success = request.json['success']
-    error_string = request.json['error']
+    size = request.json.get('size', None)
     f = db.session.query(File).filter_by(id=file_id).first()
     if not f:
         logbook.error('Transporter attempted to update an unknown file id {}', file_id)
         return '', http.client.BAD_REQUEST
 
+    f.size = size
     f.status = "uploaded" if success else "failed"
+    f.beam.size += size
     db.session.commit()
 
     return '{}'
