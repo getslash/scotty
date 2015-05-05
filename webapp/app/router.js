@@ -14,7 +14,7 @@ Router.map(function() {
   this.resource('api', function() {});
   this.resource('about', function() {});
   this.resource('summary', function() {});
-  this.resource('alias', { path: '/alias/:alias_id' });
+  this.resource('tag', { path: '/tag/:tag'});
 });
 
 export default Router;

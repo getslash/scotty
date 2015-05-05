@@ -46,15 +46,19 @@ class Beam(db.Model):
     completed = db.Column(db.Boolean)
     initiator = db.Column(db.Integer, db.ForeignKey('user.id'))
     files = db.relationship("File", backref="beam")
+    tags = db.relationship("Tag", backref="beam")
     pins = db.relationship("Pin", backref="beam")
 
     def __repr__(self):
         return "<Beam(id='%s')>" % (self.id, )
 
 
-class Alias(db.Model):
-    id = db.Column(db.String, primary_key=True)
+class Tag(db.Model):
+    __table_args__ = (db.UniqueConstraint('beam_id', 'tag', name='uix_beam_tag'), )
+
+    id = db.Column(db.Integer, primary_key=True)
     beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
+    tag = db.Column(db.String)
 
 
 class File(db.Model):

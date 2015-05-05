@@ -3,11 +3,12 @@ import logbook
 import http.client
 from datetime import datetime
 from sqlalchemy.sql import func
+from sqlalchemy.exc import IntegrityError
 from contextlib import closing
 from paramiko.ssh_exception import SSHException
 from flask import send_from_directory, jsonify, request
 from datetime import datetime, timezone, time
-from .models import Beam, db, File, User, Pin, Alias
+from .models import Beam, db, File, User, Pin, Tag
 from .tasks import beam_up, create_key, _COMBADGE
 from .auth import require_user
 from flask import Blueprint, current_app
@@ -32,7 +33,11 @@ def _jsonify_beam(beam):
 
 @views.route('/beams', methods=['GET'])
 def get_beams():
-    beams = [_jsonify_beam(b) for b in db.session.query(Beam).filter(Beam.pending_deletion == False, Beam.deleted == False)]
+    query = db.session.query(Beam).filter(Beam.pending_deletion == False, Beam.deleted == False)
+    if 'tag' in request.values:
+        tag = request.values['tag']
+        query = query.filter(Beam.tags.any(Tag.tag == tag))
+    beams = [_jsonify_beam(b) for b in query]
     return jsonify({'beams': beams})
 
 
@@ -99,6 +104,34 @@ def get_beam(beam_id):
              for f in beam.files]})
 
 
+@views.route('/beams/<int:beam_id>/tags/<tag>', methods=['POST'])
+def put_tag(beam_id, tag):
+    beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    if not beam:
+        return '', http.client.NOT_FOUND
+
+    t = Tag(beam_id=beam_id, tag=tag)
+    db.session.add(t)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        pass
+    return ''
+
+
+@views.route('/beams/<int:beam_id>/tags/<tag>', methods=['DELETE'])
+def remove_tag(beam_id, tag):
+    beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    if not beam:
+        return '', http.client.NOT_FOUND
+
+    t = db.session.query(Tag).filter_by(beam_id=beam_id, tag=tag).first()
+    if t:
+        db.session.delete(t)
+        db.session.commit()
+    return ''
+
+
 @views.route('/beams/<int:beam_id>', methods=['PUT'])
 def update_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
@@ -111,40 +144,6 @@ def update_beam(beam_id):
 
     return '{}'
 
-
-@views.route('/aliases', methods=['POST'])
-def create_alias():
-    alias = request.json['alias']
-    beam = db.session.query(Beam).filter_by(id=request.json['beam_id']).first()
-    if not beam:
-        return '', http.client.BAD_REQUEST
-
-    alias = Alias(beam_id=beam.id, id=alias)
-    db.session.add(alias)
-    db.session.commit()
-
-    return ""
-
-
-@views.route('/alias/<alias_name>', methods=['GET'])
-def get_alias(alias_name):
-    alias = db.session.query(Alias).filter_by(id=alias_name).first()
-    if not alias:
-        return '', http.client.NOT_FOUND
-
-    return jsonify({'beam_id': alias.beam_id})
-
-
-@views.route('/alias/<alias_name>', methods=['DELETE'])
-def delete_alias(alias_name):
-    alias = db.session.query(Alias).filter_by(id=alias_name).first()
-    if not alias:
-        return '', http.client.NOT_FOUND
-
-    db.session.delete(alias)
-    db.session.commit()
-
-    return ""
 
 
 @views.route('/files', methods=['POST'])
