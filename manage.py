@@ -13,7 +13,7 @@ bootstrap_env(["base"])
 
 
 from _lib.params import APP_NAME
-from _lib.frontend import frontend
+from _lib.frontend import frontend, ember
 from _lib.source_package import prepare_source_package
 from _lib.deployment import generate_nginx_config, run_uwsgi
 from _lib.docker import build_docker_image, start_docker_container, stop_docker_container
@@ -35,6 +35,8 @@ cli.add_command(run_uwsgi)
 cli.add_command(generate_nginx_config)
 cli.add_command(db)
 cli.add_command(frontend)
+cli.add_command(ember)
+
 
 @cli.command('ensure-secret')
 @click.argument("conf_file")
@@ -71,11 +73,8 @@ def testserver(tmux):
     if tmux:
         return _run_tmux_frontend()
     from flask_app.app import create_app
-    app = create_app()
-    app.config["DEBUG"] = True
-    app.config["TESTING"] = True
-    app.config["SECRET_KEY"] = "dummy secret key"
-    app.config["SECURITY_PASSWORD_SALT"] = app.extensions['security'].password_salt = "dummy secret password salt"
+    app = create_app({'DEBUG': True, 'TESTING': True, 'SECRET_KEY': 'dummy', 'SECURITY_PASSWORD_SALT': 'dummy'})
+    
     app.run(port=8000, extra_files=[
         from_project_root("flask_app", "app.yml")
     ])
@@ -214,11 +213,14 @@ def shell():
     from flask_app.app import create_app
     from flask_app import models
 
-    interact({
-        'db': db,
-        'app': create_app(),
-        'models': models,
-        'db': models.db,
+    app = create_app()
+
+    with app.app_context():
+        interact({
+            'db': db,
+            'app': app,
+            'models': models,
+            'db': models.db,
         })
 
 

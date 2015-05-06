@@ -24,31 +24,40 @@ def run_uwsgi(catch_exceptions):
 
 @click.command()
 @click.argument('path')
-def generate_nginx_config(path):
+@click.argument('fqdn')
+@click.argument('short_name')
+def generate_nginx_config(path, fqdn, short_name):
     if not os.path.isdir(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
     with open(path, "w") as f:
-        f.write("""server {{
+        f.write("""
+    server {{
+      server_name {fqdn};
+      include    mime.types;
+      types {{
+          text/plain log;
+      }}
 
-    include    mime.types;
-    types {{
-        text/plain log;
-    }}
+      location /static {{
+         alias {static_root};
+      }}
 
-    location /static {{
-       alias {static_root};
-    }}
+      location = / {{
+         rewrite ^/$ /static/index.html;
+      }}
 
-    location = / {{
-       rewrite ^/$ /static/index.html;
-    }}
+      location /file_contents {{
+         alias /var/scotty;
+      }}
 
-    location /file_contents {{
-       alias /var/scotty;
-    }}
-
-    location / {{
-       	 include uwsgi_params;
+      location / {{
+         include uwsgi_params;
          uwsgi_pass unix:{sock_name};
+      }}
     }}
-}}""".format(static_root=from_project_root("static"), sock_name=_UNIX_SOCKET_NAME))
+
+    server {{
+      server_name {short_name};
+      rewrite ^ {fqdn}$request_uri? permanent;
+    }}
+""".format(static_root=from_project_root("static"), sock_name=_UNIX_SOCKET_NAME, fqdn=fqdn, short_name=short_name))

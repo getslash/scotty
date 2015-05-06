@@ -31,7 +31,7 @@ module.exports = function(environment) {
 
   ENV['simple-auth'] = {
    authorizer: 'authorizer:token'
-  }
+  };
 
   if (environment === 'development') {
     // ENV.APP.LOG_RESOLVER = true;
