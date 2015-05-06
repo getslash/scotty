@@ -11,8 +11,10 @@
   {{/each}}
 </div>
 
+{{#unless controllers.application.iframe}}
 <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
    {{#link-to "new-beam" class="btn-floating btn-large"}}
      <i class="large mdi-action-backup"></i>
    {{/link-to}}
- </div>
+</div>
+{{/unless}}
