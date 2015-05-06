@@ -3,7 +3,7 @@ import Ember from "ember";
 
 export default Base.extend({
   restore: function(credentials) {
-    return new Promise(function(resolve, reject) {
+    return new Ember.RSVP.Promise(function(resolve, reject) {
       Ember.$.ajax({
         type: "POST",
         url: "/restore",
@@ -16,7 +16,7 @@ export default Base.extend({
     });
   },
   authenticate: function(auth_code) {
-    return new Promise(function(resolve, reject) {
+    return new Ember.RSVP.Promise(function(resolve, reject) {
       Ember.$.ajax({
         type: "POST",
         url: "/login",
