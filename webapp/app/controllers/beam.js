@@ -32,7 +32,12 @@ export default Ember.Controller.extend({
         contentType : 'application/json',
         data: JSON.stringify({ beam_id: this.get("model.id"), should_pin: !pinned})
       }).then(function() {
-        return self.store.fetchById("beam", self.get("model.id"));
+        return self.store.fetchById("beam", self.get("model.id")).then(function() {
+          Ember.run.scheduleOnce('afterRender', function() {
+            Ember.Logger.info("yi");
+            Ember.$('.tooltipped').tooltip({delay: 50});
+          });
+        });
       });
     }
   }

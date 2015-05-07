@@ -10,7 +10,11 @@
         <tr><td class="icon-td"><i class="fa fa-database"></i></td><td>{{capacity-display beam.model.size}}</td></tr>
         <tr>
           <td class="icon-td"><i class="fa fa-thumb-tack"></i></td>
+          {{#if beam.model.has_pinners}}
           <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{beam.model.pinners}}">{{beam.model.num_of_pins}} users</a></td>
+          {{else}}
+          <td>Nobody</td>
+          {{/if}}
         </tr>
      </table>
     </td>
