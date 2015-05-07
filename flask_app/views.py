@@ -183,7 +183,8 @@ def update_file(file_id):
 
     f.size = size
     f.status = "uploaded" if success else "failed"
-    f.beam.size += size
+    if size is not None:
+        f.beam.size += size
     db.session.commit()
 
     return '{}'
