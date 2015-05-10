@@ -96,6 +96,8 @@ def get_user(user_id):
 @views.route('/beams/<int:beam_id>', methods=['GET'])
 def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    if not beam:
+        return "No such beam", http.client.NOT_FOUND
     beam_json = _jsonify_beam(beam)
     beam_json['files'] = [f.id for f in beam.files]
     return jsonify(
