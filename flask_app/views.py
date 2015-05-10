@@ -33,7 +33,8 @@ def _jsonify_beam(beam):
 
 @views.route('/beams', methods=['GET'])
 def get_beams():
-    query = db.session.query(Beam).filter(Beam.pending_deletion == False, Beam.deleted == False)
+    query = db.session.query(Beam).filter(Beam.pending_deletion == False, Beam.deleted == False) \
+        .order_by(Beam.start.desc())
     if 'tag' in request.values:
         tag = request.values['tag']
         query = query.filter(Beam.tags.any(Tag.tag == tag))
