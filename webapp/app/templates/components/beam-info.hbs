@@ -10,20 +10,28 @@
         <tr><td class="icon-td"><i class="fa fa-database"></i></td><td>{{capacity-display beam.model.size}}</td></tr>
         <tr>
           <td class="icon-td"><i class="fa fa-thumb-tack"></i></td>
+          {{#if beam.model.has_pinners}}
           <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{beam.model.pinners}}">{{beam.model.num_of_pins}} users</a></td>
+          {{else}}
+          <td>Nobody</td>
+          {{/if}}
         </tr>
      </table>
     </td>
     <td style="text-align: right">
       {{#link-to "beam" beam.model}}
-      <img src="{{beam.model.img}}" class="responsive-img">
+      <a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{beam.model.directory}}">
+        <img src="{{beam.model.img}}" class="responsive-img">
+      </a>
       {{/link-to}}
     </td>
   </tr>
 </table>
+{{#if extended}}
 <table class="layout-table">
   <tr><td class="icon-td"><i class="fa fa-folder"></i></td><td>{{beam.model.directory}}</td></tr>
 </table>
+{{/if}}
 {{#if beam.model.deleted}}
   <br/><p style='font-style: italic'>Deleted.</p>
 {{else}}
