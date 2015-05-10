@@ -39,7 +39,7 @@ def get_beams():
         tag = request.values['tag']
         query = query.filter(Beam.tags.any(Tag.tag == tag))
 
-    beams = [_jsonify_beam(b) for b in query.limit(100)]
+    beams = [_jsonify_beam(b) for b in query.limit(50)]
     return jsonify({'beams': beams})
 
 
