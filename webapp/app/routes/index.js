@@ -3,11 +3,26 @@ import Materialize from '../mixins/materialize';
 import App from '../app';
 
 export default Ember.Route.extend(Materialize, {
+  actions: {
+    scottyButton: function() {
+      this.update();
+      return false;
+    }
+  },
+
   model: function() {
     var self = this;
     return this.store.find('beam').then(function() {
       return self.store.filter('beam', function(beam) {
         return !beam.get("deleted");
+      });
+    });
+  },
+
+  update: function() {
+    this.store.fetchAll("beam").then(function() {
+      Ember.run.scheduleOnce('afterRender', function() {
+        Ember.$('.tooltipped').tooltip({delay: 50});
       });
     });
   },
@@ -19,7 +34,7 @@ export default Ember.Route.extend(Materialize, {
     if (Ember.isNone(this.get('pollster'))) {
       this.set('pollster', App.Pollster.create({
         onPoll: function() {
-          self.store.fetchAll("beam");
+          self.update();
           return true;
         }
       }));
