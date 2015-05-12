@@ -46,14 +46,16 @@ class FileWriter(object):
         pass
 
 
-def _beam_file(transporter, path):
+def _beam_file(transporter, base_path, path):
     file_size = os.stat(path).st_size
     logger.info("Uploading {0} ({1} bytes)".format(path, file_size))
 
     transporter.sendall(struct.pack('!B', ClientMessages.StartBeamingFile))
 
     should_compress = os.path.splitext(path)[1] == ".log"
-    store_path = path + ".gz" if should_compress else path
+    store_path = path.replace(base_path, ".")
+    if should_compress:
+        store_path += ".gz"
     transporter.sendall(struct.pack('!H{0}s'.format(len(store_path)), len(store_path), store_path.encode('UTF-8')))
     logger.info("Compressing {0}".format(path))
 
@@ -94,11 +96,10 @@ def beam_up(beam_id, path, transporter_addr):
     if os.path.isfile(path):
         _beam_file(transporter, path)
     elif os.path.isdir(path):
-        os.chdir(path)
-        for (dirpath, _, filenames) in os.walk('.'):
+        for (dirpath, _, filenames) in os.walk(path):
             for filename in filenames:
                 rel_path = os.path.join(dirpath, filename)
-                _beam_file(transporter, rel_path)
+                _beam_file(transporter, path, rel_path)
 
     transporter.sendall(struct.pack('!B', ClientMessages.BeamComplete))
     transporter.close()
