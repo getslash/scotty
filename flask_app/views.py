@@ -70,6 +70,18 @@ def create_beam(user):
     return jsonify({'beam': _jsonify_beam(beam)})
 
 
+def _strip_gz(storage_name):
+    if storage_name[-6:] == "log.gz":
+        return storage_name[:-3]
+    else:
+        return storage_name
+
+
+def _dictify_file(f, beam):
+    url = "{}/file_contents/{}".format(request.host_url, _strip_gz(f.storage_name))
+    return {"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id,
+            "storage_name": f.storage_name, "url": url}
+
 
 def _dictify_user(user):
     return {'user': {'id': user.id, 'email': user.email, 'name': user.name}}
@@ -102,10 +114,7 @@ def get_beam(beam_id):
     beam_json['files'] = [f.id for f in beam.files]
     return jsonify(
         {'beam': beam_json,
-         'files':
-            [{"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id,
-              "storage_name": f.storage_name}
-             for f in beam.files]})
+         'files': [_dictify_file(f, beam) for f in beam.files]})
 
 
 @views.route('/beams/<int:beam_id>/tags/<tag>', methods=['POST'])
