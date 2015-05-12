@@ -6,10 +6,10 @@ from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from contextlib import closing
 from paramiko.ssh_exception import SSHException
-from flask import send_from_directory, jsonify, request
+from flask import send_from_directory, jsonify, request, redirect
 from datetime import datetime, timezone, time
 from .models import Beam, db, File, User, Pin, Tag
-from .tasks import beam_up, create_key, _COMBADGE
+from .tasks import beam_up, create_key
 from .auth import require_user
 from flask import Blueprint, current_app
 
@@ -242,10 +242,9 @@ def summary():
     })
 
 
-
 @views.route("/combadge")
 def get_combadge():
-    return _COMBADGE
+    return redirect("/static/assets/combadge.py")
 
 
 @views.route("/")

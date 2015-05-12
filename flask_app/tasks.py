@@ -37,7 +37,7 @@ def create_key(s):
     return RSAKey.from_private_key(file_obj=f, password=None)
 
 
-with open(os.path.join(os.path.dirname(__file__), "../scripts/combadge.py"), "r") as f:
+with open(os.path.join(os.path.dirname(__file__), "..", "static", "assets", "combadge.py"), "r") as f:
     _COMBADGE = f.read()
 
 
