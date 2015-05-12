@@ -9,6 +9,7 @@ import socket
 import struct
 
 logger = logging.getLogger("combadge")
+_CHUNK_SIZE = 10 * 1024 * 1024
 
 
 class ClientMessages(object):
@@ -70,7 +71,7 @@ def _beam_file(transporter, path):
         if should_compress:
             file_writer = gzip.GzipFile(mode="wb", fileobj=file_writer)
         with closing(file_writer):
-            for chunk in chunk_iterator(f, 2 ** 12):
+            for chunk in chunk_iterator(f, _CHUNK_SIZE):
                 file_writer.write(chunk)
 
     transporter.sendall(struct.pack('!B', ClientMessages.FileDone))
