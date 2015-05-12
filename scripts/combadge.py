@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from contextlib import closing
+import gzip
 import logging
 import os
 import sys
@@ -22,12 +24,37 @@ class ServerMessages:
     FileBeamed = 2
 
 
+def chunk_iterator(f, chunk_size):
+    while True:
+        data = f.read(chunk_size)
+        if not data:
+            return
+
+        yield data
+
+
+class FileWriter(object):
+    def __init__(self, transporter):
+        self._transporter = transporter
+
+    def write(self, data):
+        self._transporter.sendall(struct.pack('!BL', ClientMessages.FileChunk, len(data)))
+        self._transporter.sendall(data)
+
+    def close(self):
+        pass
+
+
 def _beam_file(transporter, path):
     file_size = os.stat(path).st_size
     logger.info("Uploading {0} ({1} bytes)".format(path, file_size))
 
     transporter.sendall(struct.pack('!B', ClientMessages.StartBeamingFile))
-    transporter.sendall(struct.pack('!H{0}s'.format(len(path)), len(path), path.encode('UTF-8')))
+
+    should_compress = os.path.splitext(path)[1] == ".log"
+    store_path = path + ".gz" if should_compress else path
+    transporter.sendall(struct.pack('!H{0}s'.format(len(store_path)), len(store_path), store_path.encode('UTF-8')))
+    logger.info("Compressing {0}".format(path))
 
     answer = struct.unpack('!B', transporter.recv(1))[0]
     if answer == ServerMessages.SkipFile:
@@ -39,13 +66,12 @@ def _beam_file(transporter, path):
         raise Exception("Unexpected server response: {0}".format(answer))
 
     with open(path, 'rb') as f:
-        while True:
-            chunk = f.read(2 ** 12)
-            if not chunk:
-                break
-
-            transporter.sendall(struct.pack('!BL', ClientMessages.FileChunk, len(chunk)))
-            transporter.sendall(chunk)
+        file_writer = FileWriter(transporter)
+        if should_compress:
+            file_writer = gzip.GzipFile(mode="wb", fileobj=file_writer)
+        with closing(file_writer):
+            for chunk in chunk_iterator(f, 2 ** 12):
+                file_writer.write(chunk)
 
     transporter.sendall(struct.pack('!B', ClientMessages.FileDone))
     answer = struct.unpack('!B', transporter.recv(1))[0]
