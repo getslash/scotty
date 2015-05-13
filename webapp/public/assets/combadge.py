@@ -56,8 +56,8 @@ def _beam_file(transporter, base_path, path):
     store_path = path.replace(base_path, ".")
     if should_compress:
         store_path += ".gz"
+        logger.info("Compressing {0}".format(path))
     transporter.sendall(struct.pack('!H{0}s'.format(len(store_path)), len(store_path), store_path.encode('UTF-8')))
-    logger.info("Compressing {0}".format(path))
 
     answer = struct.unpack('!B', transporter.recv(1))[0]
     if answer == ServerMessages.SkipFile:
