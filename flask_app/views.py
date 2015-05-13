@@ -78,6 +78,9 @@ def create_beam(user):
 
 
 def _strip_gz(storage_name):
+    if storage_name is None:
+        return None
+
     if storage_name[-6:] == "log.gz":
         return storage_name[:-3]
     else:
