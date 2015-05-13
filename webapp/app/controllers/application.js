@@ -23,7 +23,17 @@ export default Ember.Controller.extend({
       this.get('session').invalidate();
     }
   },
+
   me: function() {
     return this.store.find("user", this.get("session.id"));
   }.property("session.id"),
+
+  background_change: function() {
+    var view = this.get("view");
+    if (view === "iframe") {
+      Ember.$('body').addClass("iframe");
+    } else {
+      Ember.$('body').removeClass("iframe");
+    }
+  }.observes("view")
 });
