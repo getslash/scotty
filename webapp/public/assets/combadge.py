@@ -94,7 +94,7 @@ def beam_up(beam_id, path, transporter_addr):
     transporter.sendall(struct.pack('!Q', beam_id))
 
     if os.path.isfile(path):
-        _beam_file(transporter, path)
+        _beam_file(transporter, os.path.dirname(path), path)
     elif os.path.isdir(path):
         for (dirpath, _, filenames) in os.walk(path):
             for filename in filenames:
