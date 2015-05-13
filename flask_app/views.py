@@ -10,7 +10,7 @@ from flask import send_from_directory, jsonify, request, redirect
 from datetime import datetime, timezone, time
 from .models import Beam, db, File, User, Pin, Tag
 from .tasks import beam_up, create_key
-from .auth import require_user
+from .auth import require_user, get_or_create_user, InvalidEmail
 from flask import Blueprint, current_app
 
 views = Blueprint("views", __name__, template_folder="templates")
@@ -51,6 +51,13 @@ def create_beam(user):
             create_key(request.json['beam']['ssh_key'])
         except SSHException as e:
             return 'Invalid RSA key', 409
+
+    if user.is_anonymous_user:
+        if 'email' in request.json['beam']:
+            try:
+                user = get_or_create_user(request.json['beam']['email'], None)
+            except InvalidEmail:
+                return 'Invalid email', 409
 
     beam = Beam(
         start=datetime.utcnow(), size=0,
@@ -156,7 +163,6 @@ def update_beam(beam_id):
     db.session.commit()
 
     return '{}'
-
 
 
 @views.route('/files', methods=['POST'])

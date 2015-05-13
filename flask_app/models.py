@@ -33,6 +33,10 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
 
+    @property
+    def is_anonymous_user(self):
+        return self.email == "anonymous@infinidat.com"
+
 
 class Beam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
