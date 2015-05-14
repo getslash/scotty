@@ -16,6 +16,9 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
       function(error) {
         self.controllerFor('application').send('login_error', error);
       });
+    },
+    scottyButton: function() {
+      this.transitionTo("index");
     }
   },
   model: function() {

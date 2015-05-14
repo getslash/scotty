@@ -1,3 +1,4 @@
+import re
 import random
 import string
 import os
@@ -22,6 +23,13 @@ auth = Blueprint("auth", __name__, template_folder="templates")
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
 
+class InvalidEmail(Exception):
+    pass
+
+
+_EMAIL = re.compile("^.*?@infinidat.com$")
+
+
 def _get_info(credentials):
     http_client = Http()
     if credentials.access_token_expired:
@@ -29,6 +37,28 @@ def _get_info(credentials):
     credentials.authorize(http_client)
     service = build('oauth2', 'v2', http=http_client)
     return service.userinfo().get().execute()
+
+
+def is_email_valid(email):
+    return _EMAIL.search(email) is not None
+
+
+def get_or_create_user(email, name):
+    if not is_email_valid(email):
+        raise InvalidEmail()
+
+    user = user_datastore.get_user(email)
+    if not user:
+        user = user_datastore.create_user(
+            email=email,
+            name=name)
+        user_datastore.db.session.commit()
+    else:
+        if name is not None and name != user.name:
+            user.name = name
+            user_datastore.db.session.commit()
+
+    return user
 
 
 @auth.route("/login", methods=['POST'])
@@ -43,12 +73,7 @@ def login():
     if user_info.get('hd') != 'infinidat.com':
         return '', http.client.UNAUTHORIZED
 
-    user = user_datastore.get_user(user_info['email'])
-    if not user:
-        user = user_datastore.create_user(
-            email=user_info['email'],
-            name=user_info['name'])
-        user_datastore.db.session.commit()
+    user = get_or_create_user(user_info['email'], user_info['name'])
 
     user.credentials = credentials
     redis = StrictRedis(host='localhost', port=6379, db=0)

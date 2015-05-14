@@ -6,11 +6,11 @@ from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from contextlib import closing
 from paramiko.ssh_exception import SSHException
-from flask import send_from_directory, jsonify, request
+from flask import send_from_directory, jsonify, request, redirect
 from datetime import datetime, timezone, time
 from .models import Beam, db, File, User, Pin, Tag
-from .tasks import beam_up, create_key, _COMBADGE
-from .auth import require_user
+from .tasks import beam_up, create_key
+from .auth import require_user, get_or_create_user, InvalidEmail
 from flask import Blueprint, current_app
 
 views = Blueprint("views", __name__, template_folder="templates")
@@ -52,6 +52,13 @@ def create_beam(user):
         except SSHException as e:
             return 'Invalid RSA key', 409
 
+    if user.is_anonymous_user:
+        if 'email' in request.json['beam']:
+            try:
+                user = get_or_create_user(request.json['beam']['email'], None)
+            except InvalidEmail:
+                return 'Invalid email', 409
+
     beam = Beam(
         start=datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
@@ -69,6 +76,21 @@ def create_beam(user):
 
     return jsonify({'beam': _jsonify_beam(beam)})
 
+
+def _strip_gz(storage_name):
+    if storage_name is None:
+        return None
+
+    if storage_name[-6:] == "log.gz":
+        return storage_name[:-3]
+    else:
+        return storage_name
+
+
+def _dictify_file(f, beam):
+    url = "{}/file_contents/{}".format(request.host_url, _strip_gz(f.storage_name))
+    return {"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id,
+            "storage_name": f.storage_name, "url": url}
 
 
 def _dictify_user(user):
@@ -96,14 +118,13 @@ def get_user(user_id):
 @views.route('/beams/<int:beam_id>', methods=['GET'])
 def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    if not beam:
+        return "No such beam", http.client.NOT_FOUND
     beam_json = _jsonify_beam(beam)
     beam_json['files'] = [f.id for f in beam.files]
     return jsonify(
         {'beam': beam_json,
-         'files':
-            [{"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id,
-              "storage_name": f.storage_name}
-             for f in beam.files]})
+         'files': [_dictify_file(f, beam) for f in beam.files]})
 
 
 @views.route('/beams/<int:beam_id>/tags/<tag>', methods=['POST'])
@@ -145,7 +166,6 @@ def update_beam(beam_id):
     db.session.commit()
 
     return '{}'
-
 
 
 @views.route('/files', methods=['POST'])
@@ -231,10 +251,9 @@ def summary():
     })
 
 
-
 @views.route("/combadge")
 def get_combadge():
-    return _COMBADGE
+    return redirect("/static/assets/combadge.py")
 
 
 @views.route("/")

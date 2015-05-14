@@ -1,6 +1,7 @@
 #! /usr/bin/python
 from __future__ import print_function
 import os
+import sys
 import time
 import random
 import string
@@ -18,10 +19,11 @@ from _lib.source_package import prepare_source_package
 from _lib.deployment import generate_nginx_config, run_uwsgi
 from _lib.docker import build_docker_image, start_docker_container, stop_docker_container
 from _lib.db import db
+from _lib.celery import celery
 from _lib.utils import interact
 import click
 import requests
-
+import logbook
 
 ##### ACTUAL CODE ONLY BENEATH THIS POINT ######
 
@@ -36,7 +38,7 @@ cli.add_command(generate_nginx_config)
 cli.add_command(db)
 cli.add_command(frontend)
 cli.add_command(ember)
-
+cli.add_command(celery)
 
 @cli.command('ensure-secret')
 @click.argument("conf_file")
@@ -67,17 +69,32 @@ def bootstrap(develop, app):
 
 
 @cli.command()
+@click.option('--livereload/--no-livereload', is_flag=True, default=True)
 @requires_env("app", "develop")
 @click.option('--tmux/--no-tmux', is_flag=True, default=True)
-def testserver(tmux):
+def testserver(tmux, livereload, port=8000):
     if tmux:
         return _run_tmux_frontend()
     from flask_app.app import create_app
     app = create_app({'DEBUG': True, 'TESTING': True, 'SECRET_KEY': 'dummy', 'SECURITY_PASSWORD_SALT': 'dummy'})
-    
-    app.run(port=8000, extra_files=[
+
+    extra_files=[
         from_project_root("flask_app", "app.yml")
-    ])
+    ]
+
+    app = create_app({'DEBUG': True, 'TESTING': True, 'SECRET_KEY': 'dummy'})
+    if livereload:
+        from livereload import Server
+        s = Server(app)
+        for filename in extra_files:
+            s.watch(filename)
+        s.watch('flask_app')
+        for filename in ['webapp.js', 'vendor.js', 'webapp.css']:
+            s.watch(os.path.join('static', 'assets', filename))
+        logbook.StreamHandler(sys.stderr, level='DEBUG').push_application()
+        s.serve(port=port, liveport=35729)
+    else:
+        app.run(port=port, extra_files=extra_files)
 
 def _run_tmux_frontend():
     tmuxp = from_env_bin('tmuxp')

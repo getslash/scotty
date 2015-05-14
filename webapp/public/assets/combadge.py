@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from contextlib import closing
+import gzip
 import logging
 import os
 import sys
@@ -7,6 +9,7 @@ import socket
 import struct
 
 logger = logging.getLogger("combadge")
+_CHUNK_SIZE = 10 * 1024 * 1024
 
 
 class ClientMessages(object):
@@ -22,12 +25,39 @@ class ServerMessages:
     FileBeamed = 2
 
 
-def _beam_file(transporter, path):
+def chunk_iterator(f, chunk_size):
+    while True:
+        data = f.read(chunk_size)
+        if not data:
+            return
+
+        yield data
+
+
+class FileWriter(object):
+    def __init__(self, transporter):
+        self._transporter = transporter
+
+    def write(self, data):
+        self._transporter.sendall(struct.pack('!BL', ClientMessages.FileChunk, len(data)))
+        self._transporter.sendall(data)
+
+    def close(self):
+        pass
+
+
+def _beam_file(transporter, base_path, path):
     file_size = os.stat(path).st_size
     logger.info("Uploading {0} ({1} bytes)".format(path, file_size))
 
     transporter.sendall(struct.pack('!B', ClientMessages.StartBeamingFile))
-    transporter.sendall(struct.pack('!H{0}s'.format(len(path)), len(path), path.encode('UTF-8')))
+
+    should_compress = os.path.splitext(path)[1] == ".log"
+    store_path = path.replace(base_path, ".") if base_path else path
+    if should_compress:
+        store_path += ".gz"
+        logger.info("Compressing {0}".format(path))
+    transporter.sendall(struct.pack('!H{0}s'.format(len(store_path)), len(store_path), store_path.encode('UTF-8')))
 
     answer = struct.unpack('!B', transporter.recv(1))[0]
     if answer == ServerMessages.SkipFile:
@@ -39,13 +69,12 @@ def _beam_file(transporter, path):
         raise Exception("Unexpected server response: {0}".format(answer))
 
     with open(path, 'rb') as f:
-        while True:
-            chunk = f.read(2 ** 12)
-            if not chunk:
-                break
-
-            transporter.sendall(struct.pack('!BL', ClientMessages.FileChunk, len(chunk)))
-            transporter.sendall(chunk)
+        file_writer = FileWriter(transporter)
+        if should_compress:
+            file_writer = gzip.GzipFile(mode="wb", fileobj=file_writer)
+        with closing(file_writer):
+            for chunk in chunk_iterator(f, _CHUNK_SIZE):
+                file_writer.write(chunk)
 
     transporter.sendall(struct.pack('!B', ClientMessages.FileDone))
     answer = struct.unpack('!B', transporter.recv(1))[0]
@@ -65,13 +94,12 @@ def beam_up(beam_id, path, transporter_addr):
     transporter.sendall(struct.pack('!Q', beam_id))
 
     if os.path.isfile(path):
-        _beam_file(transporter, path)
+        _beam_file(transporter, os.path.dirname(path), path)
     elif os.path.isdir(path):
-        os.chdir(path)
-        for (dirpath, _, filenames) in os.walk('.'):
+        for (dirpath, _, filenames) in os.walk(path):
             for filename in filenames:
                 rel_path = os.path.join(dirpath, filename)
-                _beam_file(transporter, rel_path)
+                _beam_file(transporter, path, rel_path)
 
     transporter.sendall(struct.pack('!B', ClientMessages.BeamComplete))
     transporter.close()

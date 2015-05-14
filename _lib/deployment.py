@@ -34,6 +34,12 @@ def generate_nginx_config(path, fqdn, short_name):
     server {{
       server_name {fqdn};
       include    mime.types;
+      gzip_static on;
+      gzip_http_version   1.1;
+      gzip_proxied        expired no-cache no-store private auth;
+      gzip_disable        "MSIE [1-6]\.";
+      gzip_vary           on;
+
       types {{
           text/plain log;
       }}

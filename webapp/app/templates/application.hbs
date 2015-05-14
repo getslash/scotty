@@ -3,7 +3,7 @@
 <div class="navbar-fixed">
   <nav id="top-navbar" role="navigation">
     <div class="nav-wrapper container">
-      <a href="#"><img src="/static/assets/img/scotty.png" id="portrait"><div id="logo-container" class="brand-logo">Scotty</div></a>
+      <a {{action "scottyButton"}} style="cursor: pointer;"><img src="/static/assets/img/scotty.png" id="portrait"><div id="logo-container" class="brand-logo">Scotty</div></a>
       <ul id="nav-mobile" class="right hide-on-med-and-down">
         {{#if session.isAuthenticated}}
           <li><a href="#" {{ action 'nothing' }}>{{me.name}}</a></li>
@@ -14,7 +14,6 @@
         <li>{{#link-to "summary"}}Summary{{/link-to}}</li>
         <li>{{#link-to "api"}}API{{/link-to}}</li>
         <li>{{#link-to "about"}}About{{/link-to}}</li>
-        <li>{{#link-to "changelog"}}v{{model.version}}{{/link-to}}</li>
       </ul>
     </div>
   </nav>

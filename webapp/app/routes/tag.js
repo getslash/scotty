@@ -13,5 +13,9 @@ export default Ember.Route.extend({
     } else {
       this.render("index", {model: model});
     }
+
+    Ember.run.scheduleOnce('afterRender', function() {
+      Ember.$('.tooltipped').tooltip({delay: 50});
+    });
   }
 });
