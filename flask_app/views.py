@@ -4,6 +4,7 @@ import http.client
 from datetime import datetime
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
 from contextlib import closing
 from paramiko.ssh_exception import SSHException
 from flask import send_from_directory, jsonify, request, redirect
@@ -23,7 +24,7 @@ def _jsonify_beam(beam):
         'start': beam.start.isoformat() + 'Z',
         'size': beam.size,
         'initiator': beam.initiator,
-        'purge_time': max(0, current_app.config['VACUUM_THRESHOLD'] - (datetime.utcnow() - datetime.combine(beam.start, time(0,0))).days) if beam.files else 0,
+        'purge_time': max(0, current_app.config['VACUUM_THRESHOLD'] - (datetime.utcnow() - datetime.combine(beam.start, time(0,0))).days) if beam.size else 0,
         'error': beam.error,
         'directory': beam.directory,
         'deleted': beam.pending_deletion or beam.deleted,
@@ -33,8 +34,11 @@ def _jsonify_beam(beam):
 
 @views.route('/beams', methods=['GET'])
 def get_beams():
-    query = db.session.query(Beam).filter(Beam.pending_deletion == False, Beam.deleted == False) \
-        .order_by(Beam.start.desc())
+    query = (
+        db.session.query(Beam)
+        .options(joinedload(Beam.pins))
+        .filter_by(pending_deletion=False, deleted=False)
+        .order_by(Beam.start.desc()))
     if 'tag' in request.values:
         tag = request.values['tag']
         query = query.filter(Beam.tags.any(Tag.tag == tag))
