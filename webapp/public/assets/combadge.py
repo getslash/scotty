@@ -53,11 +53,11 @@ def _beam_file(transporter, base_path, path):
     transporter.sendall(struct.pack('!B', ClientMessages.StartBeamingFile))
 
     should_compress = os.path.splitext(path)[1] == ".log"
-    store_path = path.replace(base_path, ".")
+    store_path = path.replace(base_path, ".") if base_path else path
     if should_compress:
         store_path += ".gz"
+        logger.info("Compressing {0}".format(path))
     transporter.sendall(struct.pack('!H{0}s'.format(len(store_path)), len(store_path), store_path.encode('UTF-8')))
-    logger.info("Compressing {0}".format(path))
 
     answer = struct.unpack('!B', transporter.recv(1))[0]
     if answer == ServerMessages.SkipFile:
@@ -94,7 +94,7 @@ def beam_up(beam_id, path, transporter_addr):
     transporter.sendall(struct.pack('!Q', beam_id))
 
     if os.path.isfile(path):
-        _beam_file(transporter, path)
+        _beam_file(transporter, os.path.dirname(path), path)
     elif os.path.isdir(path):
         for (dirpath, _, filenames) in os.walk(path):
             for filename in filenames:
