@@ -184,7 +184,7 @@ def register_file():
         return '', http.client.FORBIDDEN
 
     file_name = request.json['file_name']
-    f = db.session.query(File, File.status, File.id).filter_by(beam_id=beam_id, file_name=file_name).first()
+    f = db.session.query(File).filter_by(beam_id=beam_id, file_name=file_name).first()
     if not f:
         logbook.info("Got upload request for a new file: {} @ {}", file_name, beam_id)
         f = File(beam_id=beam_id, file_name=file_name, size=None, status="pending")

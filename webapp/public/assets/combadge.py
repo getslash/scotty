@@ -7,9 +7,13 @@ import os
 import sys
 import socket
 import struct
+import traceback
+from time import sleep
 
 logger = logging.getLogger("combadge")
 _CHUNK_SIZE = 10 * 1024 * 1024
+_SLEEP_TIME = 10
+_NUM_OF_RETRIES = 3
 
 
 class ClientMessages(object):
@@ -85,7 +89,7 @@ def _beam_file(transporter, base_path, path):
         raise Exception("Unexpected server response: {0}".format(answer))
 
 
-def beam_up(beam_id, path, transporter_addr):
+def _beam_up(beam_id, path, transporter_addr):
     logger.info("Contacting transporter %s", transporter_addr)
     transporter = socket.socket()
     transporter.connect((transporter_addr, 9000))
@@ -103,6 +107,28 @@ def beam_up(beam_id, path, transporter_addr):
 
     transporter.sendall(struct.pack('!B', ClientMessages.BeamComplete))
     transporter.close()
+
+
+def beam_up(beam_id, path, transporter_addr):
+    attempt = 1
+    while True:
+        try:
+            _beam_up(beam_id, path, transporter_addr)
+        except Exception:
+            should_retry = attempt < _NUM_OF_RETRIES
+            logger.error(
+                "Attempt %d of beaming failed. %s. %s",
+                attempt,
+                "retrying" if should_retry else "exiting",
+                traceback.format_exc())
+            if not should_retry:
+                raise
+            else:
+                attempt += 1
+                logger.info("Sleeping %d seconds before reattempting", _SLEEP_TIME)
+                sleep(_SLEEP_TIME)
+        else:
+            break
 
 
 def main():
