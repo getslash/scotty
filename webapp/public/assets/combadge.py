@@ -103,7 +103,10 @@ def _beam_up(beam_id, path, transporter_addr):
         for (dirpath, _, filenames) in os.walk(path):
             for filename in filenames:
                 rel_path = os.path.join(dirpath, filename)
-                _beam_file(transporter, path, rel_path)
+                if os.path.isfile(rel_path):
+                    _beam_file(transporter, path, rel_path)
+                else:
+                    logger.info("Skipping non-file {0}".format(rel_path))
 
     transporter.sendall(struct.pack('!B', ClientMessages.BeamComplete))
     transporter.close()

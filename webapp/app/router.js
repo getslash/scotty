@@ -16,6 +16,7 @@ Router.map(function() {
   this.resource('summary', function() {});
   this.resource('tag', { path: '/tag/:tag'});
   this.route('not-found', { path: "*path"});
+  this.resource('faq', function() {});
 });
 
 export default Router;
