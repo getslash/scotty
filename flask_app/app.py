@@ -3,13 +3,11 @@ import logging
 import os
 import sys
 import yaml
-from functools import wraps
 from raven.contrib.flask import Sentry
 from flask.ext.security import Security
 from flask.ext.mail import Mail
-from flask import current_app
-
 import logbook
+
 
 def create_app(config=None):
     if config is None:
@@ -18,8 +16,6 @@ def create_app(config=None):
     ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 
     app = flask.Flask(__name__, static_folder=os.path.join(ROOT_DIR, "..", "static"))
-
-
     app.config['SQLALCHEMY_DATABASE_URI'] = os.path.expandvars(
         os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://localhost/scotty'))
     app.config['TRANSPORTER_HOST'] = '192.168.50.1'

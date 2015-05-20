@@ -3,20 +3,18 @@ from flask.ext.security import UserMixin, RoleMixin
 
 db = SQLAlchemy()
 
-### Add models here
-
-roles_users = db.Table('roles_users',
+roles_users = db.Table(
+    'roles_users',
     db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
     db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
 
 
 class Pin(db.Model):
-    __table_args__ = (db.UniqueConstraint('beam_id', 'user_id', name='uix_pin'), ) # Index
+    __table_args__ = (db.UniqueConstraint('beam_id', 'user_id', name='uix_pin'), )
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
-
 
 
 class Role(db.Model, RoleMixin):
@@ -66,7 +64,7 @@ class Tag(db.Model):
 
 
 class File(db.Model):
-    __table_args__ = (db.UniqueConstraint('beam_id', 'file_name', name='uix_1'), ) # Index
+    __table_args__ = (db.UniqueConstraint('beam_id', 'file_name', name='uix_1'), )
 
     id = db.Column(db.Integer, primary_key=True)
     file_name = db.Column(db.String)
