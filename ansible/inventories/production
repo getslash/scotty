@@ -1,5 +1,7 @@
 [webapp]
-scotty ansible_ssh_user=root production=true transporter_host="scotty" sentry_dsn="http://da99721dc2e14a0bb12debb7447efb44:69007f54ceb04ca8acb85aa86c8d3db9@sentry.infinidat.com/21" vacuum_threshold=30 fqdn="http://scotty.lab.il.infinidat.com" short_name="scotty"
+scotty.lab.il.infinidat.com ansible_ssh_user=root production=true transporter_host="scotty" sentry_dsn="http://da99721dc2e14a0bb12debb7447efb44:69007f54ceb04ca8acb85aa86c8d3db9@sentry.infinidat.com/21" vacuum_threshold=30 fqdn="http://scotty.lab.il.infinidat.com" short_name="scotty"
+scotty-telad-01.telad.il.infinidat.com ansible_ssh_user=root production=true transporter_host="scotty-telad-01.telad.il.infinidat.com" sentry_dsn="http://da99721dc2e14a0bb12debb7447efb44:69007f54ceb04ca8acb85aa86c8d3db9@sentry.infinidat.com/21" vacuum_threshold=30 fqdn="http://scotty-telad-01.telad.il.infinidat.com" short_name="scotty"
 
 [db]
-scotty ansible_ssh_user=root production=true
+scotty.lab.il.infinidat.com ansible_ssh_user=root production=true
+scotty-telad-01.telad.il.infinidat.com ansible_ssh_user=root production=true

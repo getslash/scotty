@@ -19,3 +19,4 @@ required_packages:
     - libevent-dev
     - libpq-dev
     - redis-server
+    - libyaml-dev

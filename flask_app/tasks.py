@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 from io import StringIO
 from celery import Celery
