@@ -4,7 +4,7 @@ export default Ember.Controller.extend({
   queryParams: ['page'],
   pinned: false,
   needs: "application",
-  limit: 20,
+  limit: 50,
   page: 1,
 
   reloadModel: function() {

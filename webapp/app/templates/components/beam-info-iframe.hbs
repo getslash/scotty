@@ -27,14 +27,17 @@
     </td>
     <td style="width: 90%; padding-left: 20px; vertical-align: top">
       {{#if beam.model.files.length}}
+        <table class="layout-table">
         {{#if beam.display_pagination}}
+        <tr><td>
           <ul class="pagination">
           {{#each page in beam.pages}}
             {{#link-to "beam" beam.model (query-params page=page) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
           {{/each}}
           </ul>
-          <br/><br/>
+        </td></tr>
         {{/if}}
+        <tr><td>
         <div class="collection">
           {{#each file in beam.sliced_files}}
             {{#if beam.model.deleted}}
@@ -44,6 +47,8 @@
             {{/if}}
           {{/each}}
         </div>
+        </td></tr>
+        </table>
       {{else}}
         <p>No files were beamed yet.</p>
       {{/if}}
