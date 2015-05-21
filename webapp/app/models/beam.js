@@ -16,7 +16,7 @@ export default DS.Model.extend({
     error: DS.attr('string'),
     completed: DS.attr('boolean'),
     initiator: DS.belongsTo('user', {async: true}),
-    files: DS.hasMany('file'),
+    files: DS.hasMany('file', {async: true}),
     pins: DS.hasMany('user', {async: true}),
     pinners: "",
     relative_time: "",

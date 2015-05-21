@@ -94,9 +94,9 @@ def _strip_gz(storage_name):
         return storage_name
 
 
-def _dictify_file(f, beam):
+def _dictify_file(f):
     url = "{}/file_contents/{}".format(request.host_url, _strip_gz(f.storage_name))
-    return {"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id,
+    return {"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": f.beam_id,
             "storage_name": f.storage_name, "url": url}
 
 
@@ -129,9 +129,15 @@ def get_beam(beam_id):
         return "No such beam", http.client.NOT_FOUND
     beam_json = _jsonify_beam(beam)
     beam_json['files'] = [f.id for f in beam.files]
-    return jsonify(
-        {'beam': beam_json,
-         'files': [_dictify_file(f, beam) for f in beam.files]})
+    return jsonify({'beam': beam_json})
+
+
+@views.route('/files/<int:file_id>', methods=['GET'])
+def get_file(file_id):
+    file_rec = db.session.query(File).filter_by(id=file_id).first()
+    if not file_rec:
+        return "No such file", http.client.NOT_FOUND
+    return jsonify({'file': _dictify_file(file_rec)})
 
 
 @views.route('/beams/<int:beam_id>/tags/<tag>', methods=['POST'])

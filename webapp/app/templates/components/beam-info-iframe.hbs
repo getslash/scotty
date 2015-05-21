@@ -27,8 +27,16 @@
     </td>
     <td style="width: 90%; padding-left: 20px; vertical-align: top">
       {{#if beam.model.files.length}}
+        {{#if beam.display_pagination}}
+          <ul class="pagination">
+          {{#each page in beam.pages}}
+            {{#link-to "beam" beam.model (query-params page=page) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
+          {{/each}}
+          </ul>
+          <br/><br/>
+        {{/if}}
         <div class="collection">
-          {{#each file in beam.model.files}}
+          {{#each file in beam.sliced_files}}
             {{#if beam.model.deleted}}
               <li class="collection-item">{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></li>
             {{else}}

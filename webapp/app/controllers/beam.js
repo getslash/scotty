@@ -1,12 +1,33 @@
 import Ember from 'ember';
 
 export default Ember.Controller.extend({
+  queryParams: ['page'],
   pinned: false,
   needs: "application",
+  limit: 20,
+  page: 1,
 
   reloadModel: function() {
     this.get("model").reload();
   }.observes("model"),
+
+  sliced_files: function() {
+    var limit = this.get("limit");
+    var page = this.get("page") - 1;
+    return this.get("model.files").slice(limit * page, limit * (page + 1));
+  }.property("limit", "page", "model.files"),
+
+  display_pagination: function() {
+    return this.get("model.files.length") > this.get("limit");
+  }.property("limit", "model.files.length"),
+
+  pages: function() {
+    var arr = [];
+    for (var i = 1; i <= Math.ceil(this.get("model.files.length") / this.get("limit")); ++i) {
+      arr.push(i);
+    }
+    return arr;
+  }.property("model.files.length", "limit"),
 
   monitor_pins: function() {
     Ember.run.once(this, "update_pinned");
