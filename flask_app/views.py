@@ -181,6 +181,15 @@ def update_beam(beam_id):
     return '{}'
 
 
+def _assure_beam_dir(beam_id):
+    dir_name = str(beam_id % 1000)
+    full_path = os.path.join(current_app.config['STORAGE_PATH'], dir_name)
+    if not os.path.isdir(full_path):
+        os.mkdir(full_path)
+
+    return dir_name
+
+
 @views.route('/files', methods=['POST'])
 def register_file():
     beam_id = request.json['beam_id']
@@ -199,7 +208,8 @@ def register_file():
         f = File(beam_id=beam_id, file_name=file_name, size=None, status="pending")
         db.session.add(f)
         db.session.commit()
-        f.storage_name = "{}-{}".format(f.id, f.file_name.replace("/", "__").replace("\\", "__"))
+        f.storage_name = "{}/{}-{}".format(
+            _assure_beam_dir(beam.id), f.id, f.file_name.replace("/", "__").replace("\\", "__"))
         db.session.commit()
     else:
         logbook.info("Got upload request for a existing file: {} @ {} ({})", file_name, beam_id, f.status)
