@@ -1,4 +1,5 @@
 @import '../../bower_components/materialize/sass/components/_color.scss';
+$primary-color: color("blue", "lighten-2");
 $secondary-color: color("blue", "darken-2");
 @import '../../bower_components/materialize/sass/materialize.scss';
 

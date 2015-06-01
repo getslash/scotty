@@ -52,8 +52,19 @@
 
   {{#if beam.model.files.length}}
     <h4>Files</h4>
+    <table class="layout-table">
+    {{#if beam.display_pagination}}
+    <tr><td>
+      <ul class="pagination">
+      {{#each page in beam.pages}}
+        {{#link-to "beam" beam.model (query-params page=page) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
+      {{/each}}
+      </ul>
+    </td></tr>
+    {{/if}}
+    <tr><td>
     <div class="collection">
-      {{#each file in beam.model.files}}
+      {{#each file in beam.sliced_files}}
         {{#if beam.model.deleted}}
           <li class="collection-item">{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></li>
         {{else}}
@@ -61,6 +72,8 @@
         {{/if}}
       {{/each}}
     </div>
+    </td></tr>
+    </table>
   {{else}}
     <br/><p>No files were beamed yet.</p>
   {{/if}}

@@ -5,15 +5,12 @@ import os
 import http.client
 from functools import wraps
 from httplib2 import Http
-import logbook
 from redis import StrictRedis
 from oauth2client.client import flow_from_clientsecrets
 from apiclient.discovery import build
 from flask import request, jsonify, Blueprint
 from flask.ext.security import SQLAlchemyUserDatastore
-from flask_security.utils import verify_and_update_password, login_user
-from flask_security.decorators import auth_token_required
-from .app import create_app
+from flask_security.utils import login_user
 from .models import Role, User, db
 
 

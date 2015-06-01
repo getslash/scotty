@@ -1,14 +1,12 @@
 import os
 import logbook
 import http.client
-from datetime import datetime
+from datetime import datetime, time
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
-from contextlib import closing
 from paramiko.ssh_exception import SSHException
 from flask import send_from_directory, jsonify, request, redirect
-from datetime import datetime, timezone, time
 from .models import Beam, db, File, User, Pin, Tag
 from .tasks import beam_up, create_key
 from .auth import require_user, get_or_create_user, InvalidEmail
@@ -16,7 +14,12 @@ from flask import Blueprint, current_app
 
 views = Blueprint("views", __name__, template_folder="templates")
 
+
 def _jsonify_beam(beam):
+    purge_time = (
+        current_app.config['VACUUM_THRESHOLD'] - (datetime.utcnow() - datetime.combine(beam.start, time(0, 0))).days
+        if beam.size else 0)
+    purge_time = max(purge_time, 0)
     return {
         'id': beam.id,
         'host': beam.host,
@@ -24,7 +27,7 @@ def _jsonify_beam(beam):
         'start': beam.start.isoformat() + 'Z',
         'size': beam.size,
         'initiator': beam.initiator,
-        'purge_time': max(0, current_app.config['VACUUM_THRESHOLD'] - (datetime.utcnow() - datetime.combine(beam.start, time(0,0))).days) if beam.size else 0,
+        'purge_time': purge_time,
         'error': beam.error,
         'directory': beam.directory,
         'deleted': beam.pending_deletion or beam.deleted,
@@ -53,7 +56,7 @@ def create_beam(user):
     if request.json['beam']['auth_method'] == 'rsa':
         try:
             create_key(request.json['beam']['ssh_key'])
-        except SSHException as e:
+        except SSHException:
             return 'Invalid RSA key', 409
 
     if user.is_anonymous_user:
@@ -91,9 +94,9 @@ def _strip_gz(storage_name):
         return storage_name
 
 
-def _dictify_file(f, beam):
+def _dictify_file(f):
     url = "{}/file_contents/{}".format(request.host_url, _strip_gz(f.storage_name))
-    return {"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": beam.id,
+    return {"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": f.beam_id,
             "storage_name": f.storage_name, "url": url}
 
 
@@ -126,9 +129,15 @@ def get_beam(beam_id):
         return "No such beam", http.client.NOT_FOUND
     beam_json = _jsonify_beam(beam)
     beam_json['files'] = [f.id for f in beam.files]
-    return jsonify(
-        {'beam': beam_json,
-         'files': [_dictify_file(f, beam) for f in beam.files]})
+    return jsonify({'beam': beam_json})
+
+
+@views.route('/files/<int:file_id>', methods=['GET'])
+def get_file(file_id):
+    file_rec = db.session.query(File).filter_by(id=file_id).first()
+    if not file_rec:
+        return "No such file", http.client.NOT_FOUND
+    return jsonify({'file': _dictify_file(file_rec)})
 
 
 @views.route('/beams/<int:beam_id>/tags/<tag>', methods=['POST'])
@@ -172,6 +181,15 @@ def update_beam(beam_id):
     return '{}'
 
 
+def _assure_beam_dir(beam_id):
+    dir_name = str(beam_id % 1000)
+    full_path = os.path.join(current_app.config['STORAGE_PATH'], dir_name)
+    if not os.path.isdir(full_path):
+        os.mkdir(full_path)
+
+    return dir_name
+
+
 @views.route('/files', methods=['POST'])
 def register_file():
     beam_id = request.json['beam_id']
@@ -190,7 +208,8 @@ def register_file():
         f = File(beam_id=beam_id, file_name=file_name, size=None, status="pending")
         db.session.add(f)
         db.session.commit()
-        f.storage_name = "{}-{}".format(f.id, f.file_name.replace("/", "__").replace("\\", "__"))
+        f.storage_name = "{}/{}-{}".format(
+            _assure_beam_dir(beam.id), f.id, f.file_name.replace("/", "__").replace("\\", "__"))
         db.session.commit()
     else:
         logbook.info("Got upload request for a existing file: {} @ {} ({})", file_name, beam_id, f.status)
@@ -218,10 +237,10 @@ def update_file(file_id):
 
 @views.route('/pin', methods=['PUT'])
 @require_user(allow_anonymous=False)
-def pin(user):
+def update_pin(user):
     beam = db.session.query(Beam).filter_by(id=int(request.json['beam_id'])).first()
     if not beam:
-        return '', NOT_FOUND
+        return '', http.client.NOT_FOUND
 
     pin = db.session.query(Pin).filter_by(user_id=user.id, beam_id=beam.id).first()
     if request.json['should_pin'] and not pin:
@@ -245,13 +264,13 @@ def info():
 
 @views.route("/summary")
 def summary():
-    beams = db.session.query(Beam).filter(Beam.pending_deletion == False, Beam.deleted == False)
-    size = int(db.session.query(func.sum(Beam.size)).filter(Beam.pending_deletion == False, Beam.deleted == False)[0][0] or 0)
+    beams = db.session.query(Beam).filter_by(pending_deletion=False, deleted=False)
+    size = int(db.session.query(func.sum(Beam.size)).filter_by(pending_deletion=False, deleted=False)[0][0] or 0)
     oldest = beams.order_by(Beam.start).first()
     return jsonify({
         "space_usage": size,
         "oldest_beam": oldest.id if oldest else None,
-        "number_of_beams":  beams.count()
+        "number_of_beams": beams.count()
     })
 
 

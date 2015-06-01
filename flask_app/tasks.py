@@ -1,17 +1,15 @@
 from __future__ import absolute_import
 import os
-import traceback
 from io import StringIO
 from celery import Celery
 from paramiko import SSHClient
 from paramiko.client import AutoAddPolicy
 from paramiko.rsakey import RSAKey
-import socket
 from .app import create_app
 from .models import Beam, db
 from celery.utils.log import get_task_logger
 from celery.schedules import crontab
-from celery.signals import worker_init, task_failure
+from celery.signals import worker_init
 from raven.contrib.celery import register_signal
 
 
@@ -38,8 +36,8 @@ def create_key(s):
     return RSAKey.from_private_key(file_obj=f, password=None)
 
 
-with open(os.path.join(os.path.dirname(__file__), "..", "static", "assets", "combadge.py"), "r") as f:
-    _COMBADGE = f.read()
+with open(os.path.join(os.path.dirname(__file__), "..", "static", "assets", "combadge.py"), "r") as combadge:
+    _COMBADGE = combadge.read()
 
 
 @queue.task
@@ -128,6 +126,6 @@ def vacuum():
 
 
 @worker_init.connect
-def on_init(**kwargs):
+def on_init(**_):
     app = create_app()
     register_signal(app.raven.client)
