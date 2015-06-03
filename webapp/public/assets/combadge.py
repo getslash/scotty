@@ -13,7 +13,7 @@ from time import sleep
 logger = logging.getLogger("combadge")
 _CHUNK_SIZE = 10 * 1024 * 1024
 _SLEEP_TIME = 10
-_NUM_OF_RETRIES = 3
+_NUM_OF_RETRIES = (60 // _SLEEP_TIME) * 15
 
 
 class ClientMessages(object):
@@ -127,8 +127,8 @@ def beam_up(beam_id, path, transporter_addr):
             if not should_retry:
                 raise
             else:
+                logger.info("Sleeping %d seconds before reattempting (%d/%d)", _SLEEP_TIME, attempt, _NUM_OF_RETRIES)
                 attempt += 1
-                logger.info("Sleeping %d seconds before reattempting", _SLEEP_TIME)
                 sleep(_SLEEP_TIME)
         else:
             break
