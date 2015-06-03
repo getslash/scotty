@@ -5,6 +5,7 @@ from celery import Celery
 from paramiko import SSHClient
 from paramiko.client import AutoAddPolicy
 from paramiko.rsakey import RSAKey
+import paramiko
 from .app import create_app
 from .models import Beam, db
 from celery.utils.log import get_task_logger
@@ -61,7 +62,7 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
         ssh_client.connect(host, **kwargs)
         logger.info('{}: Connected to {}. Uploading combadge'.format(beam_id, host))
 
-        stdin, stdout ,stderr = ssh_client.exec_command("cat > /tmp/combadge.py && chmod +x /tmp/combadge.py")
+        stdin, stdout, stderr = ssh_client.exec_command("cat > /tmp/combadge.py && chmod +x /tmp/combadge.py")
         stdin.write(_COMBADGE)
         stdin.channel.shutdown_write()
         retcode = stdout.channel.recv_exit_status()
@@ -82,8 +83,9 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
             beam.error = str(e)
             beam.completed = True
             db.session.commit()
-        raise
 
+        if type(e) is not paramiko.ssh_exception.AuthenticationException:
+            raise
 
 def vacuum_beam(beam, storage_path):
     logger.info("Vacuuming {}".format(beam.id))
