@@ -140,7 +140,7 @@ def get_file(file_id):
     return jsonify({'file': _dictify_file(file_rec)})
 
 
-@views.route('/beams/<int:beam_id>/tags/<tag>', methods=['POST'])
+@views.route('/beams/<int:beam_id>/tags/<path:tag>', methods=['POST'])
 def put_tag(beam_id, tag):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
@@ -155,7 +155,7 @@ def put_tag(beam_id, tag):
     return ''
 
 
-@views.route('/beams/<int:beam_id>/tags/<tag>', methods=['DELETE'])
+@views.route('/beams/<int:beam_id>/tags/<path:tag>', methods=['DELETE'])
 def remove_tag(beam_id, tag):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
