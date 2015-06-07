@@ -71,7 +71,7 @@ def login():
 
     user_info = _get_info(credentials)
     if user_info.get('hd') != 'infinidat.com':
-        return '', http.client.UNAUTHORIZED
+        abort(http.client.UNAUTHORIZED)
 
     user = get_or_create_user(user_info['email'], user_info['name'])
     token = _get_token_serializer().dumps({'user_id': user.id})
@@ -86,7 +86,7 @@ def _get_user_from_auth_token(auth_token):
     try:
         token_data = _get_token_serializer().loads(auth_token, max_age=_MAX_TOKEN_AGE)
     except BadSignature:
-        abort(401)
+        abort(http.client.UNAUTHORIZED)
 
     return user_datastore.get_user(token_data['user_id'])
 
@@ -95,7 +95,7 @@ def _get_user_from_auth_token(auth_token):
 def restore():
     user = _get_user_from_auth_token(request.json['auth_token'])
     if not user:
-        return '', http.client.FORBIDDEN
+        abort(http.client.FORBIDDEN)
 
     assert user.id == request.json['id']
     return jsonify(request.json)
@@ -123,7 +123,7 @@ def require_user(allow_anonymous):
 
             if not user:
                 if not allow_anonymous:
-                    return "", http.client.FORBIDDEN
+                    abort(http.client.FORBIDDEN)
                 else:
                     user = _get_anonymous_user()
 
