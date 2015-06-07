@@ -1,20 +1,19 @@
 import re
-import random
-import string
 import os
 import http.client
 from functools import wraps
 from httplib2 import Http
-from redis import StrictRedis
 from oauth2client.client import flow_from_clientsecrets
 from apiclient.discovery import build
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint, current_app, abort
 from flask.ext.security import SQLAlchemyUserDatastore
-from flask_security.utils import login_user
 from .models import Role, User, db
+from itsdangerous import TimedSerializer, BadSignature
 
 
 auth = Blueprint("auth", __name__, template_folder="templates")
+
+_MAX_TOKEN_AGE = 60 * 60 * 24 * 365
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -25,6 +24,10 @@ class InvalidEmail(Exception):
 
 
 _EMAIL = re.compile("^.*?@infinidat.com$")
+
+
+def _get_token_serializer():
+    return TimedSerializer(current_app.config['SECRET_KEY'])
 
 
 def _get_info(credentials):
@@ -71,31 +74,21 @@ def login():
         return '', http.client.UNAUTHORIZED
 
     user = get_or_create_user(user_info['email'], user_info['name'])
+    token = _get_token_serializer().dumps({'user_id': user.id})
 
-    user.credentials = credentials
-    redis = StrictRedis(host='localhost', port=6379, db=0)
-    auth_token = redis.get("auth_tokens:{}".format(user.id))
-    if not auth_token:
-        auth_token = "".join([random.choice(string.ascii_letters) for i in range(50)])
-        redis.set("auth_tokens:{}".format(user.id), auth_token)
-        redis.set("users:{}".format(auth_token), user.id)
-    else:
-        auth_token = auth_token.decode("ASCII")
-        assert int(redis.get("users:{}".format(auth_token))) == user.id
-
-    login_user(user)
     return jsonify({
         'id': user.id,
-        'auth_token': auth_token,
+        'auth_token': token,
     })
 
 
 def _get_user_from_auth_token(auth_token):
-    redis = StrictRedis(host='localhost', port=6379, db=0)
-    uid = int(redis.get("users:{}".format(auth_token)))
-    if not uid:
-        return None
-    return user_datastore.get_user(uid)
+    try:
+        token_data = _get_token_serializer().loads(auth_token, max_age=_MAX_TOKEN_AGE)
+    except BadSignature:
+        abort(401)
+
+    return user_datastore.get_user(token_data['user_id'])
 
 
 @auth.route("/restore", methods=['POST'])
