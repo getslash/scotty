@@ -1,3 +1,3 @@
 app_name: scotty
-APP_VERSION: 0.9.3
+APP_VERSION: 0.9.4
 SECURITY_PASSWORD_HASH: sha512_crypt
