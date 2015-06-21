@@ -97,6 +97,9 @@ def _beam_up(beam_id, path, transporter_addr):
     beam_id = int(beam_id)
     transporter.sendall(struct.pack('!Q', beam_id))
 
+    if path == "-":
+        for filename in sys.stdin:
+            _beam_file(transporter, "", filename.strip())
     if os.path.isfile(path):
         _beam_file(transporter, os.path.dirname(path), path)
     elif os.path.isdir(path):
