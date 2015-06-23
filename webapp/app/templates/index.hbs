@@ -1,5 +1,5 @@
 <br/>
-<div {{bind-attr class="controllers.application.iframe::container :beams-container"}}>
+<div class="beams-container {{unless controllers.application.iframe "container"}}">
   {{#each beam in this}}
     <div class="beam-container">
       <div class="beam-card">

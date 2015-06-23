@@ -44,7 +44,7 @@
               {{#if beam.model.deleted}}
                 <li class="collection-item">{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></li>
               {{else}}
-                <a class="collection-item file-link" target="_blank" {{bind-attr href=file.url}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
+                <a class="collection-item file-link" target="_blank" href={{file.url}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
               {{/if}}
             {{/if}}
           {{/each}}
