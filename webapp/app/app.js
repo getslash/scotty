@@ -50,8 +50,8 @@ App.initializer({
       onPoll: function() {
         var beams = container.lookup("store:main").all("beam").content;
         for (var i = 0; i < beams.length; i++) {
-          var beam = beams[i];
-          Ember.run.once(beam, "update_relative_time");
+          var beam = beams[i].getRecord();
+          beam.set("tick", beam.get("tick") + 1);
         }
         return true;
       }
