@@ -3,7 +3,7 @@
     <div class="row">
       <div class="col s8">New Beam</div>
       <div class="col s4">
-        <a id="beam-submit" {{action 'beam'}} {{bind-attr class=":waves-effect :waves-light :btn submitting:disabled"}}><i class="mdi-action-backup left"></i>beam it up, scotty</a>
+        <a id="beam-submit" {{action 'beam'}} class="waves-effect waves-light btn {{if submitting "disabled"}}"><i class="mdi-action-backup left"></i>beam it up, scotty</a>
       </div>
     </div>
   </div>
@@ -39,8 +39,8 @@
       <div class="col s3">
       <p>Authentication:</p>
         <div class="collection">
-          <a href="#" {{action "method_rsa"}} {{bind-attr class=":collection-item auth_rsa:active"}}>RSA Key</a>
-          <a href="#" {{action "method_password"}} {{bind-attr class=":collection-item auth_password:active"}}>Password</a>
+          <a href="#" {{action "method_rsa"}} class="collection-item {{if auth_rsa "active"}}">RSA Key</a>
+          <a href="#" {{action "method_password"}} class="collection-item {{if auth_password "active"}}">Password</a>
         </div>
       </div>
       <div class="input-field col s9">

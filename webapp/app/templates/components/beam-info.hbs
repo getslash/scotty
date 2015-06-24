@@ -56,7 +56,7 @@
     {{#if beam.display_pagination}}
     <tr><td>
       <ul class="pagination">
-      {{#each page in beam.pages}}
+      {{#each beam.pages as |page|}}
         {{#link-to "beam" beam.model (query-params page=page) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
       {{/each}}
       </ul>
@@ -64,12 +64,12 @@
     {{/if}}
     <tr><td>
     <div class="collection">
-      {{#each file in beam.sliced_files}}
+      {{#each beam.sliced_files as |file|}}
         {{#if file.file_name}}
           {{#if beam.model.deleted}}
             <li class="collection-item">{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></li>
           {{else}}
-            <a class="collection-item file-link" target="_blank" {{bind-attr href=file.url}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
+            <a class="collection-item file-link" target="_blank" href={{file.url}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
           {{/if}}
         {{/if}}
       {{/each}}
