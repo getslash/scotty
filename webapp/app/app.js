@@ -42,13 +42,13 @@ App.Pollster = Ember.Object.extend({
   }
 });
 
-App.initializer({
+App.instanceInitializer({
   name: "relative_time_update",
 
-  initialize: function(container) {
+  initialize: function(instance) {
     App.update_reltime = App.Pollster.create({
       onPoll: function() {
-        var beams = container.lookup("store:main").all("beam").content;
+        var beams = instance.container.lookup("store:application").all("beam").content;
         for (var i = 0; i < beams.length; i++) {
           var beam = beams[i].getRecord();
           beam.set("tick", beam.get("tick") + 1);
