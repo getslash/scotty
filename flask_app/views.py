@@ -1,18 +1,40 @@
 import os
 import logbook
 import http.client
+from jsonschema import Draft4Validator
+from functools import wraps
 from datetime import datetime, time
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 from paramiko.ssh_exception import SSHException
-from flask import send_from_directory, jsonify, request, redirect
+from flask import send_from_directory, jsonify, request, redirect, abort
 from .models import Beam, db, File, User, Pin, Tag
 from .tasks import beam_up, create_key
 from .auth import require_user, get_or_create_user, InvalidEmail
 from flask import Blueprint, current_app
 
 views = Blueprint("views", __name__, template_folder="templates")
+
+
+def validate_schema(schema):
+    validator = Draft4Validator(schema)
+
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            if not request.json:
+                abort(http.client.BAD_REQUEST)
+
+            try:
+                validator.validate(request.json)
+            except Exception as e:
+                logbook.error(e)
+                abort(http.client.BAD_REQUEST)
+
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 def _jsonify_beam(beam):
@@ -52,19 +74,37 @@ def get_beams():
 
 @views.route('/beams', methods=['POST'])
 @require_user(allow_anonymous=True)
+@validate_schema({
+    'type': 'object',
+    'properties': {
+        'beam': {
+            'type': 'object',
+            'properties': {
+                'auth_method': {'type': 'string', 'enum': ['rsa', 'password', 'independent']},
+                'user': {'type': 'string'},
+                'password': {'type': ['string', 'null']},
+                'directory': {'type': 'string'},
+                'email': {'type': 'string'},
+                'ssh_key': {'type': ['string', 'null']},
+            },
+            'required': ['auth_method', 'host', 'directory']
+        }
+    },
+    'required': ['beam']
+})
 def create_beam(user):
     if request.json['beam']['auth_method'] == 'rsa':
         try:
             create_key(request.json['beam']['ssh_key'])
         except SSHException:
-            return 'Invalid RSA key', 409
+            return 'Invalid RSA key', http.client.CONFLICT
 
     if user.is_anonymous_user:
         if 'email' in request.json['beam']:
             try:
                 user = get_or_create_user(request.json['beam']['email'], None)
             except InvalidEmail:
-                return 'Invalid email', 409
+                return 'Invalid email', http.client.CONFLICT
 
     beam = Beam(
         start=datetime.utcnow(), size=0,
@@ -108,7 +148,7 @@ def _dictify_user(user):
 def get_user_by_email(email):
     user = db.session.query(User).filter_by(email=email).first()
     if not user:
-        return '', http.client.NOT_FOUND
+        abort(http.client.NOT_FOUND)
 
     return jsonify(_dictify_user(user))
 
@@ -117,7 +157,7 @@ def get_user_by_email(email):
 def get_user(user_id):
     user = db.session.query(User).filter_by(id=user_id).first()
     if not user:
-        return '', http.client.NOT_FOUND
+        abort(http.client.NOT_FOUND)
 
     return jsonify(_dictify_user(user))
 
@@ -144,7 +184,7 @@ def get_file(file_id):
 def put_tag(beam_id, tag):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
-        return '', http.client.NOT_FOUND
+        abort(http.client.NOT_FOUND)
 
     t = Tag(beam_id=beam_id, tag=tag)
     db.session.add(t)
@@ -159,7 +199,7 @@ def put_tag(beam_id, tag):
 def remove_tag(beam_id, tag):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
-        return '', http.client.NOT_FOUND
+        abort(http.client.NOT_FOUND)
 
     t = db.session.query(Tag).filter_by(beam_id=beam_id, tag=tag).first()
     if t:
@@ -169,10 +209,18 @@ def remove_tag(beam_id, tag):
 
 
 @views.route('/beams/<int:beam_id>', methods=['PUT'])
+@validate_schema({
+    'type': 'object',
+    'properties': {
+        'completed': {'type': 'boolean'},
+        'error': {'type': ['string', 'null']}
+    },
+    'required': ['completed']
+})
 def update_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if beam.pending_deletion or beam.deleted:
-        return '', http.client.FORBIDDEN
+        abort(http.client.FORBIDDEN)
 
     beam.completed = request.json['completed']
     beam.error = request.json.get('error', None)
@@ -191,15 +239,23 @@ def _assure_beam_dir(beam_id):
 
 
 @views.route('/files', methods=['POST'])
+@validate_schema({
+    'type': 'object',
+    'properties': {
+        'beam_id': {'type': 'number'},
+        'file_name': {'type': 'string'},
+    },
+    'required': ['beam_id', 'file_name']
+})
 def register_file():
     beam_id = request.json['beam_id']
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
         logbook.error('Transporter attempted to post to unknown beam id {}', beam_id)
-        return '', http.client.BAD_REQUEST
+        abort(http.client.BAD_REQUEST)
 
     if beam.pending_deletion or beam.deleted:
-        return '', http.client.FORBIDDEN
+        abort(http.client.FORBIDDEN)
 
     file_name = request.json['file_name']
     f = db.session.query(File).filter_by(beam_id=beam_id, file_name=file_name).first()
@@ -218,13 +274,21 @@ def register_file():
 
 
 @views.route('/files/<int:file_id>', methods=['PUT'])
+@validate_schema({
+    'type': 'object',
+    'properties': {
+        'success': {'type': 'boolean'},
+        'size': {'type': ['number', 'null']},
+    },
+    'required': ['success']
+})
 def update_file(file_id):
     success = request.json['success']
     size = request.json.get('size', None)
     f = db.session.query(File).filter_by(id=file_id).first()
     if not f:
         logbook.error('Transporter attempted to update an unknown file id {}', file_id)
-        return '', http.client.BAD_REQUEST
+        abort(http.client.BAD_REQUEST)
 
     f.size = size
     f.status = "uploaded" if success else "failed"
@@ -237,10 +301,18 @@ def update_file(file_id):
 
 @views.route('/pin', methods=['PUT'])
 @require_user(allow_anonymous=False)
+@validate_schema({
+    'type': 'object',
+    'properties': {
+        'beam_id': {'type': 'number'},
+        'should_pin': {'type': 'boolean'},
+    },
+    'required': ['beam_id', 'should_pin']
+})
 def update_pin(user):
     beam = db.session.query(Beam).filter_by(id=int(request.json['beam_id'])).first()
     if not beam:
-        return '', http.client.NOT_FOUND
+        abort(http.client.NOT_FOUND)
 
     pin = db.session.query(Pin).filter_by(user_id=user.id, beam_id=beam.id).first()
     if request.json['should_pin'] and not pin:

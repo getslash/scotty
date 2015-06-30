@@ -13,13 +13,17 @@ export default DS.Model.extend({
     directory: DS.attr('string'),
     deleted: DS.attr('boolean'),
     purge_time: DS.attr('number'),
-    error: DS.attr('string'),
+    error_message: DS.attr('string'),
     completed: DS.attr('boolean'),
     initiator: DS.belongsTo('user', {async: true}),
     files: DS.hasMany('file', {async: true}),
     pins: DS.hasMany('user', {async: true}),
     pinners: "",
-    relative_time: "",
+    tick: 1,
+
+    relative_time: function() {
+      return moment(this.get("start")).fromNow();
+    }.property("start", "tick"),
 
     purge_str: function() {
       var purge_time = this.get("purge_time");
@@ -36,14 +40,6 @@ export default DS.Model.extend({
     should_display_purge_str: function() {
       return this.get("completed") && !this.get("has_pinners");
     }.property("has_pinners", "completed").readOnly(),
-
-    start_observer: function() {
-      Ember.run.once(this, "update_relative_time");
-    }.observes("start"),
-
-    update_relative_time: function() {
-      this.set("relative_time", moment(this.get("start")).fromNow());
-    },
 
     num_of_pins: function () {
       return this.get("pins").get("length");
@@ -65,6 +61,6 @@ export default DS.Model.extend({
     },
 
     img: function() {
-      return (this.get("completed") ? (this.get("error") != null ? "/static/assets/img/folder-error.gif" : "/static/assets/img/folder-regular.gif") : "/static/assets/img/folder-beaming.gif");
-    }.property("completed", "error")
+      return (this.get("completed") ? (this.get("error_message") != null ? "/static/assets/img/folder-error.gif" : "/static/assets/img/folder-regular.gif") : "/static/assets/img/folder-beaming.gif");
+    }.property("completed", "error_message")
 });

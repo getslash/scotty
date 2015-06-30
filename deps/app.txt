@@ -16,3 +16,4 @@ paramiko
 raven[flask]
 oauth2client
 google-api-python-client
+jsonschema
