@@ -197,7 +197,11 @@ def put_tag(beam_id, tag):
 
 @views.route('/tags')
 def get_tags():
-    tags = db.session.query(Tag.tag, func.count(Tag.beam_id)).join(Tag.beam).filter(Tag.beam.has(None, deleted=False)).group_by(Tag.tag)
+    tags = (
+        db.session.query(Tag.tag, func.count(Tag.beam_id))
+        .filter(Tag.beam.has(None, deleted=False))
+        .group_by(Tag.tag)
+        .limit(200))
     return jsonify({'tags': [{'id': tag[0], 'number_of_beams': tag[1]} for tag in tags]})
 
 

@@ -60,7 +60,7 @@ class Tag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
     beam = db.relationship("Beam", backref="tags")
-    tag = db.Column(db.String)
+    tag = db.Column(db.String, index=True)
 
 
 class File(db.Model):
