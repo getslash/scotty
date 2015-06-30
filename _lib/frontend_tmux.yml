@@ -1,5 +1,8 @@
 session_name: frontend compilation
 windows:
+  - window_name: cmd
+    panes:
+      - pwd
   - window_name: frontend compilation
     layout: even-horizontal
     panes:
@@ -15,6 +18,3 @@ windows:
   - window_name: transporter
     panes:
       - z transporter && RUST_LOG=transporter=debug cargo run example/transporter.conf
-  - window_name: cmd
-    panes:
-      - pwd
