@@ -195,6 +195,12 @@ def put_tag(beam_id, tag):
     return ''
 
 
+@views.route('/tags')
+def get_tags():
+    tags = db.session.query(Tag.tag, func.count(Tag.beam_id)).join(Tag.beam).filter(Tag.beam.has(None, deleted=False)).group_by(Tag.tag)
+    return jsonify({'tags': [{'id': tag[0], 'number_of_beams': tag[1]} for tag in tags]})
+
+
 @views.route('/beams/<int:beam_id>/tags/<path:tag>', methods=['DELETE'])
 def remove_tag(beam_id, tag):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()

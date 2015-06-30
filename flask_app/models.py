@@ -48,7 +48,6 @@ class Beam(db.Model):
     completed = db.Column(db.Boolean)
     initiator = db.Column(db.Integer, db.ForeignKey('user.id'))
     files = db.relationship("File", backref="beam")
-    tags = db.relationship("Tag", backref="beam")
     pins = db.relationship("Pin", backref="beam")
 
     def __repr__(self):
@@ -60,6 +59,7 @@ class Tag(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
+    beam = db.relationship("Beam", backref="tags")
     tag = db.Column(db.String)
 
 
