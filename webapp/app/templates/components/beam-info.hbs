@@ -46,8 +46,8 @@
 {{/if}}
 
 {{#if extended}}
-  {{#if beam.model.error}}
-  <br/><p class="red-text text-darken-2">{{newlines-text beam.model.error}}</p>
+  {{#if beam.model.error_message}}
+  <br/><p class="red-text text-darken-2">{{newlines-text beam.model.error_message}}</p>
   {{/if}}
 
   {{#if beam.model.files.length}}

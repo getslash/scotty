@@ -13,7 +13,7 @@ export default DS.Model.extend({
     directory: DS.attr('string'),
     deleted: DS.attr('boolean'),
     purge_time: DS.attr('number'),
-    error: DS.attr('string'),
+    error_message: DS.attr('string'),
     completed: DS.attr('boolean'),
     initiator: DS.belongsTo('user', {async: true}),
     files: DS.hasMany('file', {async: true}),
@@ -61,6 +61,6 @@ export default DS.Model.extend({
     },
 
     img: function() {
-      return (this.get("completed") ? (this.get("error") != null ? "/static/assets/img/folder-error.gif" : "/static/assets/img/folder-regular.gif") : "/static/assets/img/folder-beaming.gif");
-    }.property("completed", "error")
+      return (this.get("completed") ? (this.get("error_message") != null ? "/static/assets/img/folder-error.gif" : "/static/assets/img/folder-regular.gif") : "/static/assets/img/folder-beaming.gif");
+    }.property("completed", "error_message")
 });
