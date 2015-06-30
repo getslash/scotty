@@ -1,3 +1,4 @@
+{{#unless controllers.application.iframe}}
 <br/>
 <div class="beams-container {{unless controllers.application.iframe "container"}}">
   {{#each this as |beam|}}
@@ -11,10 +12,34 @@
   {{/each}}
 </div>
 
-{{#unless controllers.application.iframe}}
 <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
    {{#link-to "new-beam" class="btn-floating btn-large"}}
      <i class="large mdi-action-backup"></i>
    {{/link-to}}
 </div>
+{{else}}
+<table>
+  <thead>
+    <tr>
+      <th>Beam ID</th>
+      <th>User</th>
+      <th>Host</th>
+      <th>Directory</th>
+      <th>Started</th>
+      <th>Size</th>
+    </tr>
+  </thead>
+  <tbody>
+  {{#each this as |beam|}}
+    <tr>
+      <td>{{#link-to "beam" beam.model}}{{beam.model.id}}{{/link-to}}</td>
+      <td>{{beam.model.initiator.display_name}}</td>
+      <td>{{beam.model.host}}</td>
+      <td>{{beam.model.directory}}</td>
+      <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{format-date beam.model.start}}">{{beam.model.relative_time}}</a></td>
+      <td>{{capacity-display beam.model.size}}</td>
+    </tr>
+  {{/each}}
+  </tbody>
+</table>
 {{/unless}}
