@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import os
+from datetime import timedelta, datetime
 from io import StringIO
 from celery import Celery
 from paramiko import SSHClient
@@ -22,13 +23,19 @@ queue.conf.update(
     CELERY_ACCEPT_CONTENT=['json'],  # Ignore other content
     CELERY_RESULT_SERIALIZER='json',
     CELERY_ENABLE_UTC=True,
-    CELERYBEAT_SCHEDULE = {
+    CELERYBEAT_SCHEDULE={
         'vacuum': {
             'task': 'flask_app.tasks.vacuum',
             'schedule': crontab(hour=0, minute=0),
-        }},
+        },
+        'mark-timeout': {
+            'task': 'flask_app.tasks.mark_timeout',
+            'schedule': timedelta(minutes=15),
+        },
+    },
     CELERY_TIMEZONE='UTC'
 )
+
 
 def create_key(s):
     f = StringIO()
@@ -87,6 +94,7 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
         if type(e) is not paramiko.ssh_exception.AuthenticationException:
             raise
 
+
 def vacuum_beam(beam, storage_path):
     logger.info("Vacuuming {}".format(beam.id))
     for f in beam.files:
@@ -98,6 +106,23 @@ def vacuum_beam(beam, storage_path):
     logger.info("Vacuumed {} successfully".format(beam.id))
     beam.deleted = True
     db.session.commit()
+
+
+@queue.task
+def mark_timeout():
+    app = create_app()
+    with app.app_context():
+        timeout = timedelta(seconds=app.config['COMBADGE_CONTACT_TIMEOUT'])
+        timed_out = datetime.utcnow() - timeout
+        dead_beams = (
+            db.session.query(Beam).filter_by(completed=False)
+            .filter(Beam.combadge_contacted == False, Beam.start < timed_out))
+        for beam in dead_beams:
+            logger.info("Combadge of {} did not contact for more than {}".format(beam.id, timeout))
+            beam.completed = True
+            beam.error = "Combadge didn't contact the transporter"
+
+        db.session.commit()
 
 
 @queue.task

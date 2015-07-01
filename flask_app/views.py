@@ -112,6 +112,7 @@ def create_beam(user):
         directory=request.json['beam']['directory'],
         initiator=user.id,
         error=None,
+        combadge_contacted=False,
         pending_deletion=False, completed=False, deleted=False)
     db.session.add(beam)
     db.session.commit()
@@ -279,6 +280,10 @@ def register_file():
         db.session.commit()
     else:
         logbook.info("Got upload request for a existing file: {} @ {} ({})", file_name, beam_id, f.status)
+
+    if not beam.combadge_contacted:
+        beam.combadge_contacted = True
+        db.session.commit()
 
     return jsonify({'file_id': str(f.id), 'should_beam': f.status != 'uploaded', 'storage_name': f.storage_name})
 
