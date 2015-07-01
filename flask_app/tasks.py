@@ -30,7 +30,7 @@ queue.conf.update(
         },
         'mark-timeout': {
             'task': 'flask_app.tasks.mark_timeout',
-            'schedule': timedelta(minutes=5),
+            'schedule': timedelta(minutes=15),
         },
     },
     CELERY_TIMEZONE='UTC'
@@ -114,7 +114,6 @@ def mark_timeout():
     with app.app_context():
         timeout = timedelta(seconds=app.config['COMBADGE_CONTACT_TIMEOUT'])
         timed_out = datetime.utcnow() - timeout
-        logger.info("{}".format(timed_out))
         dead_beams = (
             db.session.query(Beam).filter_by(completed=False)
             .filter(Beam.combadge_contacted == False, Beam.start < timed_out))
