@@ -13,7 +13,7 @@
     "ember-simple-auth": "^0.7.3",
     "fontawesome": "~4.2.0",
     "loader.js": "ember-cli/loader.js#3.2.0",
-    "materialize": "0.96.0",
+    "materialize": "^0.97.0",
     "moment": "^2.9.0",
     "numeral": "^1.5.3",
     "qunit": "~1.17.1"
