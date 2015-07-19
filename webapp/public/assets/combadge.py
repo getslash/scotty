@@ -141,9 +141,48 @@ def main():
         print("Usage: combadge [beam id] [path] [transporter hostname]")
         return 1
 
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # exit first parent
+            sys.exit(0)
+    except OSError as e:
+        sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
+        sys.exit(1)
+
+    # decouple from parent environment
+    os.setsid()
+    os.umask(0)
+
+    # do second fork
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # exit from second parent
+            sys.exit(0)
+    except OSError as e:
+        sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
+        sys.exit(1)
+
+    # redirect standard file descriptors
+    sys.stdout.flush()
+    sys.stderr.flush()
+    with open("/dev/null", "w") as f:
+        os.dup2(f.fileno(), sys.stdin.fileno())
+        os.dup2(f.fileno(), sys.stdout.fileno())
+        os.dup2(f.fileno(), sys.stderr.fileno())
+
+    from logging.handlers import SysLogHandler
+    handler = SysLogHandler('/dev/log')
+    logger.setLevel("DEBUG")
+    handler.setLevel("DEBUG")
+    handler.setFormatter(logging.Formatter('combadge: %(message)s'))
+    logger.addHandler(handler)
+    logger.info("Combadge forked")
+
     beam_up(beam_id, path, transporter_addr)
 
 
 if __name__ == '__main__':
     sys.exit(main())
+
