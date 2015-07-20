@@ -83,7 +83,7 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
         if retcode != 0:
             raise Exception(stderr.read().decode("ascii"))
 
-        logger.info('{}: Beam completed'.format(beam_id))
+        logger.info('{}: Detached from combadge'.format(beam_id))
     except Exception as e:
         with app.app_context():
             beam = db.session.query(Beam).filter_by(id=beam_id).first()
