@@ -1,6 +1,7 @@
 import os
 import logbook
 import http.client
+import urllib.parse
 from jsonschema import Draft4Validator
 from functools import wraps
 from datetime import datetime, time
@@ -136,7 +137,7 @@ def _strip_gz(storage_name):
 
 
 def _dictify_file(f):
-    url = "{}/file_contents/{}".format(request.host_url, _strip_gz(f.storage_name))
+    url = "{}/file_contents/{}".format(request.host_url, urllib.parse.quote(_strip_gz(f.storage_name)))
     return {"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": f.beam_id,
             "storage_name": f.storage_name, "url": url}
 
