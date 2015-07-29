@@ -1,18 +1,23 @@
 from __future__ import absolute_import
 import os
+import smtplib
+from email.mime.text import MIMEText
 from datetime import timedelta, datetime
+from collections import defaultdict
 from io import StringIO
 from celery import Celery
 from paramiko import SSHClient
 from paramiko.client import AutoAddPolicy
 from paramiko.rsakey import RSAKey
+from jinja2 import Template
 import paramiko
 from .app import create_app
-from .models import Beam, db
+from .models import Beam, db, Pin
 from celery.utils.log import get_task_logger
 from celery.schedules import crontab
 from celery.signals import worker_init
 from raven.contrib.celery import register_signal
+from sqlalchemy.orm import joinedload
 
 
 logger = get_task_logger(__name__)
@@ -27,6 +32,10 @@ queue.conf.update(
         'vacuum': {
             'task': 'flask_app.tasks.vacuum',
             'schedule': crontab(hour=0, minute=0),
+        },
+        'remind': {
+            'task': 'flask_app.tasks.remind_pinned',
+            'schedule': crontab(hour=13, minute=0, day_of_week='sunday'),
         },
         'mark-timeout': {
             'task': 'flask_app.tasks.mark_timeout',
@@ -47,6 +56,20 @@ def create_key(s):
 with open(os.path.join(os.path.dirname(__file__), "..", "static", "assets", "combadge.py"), "r") as combadge:
     _COMBADGE = combadge.read()
 
+
+_REMINDER = """Hello Captain,<br/><br/>
+This is a reminder that the following beams are pinned by you:
+<ul>
+{% for beam in beams %}
+<li><a href="{{base_url}}/#/beam/{{beam}}">{{beam}}</a></li>
+{% endfor %}
+</ul>
+<br/>
+If you still need these beams then please ignore this message. However, if these beams are not required anymore, please un-pin them to allow them to be garbage collected.
+
+Sincerely yours,
+Montgomery Scott
+"""
 
 @queue.task
 def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
@@ -123,6 +146,33 @@ def mark_timeout():
             beam.error = "Combadge didn't contact the transporter"
 
         db.session.commit()
+
+
+@queue.task
+def remind_pinned():
+    app = create_app()
+    remind_time = datetime.utcnow() - timedelta(days=app.config['PIN_REMIND_THRESHOLD'])
+    with app.app_context():
+        emails = defaultdict(list)
+        pins = (db.session.query(Pin)
+                .join(Pin.beam)
+                .options(joinedload(Pin.user), joinedload(Pin.beam))
+                .filter(Beam.start <= remind_time))
+        for pin in pins:
+            emails[pin.user.email].append(pin.beam_id)
+
+    template = Template(_REMINDER)
+    s = smtplib.SMTP(app.config['SMTP'])
+    for email, beams in emails.items():
+        body = template.render(beams=beams, base_url=app.config['BASE_URL'])
+        msg = MIMEText(body, 'html')
+        msg['Subject'] = 'Pinned beams reminder'
+        msg['From'] = 'Scotty <scotty@infinidat.com>'
+        msg['To'] = email
+
+        s.send_message(msg)
+
+    s.quit()
 
 
 @queue.task

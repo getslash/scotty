@@ -22,6 +22,9 @@ def create_app(config=None):
     app.config['STORAGE_PATH'] = '/var/scotty'
     app.config['SENTRY_DSN'] = ''
     app.config['VACUUM_THRESHOLD'] = 4
+    app.config['PIN_REMIND_THRESHOLD'] = 9
+    app.config['SMTP'] = 'smtp-dev.lab.il.infinidat.com'
+    app.config['BASE_URL'] = 'http://scotty.lab.il.infinidat.com'
     app.config['COMBADGE_CONTACT_TIMEOUT'] = 60 * 60
 
     _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "conf.d"))

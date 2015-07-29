@@ -30,6 +30,7 @@ class User(db.Model, UserMixin):
     active = db.Column(db.Boolean())
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
+    pins = db.relationship("Pin", backref="user")
 
     @property
     def is_anonymous_user(self):
