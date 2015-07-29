@@ -18,6 +18,7 @@ Router.map(function() {
   this.route('not-found', { path: "*path"});
   this.resource('faq', function() {});
   this.route('tags');
+  this.route('pinned');
 });
 
 export default Router;
