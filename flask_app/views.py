@@ -5,6 +5,7 @@ import urllib.parse
 from jsonschema import Draft4Validator
 from functools import wraps
 from datetime import datetime, time
+from sqlalchemy import distinct
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
@@ -66,8 +67,16 @@ def get_beams():
         .filter_by(pending_deletion=False, deleted=False)
         .order_by(Beam.start.desc()))
     if 'tag' in request.values:
+        if 'pinned' in request.values:
+            abort(http.client.BAD_REQUEST)
         tag = request.values['tag']
         query = query.filter(Beam.tags.any(Tag.tag == tag))
+    if 'pinned' in request.values:
+        if 'tags' in request.values:
+            abort(http.client.BAD_REQUEST)
+
+        pinned = db.session.query(distinct(Pin.beam_id))
+        query = query.filter(Beam.id.in_(pinned))
 
     beams = [_jsonify_beam(b) for b in query.limit(50)]
     return jsonify({'beams': beams})
