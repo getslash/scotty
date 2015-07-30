@@ -1,8 +1,9 @@
 import Ember from 'ember';
 
 export default Ember.Controller.extend({
-  queryParams: ['page'],
+  queryParams: ['page', 'back'],
   pinned: false,
+  back: false,
   needs: "application",
   limit: 50,
   page: 1,
