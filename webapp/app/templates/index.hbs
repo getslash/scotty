@@ -32,7 +32,7 @@
   <tbody>
   {{#each this as |beam|}}
     <tr>
-      <td>{{#link-to "beam" beam.model}}{{beam.model.id}}{{/link-to}}</td>
+      <td>{{#link-to "beam" beam.model (query-params back=true)}}{{beam.model.id}}{{/link-to}}</td>
       <td>{{beam.model.initiator.display_name}}</td>
       <td>{{beam.model.host}}</td>
       <td>{{beam.model.directory}}</td>
