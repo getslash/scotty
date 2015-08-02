@@ -65,9 +65,9 @@ This is a reminder that the following beams are pinned by you:
 {% endfor %}
 </ul>
 <br/>
-If you still need these beams then please ignore this message. However, if these beams are not required anymore, please un-pin them to allow them to be garbage collected.
-
-Sincerely yours,
+If you still need these beams then please ignore this message. However, if these beams are not required anymore, please un-pin them to allow them to be garbage collected.<br/>
+<br/>
+Sincerely yours,<br/>
 Montgomery Scott
 """
 
