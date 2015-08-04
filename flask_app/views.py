@@ -146,7 +146,9 @@ def _strip_gz(storage_name):
 
 
 def _dictify_file(f):
-    url = "{}/file_contents/{}".format(request.host_url, urllib.parse.quote(_strip_gz(f.storage_name)))
+    url = (
+        "{}/file_contents/{}".format(request.host_url, urllib.parse.quote(_strip_gz(f.storage_name)))
+        if f.storage_name else None)
     return {"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": f.beam_id,
             "storage_name": f.storage_name, "url": url}
 
