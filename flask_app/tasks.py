@@ -92,19 +92,19 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
         ssh_client.connect(host, **kwargs)
         logger.info('{}: Connected to {}. Uploading combadge'.format(beam_id, host))
 
-        stdin, stdout, stderr = ssh_client.exec_command("cat > /tmp/combadge.py && chmod +x /tmp/combadge.py")
+        stdin, stdout, stderr = ssh_client.exec_command("sh -c \"cat > /tmp/combadge.py && chmod +x /tmp/combadge.py\"")
         stdin.write(_COMBADGE)
         stdin.channel.shutdown_write()
         retcode = stdout.channel.recv_exit_status()
         if retcode != 0:
-            raise Exception(stderr.read().decode("ascii"))
+            raise Exception(stderr.read().decode("utf-8"))
 
         logger.info('{}: Running combadge'.format(beam_id))
         _, stdout, stderr = ssh_client.exec_command(
             '/tmp/combadge.py {} "{}" "{}"'.format(str(beam_id), directory, transporter))
         retcode = stdout.channel.recv_exit_status()
         if retcode != 0:
-            raise Exception(stderr.read().decode("ascii"))
+            raise Exception(stderr.read().decode("utf-8"))
 
         logger.info('{}: Detached from combadge'.format(beam_id))
     except Exception as e:
