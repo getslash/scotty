@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import os
 import smtplib
+from functools import wraps
 from email.mime.text import MIMEText
 from datetime import timedelta, datetime
 from collections import defaultdict
@@ -45,6 +46,21 @@ queue.conf.update(
     CELERY_TIMEZONE='UTC'
 )
 
+APP = None
+
+def app_context(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        global APP
+
+        if APP is None:
+            APP = create_app()
+
+        with APP.app_context():
+            return f(*args, **kwargs)
+
+    return wrapper
+
 
 def create_key(s):
     f = StringIO()
@@ -72,10 +88,10 @@ Montgomery Scott
 """
 
 @queue.task
+@app_context
 def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
-    app = create_app()
     try:
-        transporter = app.config.get('TRANSPORTER_HOST', 'scotty')
+        transporter = APP.config.get('TRANSPORTER_HOST', 'scotty')
         logger.info('Beaming up {}@{}:{} ({}) to transporter {}. Auth method: {}'.format(
             username, host, directory, beam_id, transporter, auth_method))
         ssh_client = SSHClient()
@@ -108,13 +124,12 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
 
         logger.info('{}: Detached from combadge'.format(beam_id))
     except Exception as e:
-        with app.app_context():
-            beam = db.session.query(Beam).filter_by(id=beam_id).first()
-            beam.error = str(e)
-            beam.completed = True
-            db.session.commit()
+        beam = db.session.query(Beam).filter_by(id=beam_id).first()
+        beam.error = str(e)
+        beam.completed = True
+        db.session.commit()
 
-        if type(e) is not paramiko.ssh_exception.AuthenticationException:
+        if not isinstance(e, paramiko.ssh_exception.AuthenticationException):
             raise
 
 
@@ -132,39 +147,37 @@ def vacuum_beam(beam, storage_path):
 
 
 @queue.task
+@app_context
 def mark_timeout():
-    app = create_app()
-    with app.app_context():
-        timeout = timedelta(seconds=app.config['COMBADGE_CONTACT_TIMEOUT'])
-        timed_out = datetime.utcnow() - timeout
-        dead_beams = (
-            db.session.query(Beam).filter_by(completed=False)
-            .filter(Beam.combadge_contacted == False, Beam.start < timed_out))
-        for beam in dead_beams:
-            logger.info("Combadge of {} did not contact for more than {}".format(beam.id, timeout))
-            beam.completed = True
-            beam.error = "Combadge didn't contact the transporter"
+    timeout = timedelta(seconds=APP.config['COMBADGE_CONTACT_TIMEOUT'])
+    timed_out = datetime.utcnow() - timeout
+    dead_beams = (
+        db.session.query(Beam).filter_by(completed=False)
+        .filter(Beam.combadge_contacted == False, Beam.start < timed_out))
+    for beam in dead_beams:
+        logger.info("Combadge of {} did not contact for more than {}".format(beam.id, timeout))
+        beam.completed = True
+        beam.error = "Combadge didn't contact the transporter"
 
-        db.session.commit()
+    db.session.commit()
 
 
 @queue.task
+@app_context
 def remind_pinned():
-    app = create_app()
-    remind_time = datetime.utcnow() - timedelta(days=app.config['PIN_REMIND_THRESHOLD'])
-    with app.app_context():
-        emails = defaultdict(list)
-        pins = (db.session.query(Pin)
-                .join(Pin.beam)
-                .options(joinedload(Pin.user), joinedload(Pin.beam))
-                .filter(Beam.start <= remind_time))
-        for pin in pins:
-            emails[pin.user.email].append(pin.beam_id)
+    remind_time = datetime.utcnow() - timedelta(days=APP.config['PIN_REMIND_THRESHOLD'])
+    emails = defaultdict(list)
+    pins = (db.session.query(Pin)
+            .join(Pin.beam)
+            .options(joinedload(Pin.user), joinedload(Pin.beam))
+            .filter(Beam.start <= remind_time))
+    for pin in pins:
+        emails[pin.user.email].append(pin.beam_id)
 
     template = Template(_REMINDER)
-    s = smtplib.SMTP(app.config['SMTP'])
+    s = smtplib.SMTP(APP.config['SMTP'])
     for email, beams in emails.items():
-        body = template.render(beams=beams, base_url=app.config['BASE_URL'])
+        body = template.render(beams=beams, base_url=APP.config['BASE_URL'])
         msg = MIMEText(body, 'html')
         msg['Subject'] = 'Pinned beams reminder'
         msg['From'] = 'Scotty <scotty@infinidat.com>'
@@ -176,29 +189,28 @@ def remind_pinned():
 
 
 @queue.task
+@app_context
 def vacuum():
     logger.info("Vacuum intiated")
-    app = create_app()
 
     # Make sure that the storage folder is accessable. Whenever deploying scotty to somewhere, one
     # must create this empty file in the storage directory
-    os.stat(os.path.join(app.config['STORAGE_PATH'], ".test"))
+    os.stat(os.path.join(APP.config['STORAGE_PATH'], ".test"))
 
-    with app.app_context():
-        db.engine.execute(
-            "update beam set pending_deletion=true where "
-            "(not beam.pending_deletion and not beam.deleted and beam.completed)" # Anything which isn't uncompleted or already deleted
-            "and beam.id not in (select beam_id from pin) " # which has no pinners
-            "and ("
-                "(beam.id not in (select beam_id from file)) " # Either has no files
-                "or (beam.start < now() - '%s days'::interval)" # or has files but is VACUUM_THRESHOLD days old
-            ")",
-            app.config['VACUUM_THRESHOLD'])
-        db.session.commit()
+    db.engine.execute(
+        "update beam set pending_deletion=true where "
+        "(not beam.pending_deletion and not beam.deleted and beam.completed)" # Anything which isn't uncompleted or already deleted
+        "and beam.id not in (select beam_id from pin) " # which has no pinners
+        "and ("
+            "(beam.id not in (select beam_id from file)) " # Either has no files
+            "or (beam.start < now() - '%s days'::interval)" # or has files but is VACUUM_THRESHOLD days old
+        ")",
+        APP.config['VACUUM_THRESHOLD'])
+    db.session.commit()
 
-        to_delete = db.session.query(Beam).filter(Beam.pending_deletion == True, Beam.deleted == False)
-        for beam in to_delete:
-            vacuum_beam(beam, app.config['STORAGE_PATH'])
+    to_delete = db.session.query(Beam).filter(Beam.pending_deletion == True, Beam.deleted == False)
+    for beam in to_delete:
+        vacuum_beam(beam, APP.config['STORAGE_PATH'])
     logger.info("Vacuum done")
 
 
