@@ -214,6 +214,50 @@ def vacuum():
     logger.info("Vacuum done")
 
 
+@queue.task
+@app_context
+def scrub():
+    logger.info("Scrubbing intiated")
+    errors = []
+
+    storage_path = APP.config['STORAGE_PATH']
+
+    active_beams = (db.session.query(Beam)
+                    .filter(Beam.pending_deletion == False, Beam.deleted == False)
+                    .options(joinedload(Beam.files)))
+    for beam in active_beams:
+        for beam_file in beam.files:
+            if not beam_file.storage_name and not beam_file.size:
+                errors.append("{} has no storage name and a size greated than 0".format(
+                    beam_file.id
+                ))
+                beam_file.size = 0
+                continue
+
+            full_path = os.path.join(storage_path, beam_file.storage_name)
+            if not os.path.exists(full_path):
+                errors.append("{} ({}) does not exist".format(full_path, beam_file.id))
+                continue
+
+            file_info = os.stat(full_path)
+            if file_info.st_size != beam_file.size:
+                errors.append("Size of {} ({}) is {} bytes on the disk but {} bytes in the database".format(
+                    full_path, beam_file.id, file_info.st_size, beam_file.size
+            ))
+                beam_file.size = file_info.st_size
+
+        sum_size = sum(f.size for f in beam.files if f.size is not None)
+        if beam.size != sum_size:
+            errors.append("Size of beam {} is {}, but the sum of its file sizes is {}".format(
+                beam.id, beam.size, sum_size
+            ))
+            beam.size = sum_size
+
+    if errors:
+        db.session.commit()
+        raise Exception(errors)
+
+
 @worker_init.connect
 def on_init(**_):
     app = create_app()
