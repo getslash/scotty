@@ -17,4 +17,4 @@ windows:
       - pgcli scotty
   - window_name: transporter
     panes:
-      - z transporter && RUST_LOG=transporter=debug cargo run example/transporter.conf
+      - j transporter ;and env RUST_LOG=transporter=debug cargo run example/transporter.conf
