@@ -225,6 +225,7 @@ def scrub():
     active_beams = (db.session.query(Beam)
                     .filter(Beam.pending_deletion == False, Beam.deleted == False)
                     .options(joinedload(Beam.files)))
+    expected_files = set()
     for beam in active_beams:
         for beam_file in beam.files:
             if not beam_file.storage_name and not beam_file.size:
@@ -234,7 +235,11 @@ def scrub():
                 beam_file.size = 0
                 continue
 
+            if not beam_file.storage_name:
+                continue
+
             full_path = os.path.join(storage_path, beam_file.storage_name)
+            expected_files.add(full_path)
             if not os.path.exists(full_path):
                 errors.append("{} ({}) does not exist".format(full_path, beam_file.id))
                 continue
@@ -252,6 +257,12 @@ def scrub():
                 beam.id, beam.size, sum_size
             ))
             beam.size = sum_size
+
+    for root, _, files in os.walk(storage_path):
+        for file_ in files:
+            full_path = os.path.join(root, file_)
+            if full_path not in expected_files:
+                errors.append('Unexpected files {}'.format(full_path))
 
     if errors:
         db.session.commit()
