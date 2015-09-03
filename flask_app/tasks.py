@@ -214,6 +214,76 @@ def vacuum():
     logger.info("Vacuum done")
 
 
+@queue.task
+@app_context
+def vacuum_check():
+    storage_path = APP.config['STORAGE_PATH']
+    deleted_beams = db.session.query(Beam).filter(Beam.deleted == True)
+    for beam in deleted_beams:
+        for file_ in beam.files:
+            full_path = os.path.join(storage_path, file_.storage_name)
+            if not os.path.exists(full_path):
+                continue
+
+            logger.warning("{} still exists".format(full_path))
+            os.unlink(full_path)
+
+
+@queue.task
+@app_context
+def scrub():
+    logger.info("Scrubbing intiated")
+    errors = []
+
+    storage_path = APP.config['STORAGE_PATH']
+
+    active_beams = (db.session.query(Beam)
+                    .filter(Beam.pending_deletion == False, Beam.deleted == False)
+                    .options(joinedload(Beam.files)))
+    expected_files = set()
+    for beam in active_beams:
+        for beam_file in beam.files:
+            if not beam_file.storage_name and not beam_file.size:
+                errors.append("{} has no storage name and a size greated than 0".format(
+                    beam_file.id
+                ))
+                beam_file.size = 0
+                continue
+
+            if not beam_file.storage_name:
+                continue
+
+            full_path = os.path.join(storage_path, beam_file.storage_name)
+            expected_files.add(full_path)
+            if not os.path.exists(full_path):
+                errors.append("{} ({}) does not exist".format(full_path, beam_file.id))
+                continue
+
+            file_info = os.stat(full_path)
+            if file_info.st_size != beam_file.size:
+                errors.append("Size of {} ({}) is {} bytes on the disk but {} bytes in the database".format(
+                    full_path, beam_file.id, file_info.st_size, beam_file.size
+            ))
+                beam_file.size = file_info.st_size
+
+        sum_size = sum(f.size for f in beam.files if f.size is not None)
+        if beam.size != sum_size:
+            errors.append("Size of beam {} is {}, but the sum of its file sizes is {}".format(
+                beam.id, beam.size, sum_size
+            ))
+            beam.size = sum_size
+
+    for root, _, files in os.walk(storage_path):
+        for file_ in files:
+            full_path = os.path.join(root, file_)
+            if full_path not in expected_files:
+                errors.append('Unexpected files {}'.format(full_path))
+
+    if errors:
+        db.session.commit()
+        raise Exception(errors)
+
+
 @worker_init.connect
 def on_init(**_):
     app = create_app()
