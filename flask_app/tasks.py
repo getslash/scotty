@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import os
 import smtplib
+import subprocess
 from functools import wraps
 from email.mime.text import MIMEText
 from datetime import timedelta, datetime
@@ -13,7 +14,7 @@ from paramiko.rsakey import RSAKey
 from jinja2 import Template
 import paramiko
 from .app import create_app
-from .models import Beam, db, Pin
+from .models import Beam, db, Pin, File
 from celery.utils.log import get_task_logger
 from celery.schedules import crontab
 from celery.signals import worker_init
@@ -213,6 +214,8 @@ def vacuum():
         vacuum_beam(beam, APP.config['STORAGE_PATH'])
     logger.info("Vacuum done")
 
+    validate_checksum.delay()
+
 
 @queue.task
 @app_context
@@ -227,6 +230,29 @@ def vacuum_check():
 
             logger.warning("{} still exists".format(full_path))
             os.unlink(full_path)
+
+
+def _checksum(path):
+    return subprocess.check_output([APP.config['SHA512SUM'], path]).decode("utf-8").split(" ")[0]
+
+
+@queue.task
+@app_context
+def validate_checksum():
+    storage_path = APP.config['STORAGE_PATH']
+
+    active_beams = (db.session.query(Beam)
+                    .join(Beam.files)
+                    .filter(Beam.pending_deletion == False, Beam.deleted == False,
+                            File.checksum.isnot(None), File.status == "uploaded"))
+
+    for beam in active_beams:
+        for file_ in beam.files:
+            full_path = os.path.join(storage_path, file_.storage_name)
+            checksum = _checksum(full_path)
+            assert checksum == file_.checksum, "Expected checksum of {} is {}. Got {} instead".format(
+                file_.storage_path, file_.checksum, checksum)
+            logger.info("{} validated".format(full_path))
 
 
 @queue.task
