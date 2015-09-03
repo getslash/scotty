@@ -216,6 +216,21 @@ def vacuum():
 
 @queue.task
 @app_context
+def vacuum_check():
+    storage_path = APP.config['STORAGE_PATH']
+    deleted_beams = db.session.query(Beam).filter(Beam.deleted == True)
+    for beam in deleted_beams:
+        for file_ in beam.files:
+            full_path = os.path.join(storage_path, file_.storage_name)
+            if not os.path.exists(full_path):
+                continue
+
+            logger.warning("{} still exists".format(full_path))
+            os.unlink(full_path)
+
+
+@queue.task
+@app_context
 def scrub():
     logger.info("Scrubbing intiated")
     errors = []
