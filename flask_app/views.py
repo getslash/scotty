@@ -306,6 +306,7 @@ def register_file():
     'properties': {
         'success': {'type': 'boolean'},
         'size': {'type': ['number', 'null']},
+        'checksum': {'type': ['string', 'null']},
     },
     'required': ['success']
 })
@@ -318,6 +319,7 @@ def update_file(file_id):
         abort(http.client.BAD_REQUEST)
 
     f.size = size
+    f.checksum = request.json.get('checksum', None)
     f.status = "uploaded" if success else "failed"
     if size is not None:
         f.beam.size += size
