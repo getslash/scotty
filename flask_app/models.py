@@ -1,5 +1,6 @@
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.security import UserMixin, RoleMixin
+from sqlalchemy.orm import backref
 
 db = SQLAlchemy()
 
@@ -49,7 +50,7 @@ class Beam(db.Model):
     completed = db.Column(db.Boolean, index=True)
     combadge_contacted = db.Column(db.Boolean, nullable=False, server_default="true")
     initiator = db.Column(db.Integer, db.ForeignKey('user.id'))
-    files = db.relationship("File", backref="beam")
+    files = db.relationship("File", backref=backref("beam", lazy="joined"))
     pins = db.relationship("Pin", backref="beam")
 
     def __repr__(self):
