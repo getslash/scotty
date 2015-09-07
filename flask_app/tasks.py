@@ -241,18 +241,18 @@ def _checksum(path):
 def validate_checksum():
     storage_path = APP.config['STORAGE_PATH']
 
-    active_beams = (db.session.query(Beam)
-                    .join(Beam.files)
-                    .filter(Beam.pending_deletion == False, Beam.deleted == False,
-                            File.checksum.isnot(None), File.status == "uploaded"))
+    files = File.query.join(Beam).filter(
+        Beam.pending_deletion == False, Beam.deleted == False,
+        File.checksum.isnot(None), File.status == "uploaded")
 
-    for beam in active_beams:
-        for file_ in beam.files:
-            full_path = os.path.join(storage_path, file_.storage_name)
-            checksum = _checksum(full_path)
-            assert checksum == file_.checksum, "Expected checksum of {} is {}. Got {} instead".format(
-                file_.storage_path, file_.checksum, checksum)
-            logger.info("{} validated".format(full_path))
+    for file_ in files:
+        assert not file_.beam.deleted
+        assert not file_.beam.pending_deletion
+        full_path = os.path.join(storage_path, file_.storage_name)
+        checksum = _checksum(full_path)
+        assert checksum == file_.checksum, "Expected checksum of {} is {}. Got {} instead".format(
+            full_path, file_.checksum, checksum)
+        logger.info("{} validated".format(full_path))
 
 
 @queue.task
