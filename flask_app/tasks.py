@@ -214,8 +214,6 @@ def vacuum():
         vacuum_beam(beam, APP.config['STORAGE_PATH'])
     logger.info("Vacuum done")
 
-    validate_checksum.delay()
-
 
 @queue.task
 @app_context
