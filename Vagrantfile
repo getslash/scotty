@@ -3,8 +3,7 @@
 
 Vagrant.configure(2) do |config|
   config.vm.define :server do |server|
-    server.vm.box = "trusty64"
-    server.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+    server.vm.box = "debian/jessie64"
     server.vm.host_name = "server"
     server.vm.network "forwarded_port", guest: 80, host: 8080
     server.vm.network "private_network", ip: "192.168.50.3"
@@ -21,8 +20,6 @@ Vagrant.configure(2) do |config|
       }
       ansible.sudo = true
     end
-  end
-
   config.vm.define :host do |host|
     host.vm.box = "trusty64"
     host.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"

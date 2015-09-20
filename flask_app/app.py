@@ -1,12 +1,12 @@
 import flask
-import logging
 import os
-import sys
 import yaml
 from raven.contrib.flask import Sentry
 from flask.ext.security import Security
 from flask.ext.mail import Mail
 import logbook
+from logbook.compat import redirect_logging
+
 
 
 def create_app(config=None):
@@ -16,8 +16,7 @@ def create_app(config=None):
     ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 
     app = flask.Flask(__name__, static_folder=os.path.join(ROOT_DIR, "..", "static"))
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.path.expandvars(
-        os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://localhost/scotty'))
+
     app.config['TRANSPORTER_HOST'] = '192.168.50.1'
     app.config['STORAGE_PATH'] = '/var/scotty'
     app.config['SENTRY_DSN'] = ''
@@ -27,8 +26,7 @@ def create_app(config=None):
     app.config['BASE_URL'] = 'http://scotty.lab.il.infinidat.com'
     app.config['COMBADGE_CONTACT_TIMEOUT'] = 60 * 60
     app.config['SHA512SUM'] ='/usr/bin/sha512sum'
-
-    _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "conf.d"))
+    _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "..", "conf.d"))
 
     configs = [os.path.join(ROOT_DIR, "app.yml")]
 
@@ -42,11 +40,19 @@ def create_app(config=None):
 
     app.config.update(config)
 
-    console_handler = logging.StreamHandler(sys.stderr)
-    console_handler.setLevel(logging.DEBUG)
-    app.logger.addHandler(console_handler)
+    if 'SQLALCHEMY_DATABASE_URI' not in app.config:
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.path.expandvars(
+            os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://localhost/{0}'.format(app.config['app_name'])))
 
-    logbook.info("Started")
+
+    if os.path.exists("/dev/log"):
+        syslog_handler = logbook.SyslogHandler(app.config['app_name'], "/dev/log")
+        syslog_handler.push_application()
+
+    del app.logger.handlers[:]
+    redirect_logging()
+
+    app.logger.info("Started")
 
     Mail(app)
 
