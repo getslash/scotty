@@ -16,3 +16,4 @@ raven[flask]
 oauth2client
 google-api-python-client
 jsonschema
+Flask-Login==0.2.11
