@@ -20,6 +20,7 @@ Vagrant.configure(2) do |config|
       }
       ansible.sudo = true
     end
+  end
   config.vm.define :host do |host|
     host.vm.box = "trusty64"
     host.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
