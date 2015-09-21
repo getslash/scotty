@@ -7,7 +7,7 @@ export default Base.extend({
       return;
     }
 
-    var auth_token = session.content.auth_token;
+    var auth_token = session.get('secure.auth_token');
     if (requestOptions.headers === undefined) {
       requestOptions.headers = {};
     }
