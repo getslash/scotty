@@ -4,6 +4,7 @@
 <table class="layout-table">
   <tr>
     <td style="width: 10%; vertical-align: top">
+      {{#link-to "beam" beam.model.id (query-params view="") target="_blank"}}<img style="height: 64px" src="/static/assets/img/scotty.png">&nbsp;View in Scotty{{/link-to}}<br/><br/>
       <table class="layout-table">
         <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{beam.model.initiator.display_name}}</td></tr>
         <tr><td class="icon-td"><i class="fa fa-desktop" alt="user"></i></td><td>{{beam.model.host}}</td></tr>
