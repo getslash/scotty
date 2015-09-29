@@ -7,8 +7,8 @@ export default Ember.Controller.extend({
   ssh_key: "",
   password: "",
   submitting: false,
-  auth_rsa: true,
-  auth_password: false,
+  auth_rsa: false,
+  auth_password: true,
 
   disable_all: function() {
     this.set("auth_rsa", false);

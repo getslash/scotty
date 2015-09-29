@@ -1,9 +1,6 @@
 {{#if controllers.application.iframe}}
   <div style="height: 100%; width: 100%; padding: 20px;">
-    {{beam-info-iframe beam=this}}<br/>
-    <div style="text-align:right">
-      {{#link-to "beam" model.id (query-params view="") target="_blank"}}View in Scotty&nbsp;<img style="height: 64px" src="/static/assets/img/scotty.png">{{/link-to}}
-    </div>
+    {{beam-info-iframe beam=this}}
   </div>
 {{else}}
   {{#page-card}}
