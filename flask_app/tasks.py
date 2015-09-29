@@ -97,6 +97,11 @@ Montgomery Scott
 @needs_app_context
 def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
     try:
+        beam = db.session.query(Beam).filter_by(id=beam_id).one()
+        delay = datetime.utcnow() - beam.start
+        if delay.total_seconds() > 10:
+            APP.raven.captureMessage("Beam {} took {} to start".format(beam.id, delay))
+
         transporter = APP.config.get('TRANSPORTER_HOST', 'scotty')
         logger.info('Beaming up {}@{}:{} ({}) to transporter {}. Auth method: {}'.format(
             username, host, directory, beam_id, transporter, auth_method))
@@ -130,7 +135,6 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
 
         logger.info('{}: Detached from combadge'.format(beam_id))
     except Exception as e:
-        beam = db.session.query(Beam).filter_by(id=beam_id).first()
         beam.error = str(e)
         beam.completed = True
         db.session.commit()
