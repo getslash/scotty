@@ -75,6 +75,7 @@ class File(db.Model):
     status = db.Column(db.String(25))
     size = db.Column(db.BigInteger)
     checksum = db.Column(db.String)
+    last_validated = db.Column(db.DateTime, index=True)
     storage_name = db.Column(db.String)
 
     def __repr__(self):
