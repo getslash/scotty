@@ -7,6 +7,7 @@ export default Ember.Controller.extend({
   needs: "application",
   limit: 50,
   page: 1,
+  file_filter: "",
 
   reloadModel: function() {
     this.get("model").reload();
@@ -15,8 +16,15 @@ export default Ember.Controller.extend({
   sliced_files: function() {
     var limit = this.get("limit");
     var page = this.get("page") - 1;
-    return this.get("model.files").slice(limit * page, limit * (page + 1));
-  }.property("limit", "page", "model.files"),
+    var model = this.get("model.files");
+    if (this.get("file_filter")) {
+        var file_filter = this.get("file_filter");
+        model = model.filter(function(f) {
+            return f.get("file_name").indexOf(file_filter) !== -1;
+        });
+    }
+    return model.slice(limit * page, limit * (page + 1));
+}.property("limit", "page", "model.files", "file_filter"),
 
   display_pagination: function() {
     return this.get("model.files.length") > this.get("limit");
