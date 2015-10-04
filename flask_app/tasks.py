@@ -218,6 +218,8 @@ def vacuum():
         vacuum_beam(beam, APP.config['STORAGE_PATH'])
     logger.info("Vacuum done")
 
+    validate_checksum.delay()
+
 
 @queue.task
 @app_context
@@ -245,7 +247,7 @@ def validate_checksum():
 
     files = File.query.join(Beam).filter(
         Beam.pending_deletion == False, Beam.deleted == False,
-        File.checksum.isnot(None), File.status == "uploaded")
+        File.checksum.isnot(None), File.status == "uploaded").order_by(File.last_validated).limit(100)
 
     for file_ in files:
         assert not file_.beam.deleted
@@ -254,7 +256,10 @@ def validate_checksum():
         checksum = _checksum(full_path)
         assert checksum == file_.checksum, "Expected checksum of {} is {}. Got {} instead".format(
             full_path, file_.checksum, checksum)
-        logger.info("{} validated".format(full_path))
+        logger.info("{} validated (last validated: {})".format(full_path, file_.last_validated))
+        file_.last_validated = datetime.utcnow()
+
+    db.session.commit()
 
 
 @queue.task
