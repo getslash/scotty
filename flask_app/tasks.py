@@ -41,6 +41,10 @@ queue.conf.update(
             'task': 'flask_app.tasks.vacuum',
             'schedule': crontab(hour=0, minute=0),
         },
+        'free-space': {
+            'task': 'flask_app.tasks.check_free_space',
+            'schedule': crontab(hour=10, minute=0),
+        },
         'remind': {
             'task': 'flask_app.tasks.remind_pinned',
             'schedule': crontab(hour=13, minute=0, day_of_week='sunday'),
@@ -223,6 +227,8 @@ def vacuum():
         vacuum_beam(beam, APP.config['STORAGE_PATH'])
     logger.info("Vacuum done")
 
+    validate_checksum.delay()
+
 
 @queue.task
 @needs_app_context
@@ -250,7 +256,7 @@ def validate_checksum():
 
     files = File.query.join(Beam).filter(
         Beam.pending_deletion == False, Beam.deleted == False,
-        File.checksum.isnot(None), File.status == "uploaded")
+        File.checksum.isnot(None), File.status == "uploaded").order_by(File.last_validated).limit(100)
 
     for file_ in files:
         assert not file_.beam.deleted
@@ -259,7 +265,10 @@ def validate_checksum():
         checksum = _checksum(full_path)
         assert checksum == file_.checksum, "Expected checksum of {} is {}. Got {} instead".format(
             full_path, file_.checksum, checksum)
-        logger.info("{} validated".format(full_path))
+        logger.info("{} validated (last validated: {})".format(full_path, file_.last_validated))
+        file_.last_validated = datetime.utcnow()
+
+    db.session.commit()
 
 
 @queue.task
@@ -315,6 +324,18 @@ def scrub():
     if errors:
         db.session.commit()
         raise Exception(errors)
+
+
+@queue.task
+@needs_app_context
+def check_free_space():
+    storage_path = APP.config['STORAGE_PATH']
+    df = subprocess.Popen(["df", storage_path], stdout=subprocess.PIPE)
+    output = df.communicate()[0].decode("ASCII")
+    assert df.returncode == 0
+    percent = int(output.split("\n")[1].split()[4][:-1])
+    if percent >= APP.config['FREE_SPACE_THRESHOLD']:
+        APP.raven.captureMessage("Free space is {}%".format(percent))
 
 
 @worker_init.connect

@@ -26,6 +26,7 @@ def create_app(config=None):
     app.config['BASE_URL'] = 'http://scotty.lab.il.infinidat.com'
     app.config['COMBADGE_CONTACT_TIMEOUT'] = 60 * 60
     app.config['SHA512SUM'] ='/usr/bin/sha512sum'
+    app.config['FREE_SPACE_THRESHOLD'] = 85
     _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "..", "conf.d"))
 
     configs = [os.path.join(ROOT_DIR, "app.yml")]

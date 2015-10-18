@@ -52,6 +52,10 @@
 
   {{#if beam.model.files.length}}
     <h4>Files</h4>
+    <center>
+        {{input id="file_filter" type="text" class="filter-box" value=beam.file_filter}}
+        <i class="fa fa-search"></i>
+    </center>
     <table class="layout-table">
     {{#if beam.display_pagination}}
     <tr><td>
