@@ -39,7 +39,7 @@ def bootstrap_env(deps=("base",)):
 
     if out_of_date:
         if not os.path.exists(from_env_bin("python")):
-            subprocess.check_call("virtualenv {} -p {}".format(_ENV_DIR, interpreter), shell=True)
+            subprocess.check_call("{} -m virtualenv {}".format(interpreter, _ENV_DIR), shell=True)
         cmd = "{}/bin/pip install".format(_ENV_DIR)
         for dep in out_of_date:
             cmd += " -r {}".format(_get_depfile_path(dep))

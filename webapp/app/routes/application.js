@@ -9,7 +9,7 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
 
       this.get('torii').open('google-oauth2').then(function(authorization) {
         return self.get('session').authenticate('authenticator:token', authorization).then(
-          function() { },
+          function(data) { return data; },
           function(error) { self.controllerFor('application').send('login_error', error); }
         );
       },

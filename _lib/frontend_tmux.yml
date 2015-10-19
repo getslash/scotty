@@ -18,3 +18,6 @@ windows:
   - window_name: transporter
     panes:
       - j transporter ;and env RUST_LOG=transporter=debug cargo run example/transporter.conf
+  - window_name: redis
+    panes:
+      - bash -c "cd /tmp/ && rm -rf dump.rdb && exec redis-server"

@@ -2,11 +2,13 @@ from __future__ import absolute_import
 import os
 import smtplib
 import subprocess
-from functools import wraps
 from email.mime.text import MIMEText
 from datetime import timedelta, datetime
 from collections import defaultdict
 from io import StringIO
+import functools
+import sys
+import logbook
 from celery import Celery
 from paramiko import SSHClient
 from paramiko.client import AutoAddPolicy
@@ -15,14 +17,18 @@ from jinja2 import Template
 import paramiko
 from .app import create_app
 from .models import Beam, db, Pin, File
-from celery.utils.log import get_task_logger
 from celery.schedules import crontab
 from celery.signals import worker_init
 from raven.contrib.celery import register_signal
 from sqlalchemy.orm import joinedload
 
 
-logger = get_task_logger(__name__)
+from celery.signals import after_setup_logger, after_setup_task_logger
+
+from .app import create_app
+
+logger = logbook.Logger(__name__)
+
 
 queue = Celery('tasks', broker='redis://localhost')
 queue.conf.update(
@@ -50,11 +56,10 @@ queue.conf.update(
     },
     CELERY_TIMEZONE='UTC'
 )
-
 APP = None
 
-def app_context(f):
-    @wraps(f)
+def needs_app_context(f):
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         global APP
 
@@ -93,7 +98,7 @@ Montgomery Scott
 """
 
 @queue.task
-@app_context
+@needs_app_context
 def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
     try:
         beam = db.session.query(Beam).filter_by(id=beam_id).one()
@@ -156,7 +161,7 @@ def vacuum_beam(beam, storage_path):
 
 
 @queue.task
-@app_context
+@needs_app_context
 def mark_timeout():
     timeout = timedelta(seconds=APP.config['COMBADGE_CONTACT_TIMEOUT'])
     timed_out = datetime.utcnow() - timeout
@@ -172,7 +177,7 @@ def mark_timeout():
 
 
 @queue.task
-@app_context
+@needs_app_context
 def remind_pinned():
     remind_time = datetime.utcnow() - timedelta(days=APP.config['PIN_REMIND_THRESHOLD'])
     emails = defaultdict(list)
@@ -198,7 +203,7 @@ def remind_pinned():
 
 
 @queue.task
-@app_context
+@needs_app_context
 def vacuum():
     logger.info("Vacuum intiated")
 
@@ -226,7 +231,7 @@ def vacuum():
 
 
 @queue.task
-@app_context
+@needs_app_context
 def vacuum_check():
     storage_path = APP.config['STORAGE_PATH']
     deleted_beams = db.session.query(Beam).filter(Beam.deleted == True)
@@ -245,7 +250,7 @@ def _checksum(path):
 
 
 @queue.task
-@app_context
+@needs_app_context
 def validate_checksum():
     storage_path = APP.config['STORAGE_PATH']
 
@@ -267,7 +272,7 @@ def validate_checksum():
 
 
 @queue.task
-@app_context
+@needs_app_context
 def scrub():
     logger.info("Scrubbing intiated")
     errors = []
@@ -322,7 +327,7 @@ def scrub():
 
 
 @queue.task
-@app_context
+@needs_app_context
 def check_free_space():
     storage_path = APP.config['STORAGE_PATH']
     df = subprocess.Popen(["df", storage_path], stdout=subprocess.PIPE)
@@ -337,3 +342,11 @@ def check_free_space():
 def on_init(**_):
     app = create_app()
     register_signal(app.raven.client)
+
+def setup_log(**args): # pylint: disable=W0613
+    logbook.SyslogHandler().push_application()
+    logbook.StreamHandler(sys.stderr, bubble=True).push_application()
+
+
+after_setup_logger.connect(setup_log)
+after_setup_task_logger.connect(setup_log)

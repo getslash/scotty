@@ -25,8 +25,8 @@ export default Ember.Controller.extend({
   },
 
   me: function() {
-    return this.store.find("user", this.get("session.id"));
-  }.property("session.id"),
+    return this.store.find("user", this.get("session.secure.id"));
+  }.property("session.secure.id"),
 
   background_change: function() {
     var view = this.get("view");

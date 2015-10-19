@@ -1,9 +1,13 @@
 SQLALCHEMY_DATABASE_URI: "postgresql://{{app_name}}:{{app_name}}@localhost/{{app_name}}"
-DEBUG: {% if install_with_debug is defined and install_with_debug %}true{% else %}false{% endif %}
-
 STORAGE_PATH: /var/scotty
 SENTRY_DSN: "{{sentry_dsn}}"
 
 TRANSPORTER_HOST: "{{transporter_host}}"
 VACUUM_THRESHOLD: {{vacuum_threshold}}
 PIN_REMIND_THRESHOLD: {{pin_remind_threshold}}
+
+DEBUG: {% if install_with_debug is defined and install_with_debug -%}
+true
+{%- else -%}
+false
+{%- endif %}
