@@ -8,6 +8,8 @@ export default Ember.Controller.extend({
   limit: 50,
   page: 1,
   file_filter: "",
+  session: Ember.inject.service('session'),
+
 
   reloadModel: function() {
     this.get("model").reload();
@@ -40,14 +42,14 @@ export default Ember.Controller.extend({
 
   monitor_pins: function() {
     Ember.run.once(this, "update_pinned");
-  }.observes("model.pins", "session.id").on("init"),
+}.observes("model.pins", "session.data.secure.id").on("init"),
 
   update_pinned: function() {
-    if (this.get("session.id") === undefined) {
+    if (this.get("session.data.secure.id") === undefined) {
       this.set("pinned", false);
     } else {
       var self = this;
-      return this.store.find("user", this.get("session.id")).then(function(me) {
+      return this.store.find("user", this.get("session.data.secure.id")).then(function(me) {
         self.set("pinned", self.get("model.pins").contains(me));
       });
     }

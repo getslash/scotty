@@ -7,6 +7,7 @@ from oauth2client.client import flow_from_clientsecrets
 from apiclient.discovery import build
 from flask import request, jsonify, Blueprint, current_app, abort
 from flask.ext.security import SQLAlchemyUserDatastore
+from flask.ext.login import login_user, logout_user, current_user
 from .models import Role, User, db
 from itsdangerous import TimedSerializer, BadSignature
 
@@ -75,11 +76,20 @@ def login():
 
     user = get_or_create_user(user_info['email'], user_info['name'])
     token = _get_token_serializer().dumps({'user_id': user.id})
+    login_user(user)
 
     return jsonify({
         'id': user.id,
         'auth_token': token,
     })
+
+
+@auth.route("/logout", methods=['POST'])
+def logout():
+    if current_user.is_authenticated:
+        logout_user()
+
+    return ''
 
 
 def _get_user_from_auth_token(auth_token):
@@ -98,6 +108,7 @@ def restore():
         abort(http.client.FORBIDDEN)
 
     assert user.id == request.json['id']
+    login_user(user)
     return jsonify(request.json)
 
 
@@ -120,6 +131,9 @@ def require_user(allow_anonymous):
             user = None
             if auth_token:
                 user = _get_user_from_auth_token(auth_token)
+
+            if current_user.is_authenticated:
+                user = current_user
 
             if not user:
                 if not allow_anonymous:

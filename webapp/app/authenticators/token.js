@@ -1,4 +1,4 @@
-import Base from 'simple-auth/authenticators/base';
+import Base from 'ember-simple-auth/authenticators/base';
 import Ember from "ember";
 
 export default Base.extend({
@@ -13,6 +13,12 @@ export default Base.extend({
         function(data) { resolve(data); },
         function(reason) { reject(reason.status); }
       );
+    });
+  },
+  invalidate: function() {
+    return Ember.$.ajax({
+      type: "POST",
+      url: "/logout",
     });
   },
   authenticate: function(auth_code) {

@@ -23,14 +23,15 @@ module.exports = function(environment) {
           redirectUri: '',
           apiKey:      '825485764208-hqk1p0nv7e03kf7a415tki9f8ttooeig.apps.googleusercontent.com',
           scope: 'email profile'
-        }
-      }
+        },
+        sessionServiceName: 'session'
+      },
     },
 
   };
 
   ENV['simple-auth'] = {
-   authorizer: 'authorizer:token'
+    store: 'session-store:local-storage'
   };
 
   if (environment === 'development') {

@@ -1,7 +1,6 @@
 import Ember from 'ember';
-import AuthenticationControllerMixin from 'simple-auth/mixins/authentication-controller-mixin';
 
-export default Ember.Controller.extend(AuthenticationControllerMixin, {
+export default Ember.Controller.extend({
   canSubmit: true,
   emailValid: function() {
     var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
