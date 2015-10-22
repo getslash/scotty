@@ -31,7 +31,6 @@
     "ember-cli-htmlbars": "0.7.9",
     "ember-cli-ic-ajax": "0.2.1",
     "ember-cli-inject-live-reload": "^1.3.1",
-    "ember-cli-materialize": "^0.7.2",
     "ember-cli-qunit": "1.0.0",
     "ember-cli-release": "0.2.3",
     "ember-cli-sri": "^1.0.3",
@@ -41,6 +40,7 @@
     "ember-disable-proxy-controllers": "^1.0.0",
     "ember-export-application-global": "^1.0.3",
     "ember-simple-auth": "^1.0.1",
+    "materialize-css": "^0.97.1",
     "torii": "^0.6.1"
   }
 }
