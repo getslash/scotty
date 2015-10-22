@@ -37,7 +37,7 @@ App.Pollster = Ember.Object.extend({
     this.set('timer', this.schedule(this.get('onPoll')));
   },
 
-  onPoll: function(){
+  onPoll: function() {
     // Issue JSON request and add data to the store
   }
 });
@@ -64,4 +64,3 @@ App.instanceInitializer({
 loadInitializers(App, config.modulePrefix);
 config.torii.providers['google-oauth2'].redirectUri = window.location.origin;
 export default App;
-

@@ -33,21 +33,21 @@ export default Ember.Controller.extend({
         password: this.get('password')
       };
       this.get('session').authenticate('authenticator:token', credentials)
-      .finally(function() {
-        self.set("canSubmit", true);
-      })
-      .then(
-        function() {
+        .finally(function() {
+          self.set("canSubmit", true);
+        })
+        .then(
+          function() {
 
-        },
-        function(reason) {
-          var error = reason.statusText;
-          if (reason.status === 401) {
-            error = "Invalid username or password";
-          }
+          },
+          function(reason) {
+            var error = reason.statusText;
+            if (reason.status === 401) {
+              error = "Invalid username or password";
+            }
 
-          self.set("errors", error);
-        });
+            self.set("errors", error);
+          });
     }
   }
 });

@@ -7,11 +7,15 @@ export default Base.extend({
       Ember.$.ajax({
         type: "POST",
         url: "/restore",
-        contentType : 'application/json',
+        contentType: 'application/json',
         data: JSON.stringify(credentials)
       }).then(
-        function(data) { resolve(data); },
-        function(reason) { reject(reason.status); }
+        function(data) {
+          resolve(data);
+        },
+        function(reason) {
+          reject(reason.status);
+        }
       );
     });
   },
@@ -26,11 +30,15 @@ export default Base.extend({
       Ember.$.ajax({
         type: "POST",
         url: "/login",
-        contentType : 'application/json',
+        contentType: 'application/json',
         data: JSON.stringify(auth_code)
       }).then(
-        function(data) { resolve(data); },
-        function(reason) { reject(reason.status); }
+        function(data) {
+          resolve(data);
+        },
+        function(reason) {
+          reject(reason.status);
+        }
       );
     });
   }

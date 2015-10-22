@@ -21,7 +21,7 @@ module.exports = function(environment) {
       providers: {
         'google-oauth2': {
           redirectUri: '',
-          apiKey:      '825485764208-hqk1p0nv7e03kf7a415tki9f8ttooeig.apps.googleusercontent.com',
+          apiKey: '825485764208-hqk1p0nv7e03kf7a415tki9f8ttooeig.apps.googleusercontent.com',
           scope: 'email profile'
         },
         sessionServiceName: 'session'
