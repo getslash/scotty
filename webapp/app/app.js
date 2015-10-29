@@ -46,11 +46,12 @@ App.instanceInitializer({
   name: "relative_time_update",
 
   initialize: function(instance) {
+    let storage = instance.container.lookup("service:store");
     App.update_reltime = App.Pollster.create({
       onPoll: function() {
-        var beams = instance.container.lookup("store:application").all("beam").content;
+        let beams = storage.all("beam").content;
         for (var i = 0; i < beams.length; i++) {
-          var beam = beams[i].getRecord();
+          let beam = beams[i].getRecord();
           beam.set("tick", beam.get("tick") + 1);
         }
         return true;
