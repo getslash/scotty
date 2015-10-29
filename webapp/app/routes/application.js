@@ -1,7 +1,6 @@
 import Ember from 'ember';
 import ApplicationRouteMixin from 'ember-simple-auth/mixins/application-route-mixin';
 
-
 export default Ember.Route.extend(ApplicationRouteMixin, {
   actions: {
     login: function() {
@@ -30,7 +29,10 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
     if (!this.store.recordIsLoaded("info", "1")) {
       return Ember.$.getJSON("/info").then(function(info) {
         info.id = 1;
-        self.store.push("info", info);
+        info.type = "info";
+        self.store.push({
+          data: info
+        });
         return info;
       });
     }
