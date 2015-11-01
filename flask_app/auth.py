@@ -132,7 +132,7 @@ def require_user(allow_anonymous):
             if auth_token:
                 user = _get_user_from_auth_token(auth_token)
 
-            if current_user.is_authenticated:
+            if current_user.is_authenticated():
                 user = current_user
 
             if not user:
