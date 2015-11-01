@@ -1,17 +1,19 @@
+{{#unless iframe}}
+
 <table class="layout-table">
   <tr>
     <td>
       <table class="layout-table">
-        <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{beam.model.initiator.display_name}}</td></tr>
-        <tr><td class="icon-td"><i class="fa fa-desktop" alt="user"></i></td><td>{{beam.model.host}}</td></tr>
+        <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{model.initiator.display_name}}</td></tr>
+        <tr><td class="icon-td"><i class="fa fa-desktop" alt="user"></i></td><td>{{model.host}}</td></tr>
         <tr>
           <td class="icon-td"><i class="fa fa-clock-o"></i></td>
-          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{format-date beam.model.start}}">{{beam.model.relative_time}}</a></td></tr>
-        <tr><td class="icon-td"><i class="fa fa-database"></i></td><td>{{capacity-display beam.model.size}}</td></tr>
+          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{format-date model.start}}">{{model.relative_time}}</a></td></tr>
+        <tr><td class="icon-td"><i class="fa fa-database"></i></td><td>{{capacity-display model.size}}</td></tr>
         <tr>
           <td class="icon-td"><i class="fa fa-thumb-tack"></i></td>
-          {{#if beam.model.has_pinners}}
-          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{beam.model.pinners}}">{{beam.model.num_of_pins}} users</a></td>
+          {{#if model.has_pinners}}
+          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{model.pinners}}">{{model.num_of_pins}} users</a></td>
           {{else}}
           <td>Nobody</td>
           {{/if}}
@@ -19,9 +21,9 @@
      </table>
     </td>
     <td style="text-align: right">
-      {{#link-to "beam" beam.model}}
-      <a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{beam.model.directory}}">
-        <img src="{{beam.model.img}}" class="responsive-img">
+      {{#link-to "beam" model}}
+      <a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{model.directory}}">
+        <img src="{{model.img}}" class="responsive-img">
       </a>
       {{/link-to}}
     </td>
@@ -29,48 +31,48 @@
 </table>
 {{#if extended}}
 <table class="layout-table">
-  <tr><td class="icon-td"><i class="fa fa-folder"></i></td><td>{{beam.model.directory}}</td></tr>
+  <tr><td class="icon-td"><i class="fa fa-folder"></i></td><td>{{model.directory}}</td></tr>
 </table>
 {{/if}}
-{{#if beam.model.deleted}}
+{{#if model.deleted}}
   <br/><p style='font-style: italic'>Deleted.</p>
 {{else}}
-  {{#if beam.model.should_display_purge_str}}
-    <br/><p style='font-style: italic'>Will be deleted {{beam.model.purge_str}}.</p>
+  {{#if model.should_display_purge_str}}
+    <br/><p style='font-style: italic'>Will be deleted {{model.purge_str}}.</p>
   {{/if}}
 {{/if}}
-{{#if beam.session.isAuthenticated}}
-  {{#unless beam.model.deleted}}
-    <br/><p><a {{action "pin" beam.pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if beam.pinned}}Unpin{{else}}Pin{{/if}}</a></p>
+{{#if session.isAuthenticated}}
+  {{#unless model.deleted}}
+    <br/><p><a {{action "pin" pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if pinned}}Unpin{{else}}Pin{{/if}}</a></p>
   {{/unless}}
 {{/if}}
 
 {{#if extended}}
-  {{#if beam.model.error_message}}
-  <br/><p class="red-text text-darken-2">{{newlines-text beam.model.error_message}}</p>
+  {{#if model.error_message}}
+  <br/><p class="red-text text-darken-2">{{newlines-text model.error_message}}</p>
   {{/if}}
 
-  {{#if beam.model.files.length}}
+  {{#if model.files.length}}
     <h4>Files</h4>
     <center>
-        {{input id="file_filter" type="text" class="filter-box" value=beam.file_filter}}
+        {{input id="file_filter" type="text" class="filter-box" value=file_filter}}
         <i class="fa fa-search"></i>
     </center>
     <table class="layout-table">
-    {{#if beam.display_pagination}}
+    {{#if display_pagination}}
     <tr><td>
       <ul class="pagination">
-      {{#each beam.pages as |page|}}
-        {{#link-to "beam" beam.model (query-params page=page) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
+      {{#each pages as |page|}}
+        {{#link-to "beam" model (query-params page=page) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
       {{/each}}
       </ul>
     </td></tr>
     {{/if}}
     <tr><td>
     <div class="collection">
-      {{#each beam.sliced_files as |file|}}
+      {{#each sliced_files as |file|}}
         {{#if file.file_name}}
-          {{#if beam.model.deleted}}
+          {{#if model.deleted}}
             <li class="collection-item">{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></li>
           {{else}}
             <a class="collection-item file-link" target="_blank" href={{file.url}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
@@ -84,3 +86,75 @@
     <br/><p>No files were beamed yet.</p>
   {{/if}}
 {{/if}}
+
+{{else}}
+
+{{#if back}}
+<button class="btn" {{action "back"}}>&lt; Back</button><br/><br/>
+{{/if}}
+<table class="layout-table">
+  <tr>
+    <td style="width: 10%; vertical-align: top">
+      {{#link-to "beam" this.model.id (query-params view="" back="") target="_blank"}}<img style="height: 64px" src="/static/assets/img/scotty.png">&nbsp;View in Scotty{{/link-to}}<br/><br/>
+      <table class="layout-table">
+        <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{this.model.initiator.display_name}}</td></tr>
+        <tr><td class="icon-td"><i class="fa fa-desktop" alt="user"></i></td><td>{{this.model.host}}</td></tr>
+        <tr>
+          <td class="icon-td"><i class="fa fa-clock-o"></i></td>
+          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{format-date this.model.start}}">{{this.model.relative_time}}</a></td></tr>
+        <tr><td class="icon-td"><i class="fa fa-database"></i></td><td>{{capacity-display this.model.size}}</td></tr>
+        <tr>
+          <td class="icon-td"><i class="fa fa-thumb-tack"></i></td>
+          {{#if model.has_pinners}}
+          <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{model.pinners}}">{{model.num_of_pins}} users</a></td>
+          {{else}}
+          <td>Nobody</td>
+          {{/if}}
+        </tr>
+     </table>
+     {{#if this.model.deleted}}
+       <br/><p style='font-style: italic'>Deleted.</p>
+     {{else}}
+       {{#if this.model.should_display_purge_str}}
+         <br/><p style='font-style: italic'>Will be deleted {{this.model.purge_str}}.</p>
+       {{/if}}
+     {{/if}}
+
+     {{#if this.model.error_message}}
+     <br/><p class="red-text text-darken-2">{{newlines-text this.model.error_message}}</p>
+     {{/if}}
+    </td>
+    <td style="width: 90%; padding-left: 20px; vertical-align: top">
+      {{#if this.model.files.length}}
+        <table class="layout-table">
+        {{#if this.display_pagination}}
+        <tr><td>
+          <ul class="pagination">
+          {{#each this.pages as |page|}}
+            {{#link-to "beam" this.model (query-params page=page) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
+          {{/each}}
+          </ul>
+        </td></tr>
+        {{/if}}
+        <tr><td>
+        <div class="collection">
+          {{#each this.sliced_files as |file|}}
+            {{#if file.file_name}}
+              {{#if this.model.deleted}}
+                <li class="collection-item">{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></li>
+              {{else}}
+                <a class="collection-item file-link" target="_blank" href={{file.url}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
+              {{/if}}
+            {{/if}}
+          {{/each}}
+        </div>
+        </td></tr>
+        </table>
+      {{else}}
+        <p>No files were beamed yet.</p>
+      {{/if}}
+    </td>
+  </tr>
+</table>
+
+{{/unless}}

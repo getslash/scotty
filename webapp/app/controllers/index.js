@@ -1,8 +1,5 @@
 import Ember from 'ember';
 
-export default Ember.ArrayController.extend({
-  itemController: 'beam',
-  sortProperties: ['start'],
-  sortAscending: false,
-  needs: "application"
+export default Ember.Controller.extend({
+  application: Ember.inject.controller('application'),
 });

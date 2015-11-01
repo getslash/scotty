@@ -1,9 +1,9 @@
-{{#if controllers.application.iframe}}
+{{#if application.iframe}}
   <div style="height: 100%; width: 100%; padding: 20px;">
-    {{beam-info-iframe beam=this}}
+    {{beam-info model=this.model extended=true back=back page=page iframe=true}}
   </div>
 {{else}}
   {{#page-card}}
-    {{beam-info beam=this extended=true}}
+    {{beam-info model=this.model extended=true back=back page=page}}
   {{/page-card}}
 {{/if}}
