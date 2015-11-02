@@ -16,7 +16,7 @@ class Pin(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
+    beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'), index=True)
 
 
 class Role(db.Model, RoleMixin):
@@ -72,7 +72,7 @@ class File(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     file_name = db.Column(db.String)
-    beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
+    beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'), index=True)
     status = db.Column(db.String(25))
     size = db.Column(db.BigInteger)
     checksum = db.Column(db.String)

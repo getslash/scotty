@@ -214,13 +214,14 @@ def vacuum():
     db.engine.execute(
         "update beam set pending_deletion=true where "
         "(not beam.pending_deletion and not beam.deleted and beam.completed)" # Anything which isn't uncompleted or already deleted
-        "and beam.id not in (select beam_id from pin) " # which has no pinners
+        "and not exists (select beam_id from pin where pin.beam_id = beam.id) " # which has no pinners
         "and ("
-            "(beam.id not in (select beam_id from file)) " # Either has no files
+            "(not exists (select beam_id from file where file.beam_id = beam.id)) " # Either has no files
             "or (beam.start < now() - '%s days'::interval)" # or has files but is VACUUM_THRESHOLD days old
         ")",
         APP.config['VACUUM_THRESHOLD'])
     db.session.commit()
+    logger.info("Finished marking vacuum candidates")
 
     to_delete = db.session.query(Beam).filter(Beam.pending_deletion == True, Beam.deleted == False)
     for beam in to_delete:
