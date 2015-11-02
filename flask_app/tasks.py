@@ -150,6 +150,9 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
 def vacuum_beam(beam, storage_path):
     logger.info("Vacuuming {}".format(beam.id))
     for f in beam.files:
+        if not f.storage_name:
+            continue
+
         path = os.path.join(storage_path, f.storage_name)
         if os.path.exists(path):
             logger.info("Deleting {}".format(path))
