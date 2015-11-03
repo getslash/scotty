@@ -1,7 +1,7 @@
 {{#unless this.application.iframe}}
 <br/>
 <div class="beams-container {{unless this.application.iframe "container"}}">
-  {{#each this.model as |beam|}}
+  {{#each this.sortedModel as |beam|}}
     <div class="beam-container">
       <div class="beam-card">
         <div class="card-content">
@@ -30,7 +30,7 @@
     </tr>
   </thead>
   <tbody>
-  {{#each this.model as |beam|}}
+  {{#each this.sortedModel as |beam|}}
     <tr>
       <td>{{#link-to "beam" beam (query-params back=true)}}{{beam.id}}{{/link-to}}</td>
       <td>{{beam.initiator.display_name}}</td>
