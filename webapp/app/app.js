@@ -46,7 +46,7 @@ App.instanceInitializer({
   name: "relative_time_update",
 
   initialize: function(instance) {
-    let storage = instance.container.lookup("service:store");
+    let storage = instance.lookup("service:store");
     App.update_reltime = App.Pollster.create({
       onPoll: function() {
         let beams = storage.peekAll("beam").content;

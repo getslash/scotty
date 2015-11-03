@@ -1,6 +1,7 @@
 import Ember from 'ember';
+import UnauthenticatedRouteMixin from 'ember-simple-auth/mixins/unauthenticated-route-mixin';
 
-export default Ember.Controller.extend({
+export default Ember.Controller.extend(UnauthenticatedRouteMixin, {
   canSubmit: true,
   emailValid: function() {
     var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
@@ -33,21 +34,21 @@ export default Ember.Controller.extend({
         password: this.get('password')
       };
       this.get('session').authenticate('authenticator:token', credentials)
-        .finally(function() {
-          self.set("canSubmit", true);
-        })
-        .then(
-          function() {
+      .finally(function() {
+        self.set("canSubmit", true);
+      })
+      .then(
+        function(data) {
+            return data;
+        },
+        function(reason) {
+          var error = reason.statusText;
+          if (reason.status === 401) {
+            error = "Invalid username or password";
+          }
 
-          },
-          function(reason) {
-            var error = reason.statusText;
-            if (reason.status === 401) {
-              error = "Invalid username or password";
-            }
-
-            self.set("errors", error);
-          });
+          self.set("errors", error);
+        });
     }
   }
 });

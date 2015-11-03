@@ -6,23 +6,23 @@ var Router = Ember.Router.extend({
 });
 
 Router.map(function() {
-  this.resource('setup', function() {});
-  this.resource('login', function() {});
-  this.resource('beam', {
+  this.route('setup', function() {});
+  this.route('login', function() {});
+  this.route('beam', {
     path: '/beam/:beam_id'
   });
-  this.resource('new-beam', function() {});
-  this.resource('changelog', function() {});
-  this.resource('api', function() {});
-  this.resource('about', function() {});
-  this.resource('summary', function() {});
-  this.resource('tag', {
+  this.route('new-beam', function() {});
+  this.route('changelog', function() {});
+  this.route('api', function() {});
+  this.route('about', function() {});
+  this.route('summary', function() {});
+  this.route('tag', {
     path: '/tag/:tag'
   });
   this.route('not-found', {
     path: "*path"
   });
-  this.resource('faq', function() {});
+  this.route('faq', function() {});
   this.route('tags');
   this.route('pinned');
 });
