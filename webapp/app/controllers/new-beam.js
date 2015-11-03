@@ -74,7 +74,7 @@ export default Ember.Controller.extend({
           function() {
             self.set("submitting", false);
             self.set("ssh_key", "");
-            self.transitionTo("beam", beam.id);
+            self.transitionToRoute("beam", beam.id);
           },
           function(response) {
             self.set("submitting", false);
