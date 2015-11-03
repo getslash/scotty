@@ -20,7 +20,7 @@ export default Ember.Route.extend(Materialize, {
   },
 
   update: function() {
-    this.store.findAll("beam").then(function() {
+    this.store.findAll("beam", {reload: true}).then(function() {
       Ember.run.scheduleOnce('afterRender', function() {
         Ember.$('.tooltipped').tooltip({
           delay: 50

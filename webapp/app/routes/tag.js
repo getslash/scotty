@@ -2,7 +2,7 @@ import Ember from 'ember';
 
 export default Ember.Route.extend({
   model: function(params) {
-    return this.store.find("beam", {
+    return this.store.findAll("beam", {
       tag: params.tag
     });
   },

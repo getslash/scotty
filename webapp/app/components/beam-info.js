@@ -38,7 +38,6 @@ export default Ember.Component.extend({
     }
 
     let last_page = arr[arr.length - 1];
-    Ember.Logger.info("last page: " + last_page);
     if (this.get("page") > last_page) {
       this.set("page", last_page);
     }
