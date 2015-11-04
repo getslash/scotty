@@ -7,7 +7,7 @@ from jsonschema import Draft4Validator
 from functools import wraps
 from datetime import datetime, time
 from sqlalchemy import distinct
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, false
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 from paramiko.ssh_exception import SSHException
@@ -61,6 +61,7 @@ def _jsonify_beam(beam):
     }
 
 
+_ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email']
 @views.route('/beams', methods=['GET'])
 def get_beams():
     query = (
@@ -68,17 +69,33 @@ def get_beams():
         .options(joinedload(Beam.pins))
         .filter_by(pending_deletion=False, deleted=False)
         .order_by(Beam.start.desc()))
-    if 'tag' in request.values:
-        if 'pinned' in request.values:
-            abort(http.client.BAD_REQUEST)
-        tag = request.values['tag']
-        query = query.filter(Beam.tags.any(Tag.tag == tag))
-    if 'pinned' in request.values:
-        if 'tags' in request.values:
+    query_params = []
+    for param in request.values:
+        if query_params or param not in _ALLOWED_PARAMS:
             abort(http.client.BAD_REQUEST)
 
+        query_params.append(param)
+
+    param = query_params[0] if query_params else None
+    if param == "tag":
+        tag = request.values['tag']
+        query = query.filter(Beam.tags.any(Tag.tag == tag))
+    elif param == "pinned":
         pinned = db.session.query(distinct(Pin.beam_id))
         query = query.filter(Beam.id.in_(pinned))
+    elif param == "uid":
+        try:
+            uid = int(request.values['uid'])
+        except ValueError:
+            abort(http.client.BAD_REQUEST)
+        query = query.filter_by(initiator=uid)
+    elif param == "email":
+        email = request.values['email']
+        user = db.session.query(User).filter_by(email=email).first()
+        if not user:
+            query = query.filter(false())
+        else:
+            query = query.filter_by(initiator=user.id)
 
     beams = [_jsonify_beam(b) for b in query.limit(50)]
     return jsonify({'beams': beams})

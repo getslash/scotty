@@ -24,6 +24,12 @@ Router.map(function() {
   });
   this.route('faq', function() {});
   this.route('pinned');
+
+  this.route('beams', function() {
+    this.route('by-user', { path: '/by_user/:uid' });
+    this.route('by-email', { path: '/by_email/:email' });
+  });
+  this.route('filtered-beams');
 });
 
 export default Router;

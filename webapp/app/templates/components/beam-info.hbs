@@ -4,7 +4,7 @@
   <tr>
     <td>
       <table class="layout-table">
-        <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{model.initiator.display_name}}</td></tr>
+        <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{#link-to "beams.by-user" model.initiator.id}}{{model.initiator.display_name}}{{/link-to}}</td></tr>
         <tr><td class="icon-td"><i class="fa fa-desktop" alt="user"></i></td><td>{{model.host}}</td></tr>
         <tr>
           <td class="icon-td"><i class="fa fa-clock-o"></i></td>

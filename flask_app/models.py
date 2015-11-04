@@ -27,7 +27,7 @@ class Role(db.Model, RoleMixin):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(255), unique=True)
+    email = db.Column(db.String(255), unique=True, index=True)
     name = db.Column(db.String(255))
     active = db.Column(db.Boolean())
     roles = db.relationship('Role', secondary=roles_users,
@@ -50,7 +50,7 @@ class Beam(db.Model):
     deleted = db.Column(db.Boolean, index=True)
     completed = db.Column(db.Boolean, index=True)
     combadge_contacted = db.Column(db.Boolean, nullable=False, server_default="true")
-    initiator = db.Column(db.Integer, db.ForeignKey('user.id'))
+    initiator = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     files = db.relationship("File", backref=backref("beam", lazy="joined"))
     pins = db.relationship("Pin", backref="beam")
 

@@ -1,10 +1,10 @@
-import FilteredBeams from './filtered-beams';
+import FilteredBeams from '../filtered-beams';
 
 export default FilteredBeams.extend({
   model: function(params) {
     return this.store.query("beam", {
-      tag: params.tag
+      email: params.email
     });
   },
-  what: "tag"
+  what: "email"
 });
