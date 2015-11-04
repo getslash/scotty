@@ -19,7 +19,7 @@ export default Ember.Component.extend({
       });
     }
     return model;
-  }.property("file_filter"),
+  }.property("file_filter", "model.files"),
 
   sliced_files: function() {
     let limit = this.get("limit");
