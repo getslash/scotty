@@ -52,6 +52,16 @@
   <br/><p class="red-text text-darken-2">{{newlines-text model.error_message}}</p>
   {{/if}}
 
+  {{#if model.tags}}
+      <br/>
+      <h4>Tags</h4>
+      <ul>
+          {{#each model.tags as |tag|}}
+              <li>{{#link-to "tag" tag}}{{tag}}{{/link-to}}</li>
+          {{/each}}
+      </ul>
+  {{/if}}
+
   {{#if model.files.length}}
     <h4>Files</h4>
     <center>

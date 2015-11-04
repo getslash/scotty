@@ -55,7 +55,8 @@ def _jsonify_beam(beam):
         'error': beam.error,
         'directory': beam.directory,
         'deleted': beam.pending_deletion or beam.deleted,
-        'pins': [u.user_id for u in beam.pins]
+        'pins': [u.user_id for u in beam.pins],
+        'tags': [t.tag for t in beam.tags]
     }
 
 
