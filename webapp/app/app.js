@@ -37,7 +37,7 @@ App.Pollster = Ember.Object.extend({
     this.set('timer', this.schedule(this.get('onPoll')));
   },
 
-  onPoll: function(){
+  onPoll: function() {
     // Issue JSON request and add data to the store
   }
 });
@@ -46,11 +46,12 @@ App.instanceInitializer({
   name: "relative_time_update",
 
   initialize: function(instance) {
+    let storage = instance.lookup("service:store");
     App.update_reltime = App.Pollster.create({
       onPoll: function() {
-        var beams = instance.container.lookup("store:application").all("beam").content;
+        let beams = storage.peekAll("beam").content;
         for (var i = 0; i < beams.length; i++) {
-          var beam = beams[i].getRecord();
+          let beam = beams[i].getRecord();
           beam.set("tick", beam.get("tick") + 1);
         }
         return true;
@@ -64,4 +65,3 @@ App.instanceInitializer({
 loadInitializers(App, config.modulePrefix);
 config.torii.providers['google-oauth2'].redirectUri = window.location.origin;
 export default App;
-

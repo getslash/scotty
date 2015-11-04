@@ -8,6 +8,8 @@ from collections import defaultdict
 from io import StringIO
 import functools
 import sys
+import logging
+import logging.handlers
 import logbook
 from celery import Celery
 from paramiko import SSHClient
@@ -24,6 +26,7 @@ from sqlalchemy.orm import joinedload
 
 
 from celery.signals import after_setup_logger, after_setup_task_logger
+from celery.log import redirect_stdouts_to_logger
 
 from .app import create_app
 
@@ -56,6 +59,19 @@ queue.conf.update(
     },
     CELERY_TIMEZONE='UTC'
 )
+def setup_log(**args):
+    logbook.SyslogHandler().push_application()
+    logbook.StreamHandler(sys.stderr, bubble=True).push_application()
+    redirect_stdouts_to_logger(args['logger']) # logs to local syslog
+    if os.path.exists('/dev/log'):
+        h = logging.handlers.SysLogHandler('/dev/log')
+    else:
+        h = logging.handlers.SysLogHandler()
+    h.setLevel(args['loglevel'])
+    formatter = logging.Formatter(logging.BASIC_FORMAT)
+    h.setFormatter(formatter)
+    args['logger'].addHandler(h)
+
 APP = None
 
 def needs_app_context(f):
@@ -346,10 +362,6 @@ def check_free_space():
 def on_init(**_):
     app = create_app()
     register_signal(app.raven.client)
-
-def setup_log(**args): # pylint: disable=W0613
-    logbook.SyslogHandler().push_application()
-    logbook.StreamHandler(sys.stderr, bubble=True).push_application()
 
 
 after_setup_logger.connect(setup_log)

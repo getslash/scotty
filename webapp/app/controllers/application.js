@@ -4,6 +4,7 @@ export default Ember.Controller.extend({
   queryParams: ['view'],
   view: "",
   modal_content: "",
+  session: Ember.inject.service('session'),
 
   iframe: function() {
     return this.get("view") === "iframe";
@@ -25,8 +26,8 @@ export default Ember.Controller.extend({
   },
 
   me: function() {
-    return this.store.find("user", this.get("session.secure.id"));
-  }.property("session.secure.id"),
+    return this.store.find("user", this.get("session.data.authenticated.id"));
+  }.property("session.data.authenticated.id"),
 
   background_change: function() {
     var view = this.get("view");

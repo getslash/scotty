@@ -2,14 +2,20 @@ import Ember from 'ember';
 
 export default Ember.Route.extend({
   model: function() {
-    return this.store.find("beam", {pinned: true });
+    return this.store.query("beam", {
+      pinned: true
+    });
   },
 
   renderTemplate: function(controller, model) {
-    this.render("index", {model: model});
+    this.render("index", {
+      model: model
+    });
 
     Ember.run.scheduleOnce('afterRender', function() {
-      Ember.$('.tooltipped').tooltip({delay: 50});
+      Ember.$('.tooltipped').tooltip({
+        delay: 50
+      });
     });
   }
 });

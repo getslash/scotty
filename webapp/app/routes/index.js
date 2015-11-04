@@ -12,7 +12,7 @@ export default Ember.Route.extend(Materialize, {
 
   model: function() {
     var self = this;
-    return this.store.find('beam').then(function() {
+    return this.store.findAll('beam').then(function() {
       return self.store.filter('beam', function(beam) {
         return !beam.get("deleted");
       });
@@ -20,9 +20,11 @@ export default Ember.Route.extend(Materialize, {
   },
 
   update: function() {
-    this.store.fetchAll("beam").then(function() {
+    this.store.findAll("beam", {reload: true}).then(function() {
       Ember.run.scheduleOnce('afterRender', function() {
-        Ember.$('.tooltipped').tooltip({delay: 50});
+        Ember.$('.tooltipped').tooltip({
+          delay: 50
+        });
       });
     });
   },

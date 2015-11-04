@@ -36,21 +36,24 @@ export default Ember.Controller.extend({
 
       var self = this;
       Ember.$.ajax({
-        type: "POST",
-        url: "/setup",
-        contentType : 'application/json',
-        data: JSON.stringify({ email: this.get("email"), password: this.get("password") })
-      })
-      .always(function() {
-        self.set("canSubmit", true);
-      })
-      .fail(function(jqXHR) {
-        var error = jqXHR.responseText ? jqXHR.responseText : jqXHR.statusText;
-        self.set("errors", error);
-      })
-      .done(function() {
-        self.transitionToRoute("");
-      });
+          type: "POST",
+          url: "/setup",
+          contentType: 'application/json',
+          data: JSON.stringify({
+            email: this.get("email"),
+            password: this.get("password")
+          })
+        })
+        .always(function() {
+          self.set("canSubmit", true);
+        })
+        .fail(function(jqXHR) {
+          var error = jqXHR.responseText ? jqXHR.responseText : jqXHR.statusText;
+          self.set("errors", error);
+        })
+        .done(function() {
+          self.transitionToRoute("");
+        });
     }
   }
 });

@@ -1,15 +1,15 @@
 import Ember from 'ember';
 /* global numeral */
 
-var units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
+let units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
 
-export function capacityDisplay(input) {
-  var i = 0;
-  for (i = 0; i <= units.length - 1 && input > 1024; i++) {
-    input = input / 1024;
+export function capacityDisplay(params/*, hash*/) {
+  let size = params[0];
+  for (var i = 0; i <= units.length - 1 && size > 1024; i++) {
+    size = size / 1024;
   }
 
-  return numeral(input).format('0.00') + ' ' + units[i];
+  return numeral(size).format('0.00') + ' ' + units[i];
 }
 
-export default Ember.Handlebars.makeBoundHelper(capacityDisplay);
+export default Ember.Helper.helper(capacityDisplay);

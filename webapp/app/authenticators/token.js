@@ -1,4 +1,4 @@
-import Base from 'simple-auth/authenticators/base';
+import Base from 'ember-simple-auth/authenticators/base';
 import Ember from "ember";
 
 export default Base.extend({
@@ -7,12 +7,22 @@ export default Base.extend({
       Ember.$.ajax({
         type: "POST",
         url: "/restore",
-        contentType : 'application/json',
+        contentType: 'application/json',
         data: JSON.stringify(credentials)
       }).then(
-        function(data) { resolve(data); },
-        function(reason) { reject(reason.status); }
+        function(data) {
+          resolve(data);
+        },
+        function(reason) {
+          reject(reason.status);
+        }
       );
+    });
+  },
+  invalidate: function() {
+    return Ember.$.ajax({
+      type: "POST",
+      url: "/logout",
     });
   },
   authenticate: function(auth_code) {
@@ -20,11 +30,15 @@ export default Base.extend({
       Ember.$.ajax({
         type: "POST",
         url: "/login",
-        contentType : 'application/json',
+        contentType: 'application/json',
         data: JSON.stringify(auth_code)
       }).then(
-        function(data) { resolve(data); },
-        function(reason) { reject(reason.status); }
+        function(data) {
+          resolve(data);
+        },
+        function(reason) {
+          reject(reason.status);
+        }
       );
     });
   }

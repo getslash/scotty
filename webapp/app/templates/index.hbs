@@ -1,11 +1,11 @@
-{{#unless controllers.application.iframe}}
+{{#unless this.application.iframe}}
 <br/>
-<div class="beams-container {{unless controllers.application.iframe "container"}}">
-  {{#each this as |beam|}}
+<div class="beams-container {{unless this.application.iframe "container"}}">
+  {{#each this.sortedModel as |beam|}}
     <div class="beam-container">
       <div class="beam-card">
         <div class="card-content">
-         {{beam-info beam=beam extended=false}}
+         {{beam-info model=beam extended=false}}
         </div>
       </div>
     </div>
@@ -30,14 +30,14 @@
     </tr>
   </thead>
   <tbody>
-  {{#each this as |beam|}}
+  {{#each this.sortedModel as |beam|}}
     <tr>
-      <td>{{#link-to "beam" beam.model (query-params back=true)}}{{beam.model.id}}{{/link-to}}</td>
-      <td>{{beam.model.initiator.display_name}}</td>
-      <td>{{beam.model.host}}</td>
-      <td>{{beam.model.directory}}</td>
-      <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{format-date beam.model.start}}">{{beam.model.relative_time}}</a></td>
-      <td>{{capacity-display beam.model.size}}</td>
+      <td>{{#link-to "beam" beam (query-params back=true)}}{{beam.id}}{{/link-to}}</td>
+      <td>{{beam.initiator.display_name}}</td>
+      <td>{{beam.host}}</td>
+      <td>{{beam.directory}}</td>
+      <td><a class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="{{format-date beam.start}}">{{beam.relative_time}}</a></td>
+      <td>{{capacity-display beam.size}}</td>
     </tr>
   {{/each}}
   </tbody>
