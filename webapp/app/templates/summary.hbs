@@ -2,7 +2,10 @@
   <div class="card-title grey-text">Summary</div>
   <div style="display: flex">
     <div style="flex-grow: 2">
-      <p><b>Total Space Usage:</b>&nbsp;{{capacity-display model.space_usage}}</p>
+      <p><b>Used Space:</b>&nbsp;{{capacity-display model.used_space}} ({{this.space_percent}}%)</p>
+      <p><b>Free Space:</b>&nbsp;{{capacity-display model.free_space}}</p>
+      <p><b>Total Space:</b>&nbsp;{{capacity-display model.total_space}}</p>
+      <br/>
       <p><b>Number of Beams:</b>&nbsp;{{model.number_of_beams}}</p>
       {{#if model.oldest_beam}}
         <p><b>Oldest Beam:</b>&nbsp;{{#link-to "beam" model.oldest_beam}}Beam #{{model.oldest_beam}}{{/link-to}}</p>

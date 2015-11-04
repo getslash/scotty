@@ -2,6 +2,7 @@ import os
 import logbook
 import http.client
 import urllib.parse
+import psutil
 from jsonschema import Draft4Validator
 from functools import wraps
 from datetime import datetime, time
@@ -55,7 +56,8 @@ def _jsonify_beam(beam):
         'error': beam.error,
         'directory': beam.directory,
         'deleted': beam.pending_deletion or beam.deleted,
-        'pins': [u.user_id for u in beam.pins]
+        'pins': [u.user_id for u in beam.pins],
+        'tags': [t.tag for t in beam.tags]
     }
 
 
@@ -366,10 +368,12 @@ def info():
 @views.route("/summary")
 def summary():
     beams = db.session.query(Beam).filter_by(pending_deletion=False, deleted=False)
-    size = int(db.session.query(func.sum(Beam.size)).filter_by(pending_deletion=False, deleted=False)[0][0] or 0)
+    disk_usage = psutil.disk_usage(current_app.config['STORAGE_PATH'])
     oldest = beams.order_by(Beam.start).first()
     return jsonify({
-        "space_usage": size,
+        "total_space": disk_usage.total,
+        "used_space": disk_usage.used,
+        "free_space": disk_usage.free,
         "oldest_beam": oldest.id if oldest else None,
         "number_of_beams": beams.count()
     })

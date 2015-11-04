@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import os
 import smtplib
 import subprocess
+import psutil
 from email.mime.text import MIMEText
 from datetime import timedelta, datetime
 from collections import defaultdict
@@ -349,11 +350,7 @@ def scrub():
 @queue.task
 @needs_app_context
 def check_free_space():
-    storage_path = APP.config['STORAGE_PATH']
-    df = subprocess.Popen(["df", storage_path], stdout=subprocess.PIPE)
-    output = df.communicate()[0].decode("ASCII")
-    assert df.returncode == 0
-    percent = int(output.split("\n")[1].split()[4][:-1])
+    percent = psutil.disk_usage(APP.config['STORAGE_PATH']).percent
     if percent >= APP.config['FREE_SPACE_THRESHOLD']:
         APP.raven.captureMessage("Free space is {}%".format(percent))
 

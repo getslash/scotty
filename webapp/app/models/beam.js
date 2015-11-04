@@ -15,6 +15,7 @@ export default DS.Model.extend({
   purge_time: DS.attr('number'),
   error_message: DS.attr('string'),
   completed: DS.attr('boolean'),
+  tags: DS.attr('tags'),
   initiator: DS.belongsTo('user', {
     async: true
   }),

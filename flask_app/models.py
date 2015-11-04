@@ -62,7 +62,7 @@ class Tag(db.Model):
     __table_args__ = (db.UniqueConstraint('beam_id', 'tag', name='uix_beam_tag'), )
 
     id = db.Column(db.Integer, primary_key=True)
-    beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'))
+    beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'), index=True)
     beam = db.relationship("Beam", backref="tags")
     tag = db.Column(db.String, index=True)
 
