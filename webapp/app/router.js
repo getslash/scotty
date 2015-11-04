@@ -23,7 +23,6 @@ Router.map(function() {
     path: "*path"
   });
   this.route('faq', function() {});
-  this.route('tags');
   this.route('pinned');
 });
 
