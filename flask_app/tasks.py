@@ -199,6 +199,10 @@ def mark_timeout():
 @queue.task
 @needs_app_context
 def remind_pinned():
+    if APP.config['PIN_REMIND_THRESHOLD'] is None:
+        logger.info("Sending email reminders is disabled for this instance")
+        return
+
     remind_time = datetime.utcnow() - timedelta(days=APP.config['PIN_REMIND_THRESHOLD'])
     emails = defaultdict(list)
     pins = (db.session.query(Pin)
