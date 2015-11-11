@@ -65,8 +65,8 @@
   {{#if model.files.length}}
     <h4>Files</h4>
     <center>
-        {{input id="file_filter" type="text" class="filter-box" value=file_filter}}
-        <i class="fa fa-search"></i>
+        <i class="fa fa-search"></i>&nbsp;{{input id="file_filter" type="text" class="filter-box" value=file_filter}}
+        &nbsp;<i {{action "clean"}} class="fa fa-times"></i>
     </center>
     <table class="layout-table">
     {{#if display_pagination}}

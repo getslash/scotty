@@ -86,6 +86,9 @@ export default Ember.Component.extend({
     },
     back: function() {
       window.history.go(-1);
+    },
+    clean: function() {
+      this.set("file_filter", "");
     }
   }
 });
