@@ -74,6 +74,7 @@ class Beam(db.Model):
             'size': self.size,
             'initiator': self.initiator,
             'purge_time': self.get_purge_time(default_threshold),
+            'type': None if not self.type else self.type.name,
             'error': self.error,
             'directory': self.directory,
             'deleted': self.pending_deletion or self.deleted,
