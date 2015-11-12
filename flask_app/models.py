@@ -1,3 +1,4 @@
+from datetime import datetime, time
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.security import UserMixin, RoleMixin
 from sqlalchemy.orm import backref
@@ -45,6 +46,8 @@ class Beam(db.Model):
     size = db.Column(db.BigInteger)
     host = db.Column(db.String)
     directory = db.Column(db.String)
+    type_id = db.Column(db.Integer, db.ForeignKey('beam_type.id', name="beam_type_fkey"), nullable=True)
+    type = db.relationship("BeamType")
     pending_deletion = db.Column(db.Boolean, index=True)
     error = db.Column(db.String)
     deleted = db.Column(db.Boolean, index=True)
@@ -54,8 +57,38 @@ class Beam(db.Model):
     files = db.relationship("File", backref=backref("beam", lazy="joined"))
     pins = db.relationship("Pin", backref="beam")
 
+    def get_purge_time(self, default_threshold):
+        if self.size == 0:
+            return 0
+
+        threshold = self.type.vacuum_threshold if self.type is not None else default_threshold
+        days = threshold - (datetime.utcnow() -  datetime.combine(self.start, time(0, 0))).days
+        return max(days, 0)
+
+    def to_dict(self, default_threshold):
+        return {
+            'id': self.id,
+            'host': self.host,
+            'completed': self.completed,
+            'start': self.start.isoformat() + 'Z',
+            'size': self.size,
+            'initiator': self.initiator,
+            'purge_time': self.get_purge_time(default_threshold),
+            'error': self.error,
+            'directory': self.directory,
+            'deleted': self.pending_deletion or self.deleted,
+            'pins': [u.user_id for u in self.pins],
+            'tags': [t.tag for t in self.tags] # pylint: disable=E1101
+        }
+
     def __repr__(self):
         return "<Beam(id='%s')>" % (self.id, )
+
+
+class BeamType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, index=True, unique=True, nullable=False)
+    vacuum_threshold = db.Column(db.Integer, nullable=False)
 
 
 class Tag(db.Model):

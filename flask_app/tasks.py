@@ -236,12 +236,15 @@ def vacuum():
     os.stat(os.path.join(APP.config['STORAGE_PATH'], ".test"))
 
     db.engine.execute(
-        "update beam set pending_deletion=true where "
-        "(not beam.pending_deletion and not beam.deleted and beam.completed)" # Anything which isn't uncompleted or already deleted
-        "and not exists (select beam_id from pin where pin.beam_id = beam.id) " # which has no pinners
-        "and ("
-            "(not exists (select beam_id from file where file.beam_id = beam.id)) " # Either has no files
-            "or (beam.start < now() - '%s days'::interval)" # or has files but is VACUUM_THRESHOLD days old
+        "UPDATE beam SET pending_deletion=true "
+        "FROM beam_type "
+        "WHERE "
+        "(NOT beam.pending_deletion AND NOT beam.deleted AND beam.completed)" # Anything which isn't uncompleted or already deleted
+        "AND NOT EXISTS (SELECT beam_id FROM pin WHERE pin.beam_id = beam.id) " # which has no pinners
+        "AND ("
+            "(NOT EXISTS (SELECT beam_id FROM file WHERE file.beam_id = beam.id)) " # Either has no files
+            "OR ((beam.type_id IS NULL) AND (beam.start < now() - '%s days'::interval)) " # Or belongs to the default type
+            "OR ((beam.type_id = beam_type.id) AND (beam.start < now() - (beam_type.vacuum_threshold * INTERVAL '1 DAY')))" # Or belongs to a specific type
         ")",
         APP.config['VACUUM_THRESHOLD'])
     db.session.commit()

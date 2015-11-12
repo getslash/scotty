@@ -5,7 +5,7 @@ import urllib.parse
 import psutil
 from jsonschema import Draft4Validator
 from functools import wraps
-from datetime import datetime, time
+from datetime import datetime
 from sqlalchemy import distinct
 from sqlalchemy.sql import func, false
 from sqlalchemy.exc import IntegrityError
@@ -40,33 +40,12 @@ def validate_schema(schema):
     return decorator
 
 
-def _jsonify_beam(beam):
-    purge_time = (
-        current_app.config['VACUUM_THRESHOLD'] - (datetime.utcnow() - datetime.combine(beam.start, time(0, 0))).days
-        if beam.size else 0)
-    purge_time = max(purge_time, 0)
-    return {
-        'id': beam.id,
-        'host': beam.host,
-        'completed': beam.completed,
-        'start': beam.start.isoformat() + 'Z',
-        'size': beam.size,
-        'initiator': beam.initiator,
-        'purge_time': purge_time,
-        'error': beam.error,
-        'directory': beam.directory,
-        'deleted': beam.pending_deletion or beam.deleted,
-        'pins': [u.user_id for u in beam.pins],
-        'tags': [t.tag for t in beam.tags]
-    }
-
-
 _ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email']
 @views.route('/beams', methods=['GET'])
 def get_beams():
     query = (
         db.session.query(Beam)
-        .options(joinedload(Beam.pins))
+        .options(joinedload(Beam.pins), joinedload(Beam.type))
         .filter_by(pending_deletion=False, deleted=False)
         .order_by(Beam.start.desc()))
     query_params = []
@@ -97,7 +76,7 @@ def get_beams():
         else:
             query = query.filter_by(initiator=user.id)
 
-    beams = [_jsonify_beam(b) for b in query.limit(50)]
+    beams = [b.to_dict(current_app.config['VACUUM_THRESHOLD']) for b in query.limit(50)]
     return jsonify({'beams': beams})
 
 
@@ -151,7 +130,8 @@ def create_beam(user):
             beam.id, beam.host, beam.directory, request.json['beam']['user'], request.json['beam']['auth_method'],
             request.json['beam'].get('ssh_key', None), request.json['beam'].get('password', ''))
 
-    return jsonify({'beam': _jsonify_beam(beam)})
+    return jsonify(
+        {'beam': beam.to_dict(current_app.config['VACUUM_THRESHOLD'])})
 
 
 def _strip_gz(storage_name):
@@ -199,7 +179,7 @@ def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
         return "No such beam", http.client.NOT_FOUND
-    beam_json = _jsonify_beam(beam)
+    beam_json = beam.to_dict()
     beam_json['files'] = [f.id for f in beam.files]
     return jsonify({'beam': beam_json})
 
