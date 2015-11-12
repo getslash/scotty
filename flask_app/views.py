@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 from paramiko.ssh_exception import SSHException
 from flask import send_from_directory, jsonify, request, redirect, abort
-from .models import Beam, db, File, User, Pin, Tag
+from .models import Beam, db, File, User, Pin, Tag, BeamType
 from .tasks import beam_up, create_key
 from .auth import require_user, get_or_create_user, InvalidEmail
 from flask import Blueprint, current_app
@@ -90,6 +90,7 @@ def get_beams():
             'properties': {
                 'auth_method': {'type': 'string', 'enum': ['rsa', 'password', 'independent']},
                 'user': {'type': 'string'},
+                'type': {'type': ['string', 'null']},
                 'password': {'type': ['string', 'null']},
                 'directory': {'type': 'string'},
                 'email': {'type': 'string'},
@@ -122,6 +123,14 @@ def create_beam(user):
         error=None,
         combadge_contacted=False,
         pending_deletion=False, completed=False, deleted=False)
+
+    if request.json['beam'].get('type') is not None:
+        type_obj = db.session.query(BeamType).filter_by(name=request.json['beam']['type']).first()
+        if not type_obj:
+            return 'Invalid beam type', http.client.CONFLICT
+
+        beam.type = type_obj
+
     db.session.add(beam)
     db.session.commit()
 
