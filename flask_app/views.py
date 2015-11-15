@@ -188,7 +188,7 @@ def get_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
         return "No such beam", http.client.NOT_FOUND
-    beam_json = beam.to_dict()
+    beam_json = beam.to_dict(current_app.config['VACUUM_THRESHOLD'])
     beam_json['files'] = [f.id for f in beam.files]
     return jsonify({'beam': beam_json})
 
