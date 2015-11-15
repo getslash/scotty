@@ -13,6 +13,7 @@ export default DS.Model.extend({
   directory: DS.attr('string'),
   deleted: DS.attr('boolean'),
   purge_time: DS.attr('number'),
+  type: DS.attr('string'),
   error_message: DS.attr('string'),
   completed: DS.attr('boolean'),
   tags: DS.attr('tags'),

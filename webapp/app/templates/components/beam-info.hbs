@@ -18,6 +18,9 @@
           <td>Nobody</td>
           {{/if}}
         </tr>
+        {{#if model.type}}
+            <tr><td class="icon-td"><i class="fa fa-info-circle"></i></td><td>{{model.type}}</td></tr>
+        {{/if}}
      </table>
     </td>
     <td style="text-align: right">
