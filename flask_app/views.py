@@ -157,8 +157,11 @@ def _dictify_file(f):
     url = (
         "{}/file_contents/{}".format(request.host_url, urllib.parse.quote(_strip_gz(f.storage_name)))
         if f.storage_name else None)
-    return {"id": f.id, "file_name": f.file_name, "status": f.status, "size": f.size, "beam": f.beam_id,
-            "storage_name": f.storage_name, "url": url}
+
+    mtime = None if f.mtime is None else f.mtime.isoformat() + 'Z'
+    return {"id": f.id, "file_name": f.file_name, "status": f.status, "size":
+            f.size, "beam": f.beam_id,
+            "storage_name": f.storage_name, "url": url, "mtime": mtime}
 
 
 def _dictify_user(user):
@@ -315,6 +318,7 @@ def register_file():
         'success': {'type': 'boolean'},
         'size': {'type': ['number', 'null']},
         'checksum': {'type': ['string', 'null']},
+        'mtime': {'type': ['number', 'null']},
     },
     'required': ['success']
 })
@@ -326,7 +330,12 @@ def update_file(file_id):
         logbook.error('Transporter attempted to update an unknown file id {}', file_id)
         abort(http.client.BAD_REQUEST)
 
+    mtime = request.json.get("mtime")
+    if mtime is not None:
+        mtime = datetime.utcfromtimestamp(mtime)
+
     f.size = size
+    f.mtime = mtime
     f.checksum = request.json.get('checksum', None)
     f.status = "uploaded" if success else "failed"
     if size is not None:

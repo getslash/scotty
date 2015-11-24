@@ -21,6 +21,7 @@ class ClientMessages(object):
     StartBeamingFile = 1
     FileChunk = 2
     FileDone = 3
+    ProtocolVersion = 4
 
 
 class ServerMessages:
@@ -72,6 +73,9 @@ def _beam_file(transporter, base_path, path):
     else:
         raise Exception("Unexpected server response: {0}".format(answer))
 
+    stat = os.stat(path)
+    transporter.sendall(struct.pack('!Q', int(stat.st_mtime)))
+
     with open(path, 'rb') as f:
         file_writer = FileWriter(transporter)
         if should_compress:
@@ -96,6 +100,8 @@ def _beam_up(beam_id, path, transporter_addr):
 
     beam_id = int(beam_id)
     transporter.sendall(struct.pack('!Q', beam_id))
+
+    transporter.sendall(struct.pack('!BH', ClientMessages.ProtocolVersion, 2))
 
     if os.path.isfile(path):
         _beam_file(transporter, os.path.dirname(path), path)
@@ -185,4 +191,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-

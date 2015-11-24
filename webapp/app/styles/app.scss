@@ -85,13 +85,8 @@ body {
   font-weight: bold;
 }
 
-.layout-table {
-  tr {
-    td {
-      padding: 0px;
-    }
-  }
-
+.layout-table > tr > td {
+    padding: 0px;
 }
 
 .icon-td {
