@@ -6,7 +6,7 @@ export function formatDate(params/*, hash*/) {
   if (params[0] === null) {
     return '';
   }
-  return moment(params[0]).format('DD/MM/YY HH:mm');
+  return moment(params[0]).format('DD/MM/YY HH:mm:ss');
 }
 
 export default Ember.Helper.helper(formatDate);
