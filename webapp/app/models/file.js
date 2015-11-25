@@ -3,6 +3,7 @@ import DS from 'ember-data';
 export default DS.Model.extend({
   beam: DS.belongsTo("beam"),
   file_name: DS.attr("string"),
+  mtime: DS.attr('date'),
   status: DS.attr("string"),
   size: DS.attr("number"),
   storage_name: DS.attr("string"),

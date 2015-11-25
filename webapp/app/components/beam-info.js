@@ -9,9 +9,12 @@ export default Ember.Component.extend({
   back: false,
   iframe: false,
   file_filter: "",
+  sort_props: ['file_name'],
+
+  sorted_files: Ember.computed.sort("model.files", "sort_props"),
 
   filtered_model: function() {
-    var model = this.get("model.files");
+    var model = this.get("sorted_files");
     if (this.get("file_filter")) {
       let file_filter = this.get("file_filter");
       model = model.filter(function(f) {
@@ -19,7 +22,7 @@ export default Ember.Component.extend({
       });
     }
     return model;
-  }.property("file_filter", "model.files"),
+  }.property("file_filter", "sorted_files"),
 
   sliced_files: function() {
     let limit = this.get("limit");

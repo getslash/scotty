@@ -75,6 +75,7 @@ def testserver(tmux, livereload, port):
     if tmux:
         return _run_tmux_frontend(port=port)
     from flask_app.app import create_app
+    os.environ['CONFIG_DIRECTORY'] = from_project_root("conf.d")
     app = create_app({'DEBUG': True, 'TESTING': True, 'SECRET_KEY': 'dummy', 'SECURITY_PASSWORD_SALT': 'dummy'})
 
     extra_files=[

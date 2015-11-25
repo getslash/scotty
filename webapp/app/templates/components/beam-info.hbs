@@ -82,17 +82,28 @@
     </td></tr>
     {{/if}}
     <tr><td>
-    <div class="collection">
-      {{#each sliced_files as |file|}}
-        {{#if file.file_name}}
-          {{#if model.deleted}}
-            <li class="collection-item">{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></li>
-          {{else}}
-            <a class="collection-item file-link" target="_blank" href={{file.url}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
-          {{/if}}
-        {{/if}}
-      {{/each}}
-    </div>
+    <table class="highlight">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Modification Time</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{#each sliced_files as |file|}}
+            {{#if file.file_name}}
+            <tr>
+                <td>
+                    {{#if model.deleted}}{{file.file_name}}{{else}}<a class="collection-item file-link" target="_blank" href={{file.url}}>{{file.file_name}}</a>{{/if}}
+                </td>
+                <td>{{capacity-display file.size}}</td>
+                <td>{{format-date file.mtime}}</td>
+            </tr>
+            {{/if}}
+        {{/each}}
+        </tbody>
+    </table>
     </td></tr>
     </table>
   {{else}}
@@ -107,7 +118,7 @@
   To get a live view of the beam:
   <pre>
       $ ssh view@scotty-view
-      scotty-view$ beamlink {{model.id}}
+      $ beamlink {{model.id}}
   </pre>
 {{/if}}
 
@@ -161,17 +172,28 @@
         </td></tr>
         {{/if}}
         <tr><td>
-        <div class="collection">
-          {{#each this.sliced_files as |file|}}
-            {{#if file.file_name}}
-              {{#if this.model.deleted}}
-                <li class="collection-item">{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></li>
-              {{else}}
-                <a class="collection-item file-link" target="_blank" href={{file.url}}>{{file.file_name}}<span class="badge">{{capacity-display file.size}}</span></a>
-              {{/if}}
-            {{/if}}
-          {{/each}}
-        </div>
+        <table class="highlight">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Size</th>
+                    <th>Modification Time</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{#each sliced_files as |file|}}
+                {{#if file.file_name}}
+                <tr>
+                    <td>
+                        {{#if model.deleted}}{{file.file_name}}{{else}}<a class="collection-item file-link" target="_blank" href={{file.url}}>{{file.file_name}}</a>{{/if}}
+                    </td>
+                    <td>{{capacity-display file.size}}</td>
+                    <td>{{format-date file.mtime}}</td>
+                </tr>
+                {{/if}}
+            {{/each}}
+            </tbody>
+        </table>
         </td></tr>
         </table>
       {{else}}
