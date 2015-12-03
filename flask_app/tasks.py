@@ -359,7 +359,7 @@ def scrub():
 def check_free_space():
     percent = psutil.disk_usage(APP.config['STORAGE_PATH']).percent
     if percent >= APP.config['FREE_SPACE_THRESHOLD']:
-        APP.raven.captureMessage("Free space is {}%".format(percent))
+        APP.raven.captureMessage("Used space is {}%".format(percent))
 
 
 @worker_init.connect
