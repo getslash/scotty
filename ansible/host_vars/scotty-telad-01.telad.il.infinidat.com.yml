@@ -1,7 +1,7 @@
  production: true
  transporter_host: "scotty-telad-01"
  sentry_dsn: "http://da99721dc2e14a0bb12debb7447efb44:69007f54ceb04ca8acb85aa86c8d3db9@sentry.infinidat.com/21"
- vacuum_threshold: 60
+ vacuum_threshold: 30
  pin_remind_threshold: 7
  fqdn: "scotty-telad-01.telad.il.infinidat.com"
  hostname_redirect_aliases: ["scotty-telad-01"]
