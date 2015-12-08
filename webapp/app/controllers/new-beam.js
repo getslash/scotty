@@ -66,6 +66,7 @@ export default Ember.Controller.extend({
         auth_method: auth_method,
         user: this.get("user"),
         directory: this.get("directory"),
+        tags: this.get("tags").split(","),
       });
 
       var self = this;
