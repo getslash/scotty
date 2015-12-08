@@ -95,6 +95,7 @@ def get_beams():
                 'directory': {'type': 'string'},
                 'email': {'type': 'string'},
                 'ssh_key': {'type': ['string', 'null']},
+                'tags': {'type': 'array', 'items': {'type': 'string'}},
             },
             'required': ['auth_method', 'host', 'directory']
         }
@@ -133,6 +134,13 @@ def create_beam(user):
 
     db.session.add(beam)
     db.session.commit()
+
+    tags = request.json['beam'].get('tags')
+    if tags:
+        for tag in tags:
+            t = Tag(beam_id=beam.id, tag=tag)
+            db.session.add(t)
+        db.session.commit()
 
     if request.json['beam']['auth_method'] != 'independent':
         beam_up.delay(
