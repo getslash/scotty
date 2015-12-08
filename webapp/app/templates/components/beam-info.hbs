@@ -4,6 +4,7 @@
   <tr>
     <td>
       <table class="layout-table">
+        <tr><td class="icon-td"><i class="fa fa-hashtag"></i></td><td>{{model.id}}</td></tr>
         <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{#link-to "beams.by-user" model.initiator.id}}{{model.initiator.display_name}}{{/link-to}}</td></tr>
         <tr><td class="icon-td"><i class="fa fa-desktop" alt="user"></i></td><td>{{model.host}}</td></tr>
         <tr>
@@ -132,6 +133,7 @@
     <td style="width: 10%; vertical-align: top">
       {{#link-to "beam" this.model.id (query-params view="" back="") target="_blank"}}<img style="height: 64px" src="/static/assets/img/scotty.png">&nbsp;View in Scotty{{/link-to}}<br/><br/>
       <table class="layout-table">
+        <tr><td class="icon-td"><i class="fa fa-hashtag"></i></td><td>{{model.id}}</td></tr>
         <tr><td class="icon-td"><i class="fa fa-user"></i></td><td>{{this.model.initiator.display_name}}</td></tr>
         <tr><td class="icon-td"><i class="fa fa-desktop" alt="user"></i></td><td>{{this.model.host}}</td></tr>
         <tr>
