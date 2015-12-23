@@ -22,7 +22,6 @@ Router.map(function() {
   this.route('not-found', {
     path: "*path"
   });
-  this.route('faq', function() {});
   this.route('pinned');
 
   this.route('beams', function() {
