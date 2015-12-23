@@ -12,11 +12,7 @@ export default Ember.Controller.extend({
 
   actions: {
     login_error: function(error) {
-      if (error === 401) {
-        this.set('modal_content', 'Scotty must be used with Infinidat accounts');
-      } else {
-        this.set('modal_content', 'There was an error logging you in: ' + error);
-      }
+      this.set('modal_content', 'There was an error logging you in: ' + error);
       Ember.Logger.error(error);
       Ember.$('#appmodal').openModal();
     },
