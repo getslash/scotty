@@ -237,16 +237,28 @@ def vacuum():
 
     db.engine.execute(
         "UPDATE beam SET pending_deletion=true "
+        "WHERE "
+        "(NOT beam.pending_deletion AND NOT beam.deleted AND beam.completed)" # Anything which isn't uncompleted or already deleted
+        "AND NOT EXISTS (SELECT beam_id FROM pin WHERE pin.beam_id = beam.id) " # which has no pinners
+        "AND (NOT EXISTS (SELECT beam_id FROM file WHERE file.beam_id = beam.id)) " # And has no files
+        )
+    db.engine.execute(
+        "UPDATE beam SET pending_deletion=true "
+        "WHERE "
+        "(NOT beam.pending_deletion AND NOT beam.deleted AND beam.completed)" # Anything which isn't uncompleted or already deleted
+        "AND NOT EXISTS (SELECT beam_id FROM pin WHERE pin.beam_id = beam.id) " # which has no pinners
+        "AND ((beam.type_id IS NULL) AND (beam.start < now() - '%s days'::interval)) "
+            # Belongs to the default type and the default vacuum threshold has been exceeded
+        , APP.config['VACUUM_THRESHOLD'])
+    db.engine.execute(
+        "UPDATE beam SET pending_deletion=true "
         "FROM beam_type "
         "WHERE "
         "(NOT beam.pending_deletion AND NOT beam.deleted AND beam.completed)" # Anything which isn't uncompleted or already deleted
         "AND NOT EXISTS (SELECT beam_id FROM pin WHERE pin.beam_id = beam.id) " # which has no pinners
-        "AND ("
-            "(NOT EXISTS (SELECT beam_id FROM file WHERE file.beam_id = beam.id)) " # Either has no files
-            "OR ((beam.type_id IS NULL) AND (beam.start < now() - '%s days'::interval)) " # Or belongs to the default type
-            "OR ((beam.type_id = beam_type.id) AND (beam.start < now() - (beam_type.vacuum_threshold * INTERVAL '1 DAY')))" # Or belongs to a specific type
-        ")",
-        APP.config['VACUUM_THRESHOLD'])
+        "AND ((beam.type_id = beam_type.id) AND (beam.start < now() - (beam_type.vacuum_threshold * INTERVAL '1 DAY')))"
+            # Belongs to a specific type which its vacuum threshold has been exceeded
+        )
     db.session.commit()
     logger.info("Finished marking vacuum candidates")
 
