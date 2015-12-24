@@ -29,8 +29,6 @@ from sqlalchemy.orm import joinedload
 from celery.signals import after_setup_logger, after_setup_task_logger
 from celery.log import redirect_stdouts_to_logger
 
-from .app import create_app
-
 logger = logbook.Logger(__name__)
 
 
