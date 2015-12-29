@@ -223,7 +223,7 @@ def remind_pinned():
         body = template.render(beams=beams, base_url=APP.config['BASE_URL'])
         msg = MIMEText(body, 'html')
         msg['Subject'] = 'Pinned beams reminder'
-        msg['From'] = 'Scotty <scotty@infinidat.com>'
+        msg['From'] = APP.config['SMTP_FROM']
         msg['To'] = email
 
         s.send_message(msg)
