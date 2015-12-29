@@ -37,7 +37,7 @@ class User(db.Model, UserMixin):
 
     @property
     def is_anonymous_user(self):
-        return self.email == "anonymous@infinidat.com"
+        return self.email == "anonymous@getslash.github.io"
 
 
 class Beam(db.Model):
