@@ -1,4 +1,4 @@
-session_name: frontend compilation
+session_name: scotty
 windows:
   - window_name: cmd
     panes:

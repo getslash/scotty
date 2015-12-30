@@ -17,16 +17,8 @@ def create_app(config=None):
 
     app = flask.Flask(__name__, static_folder=os.path.join(ROOT_DIR, "..", "static"))
 
-    app.config['TRANSPORTER_HOST'] = '192.168.50.1'
-    app.config['STORAGE_PATH'] = '/var/scotty'
-    app.config['SENTRY_DSN'] = ''
-    app.config['VACUUM_THRESHOLD'] = 4
-    app.config['PIN_REMIND_THRESHOLD'] = 9
-    app.config['SMTP'] = 'smtp-dev.lab.il.infinidat.com'
-    app.config['BASE_URL'] = 'http://scotty.lab.il.infinidat.com'
     app.config['COMBADGE_CONTACT_TIMEOUT'] = 60 * 60
     app.config['SHA512SUM'] ='/usr/bin/sha512sum'
-    app.config['FREE_SPACE_THRESHOLD'] = 85
     _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "..", "conf.d"))
 
     configs = [os.path.join(ROOT_DIR, "app.yml")]
@@ -57,7 +49,7 @@ def create_app(config=None):
 
     Mail(app)
 
-    app.raven = Sentry(app, dsn=app.config['SENTRY_DSN'])
+    app.raven = Sentry(app, dsn=app.config.get('SENTRY_DSN'))
 
     from . import models
 

@@ -29,8 +29,6 @@ from sqlalchemy.orm import joinedload
 from celery.signals import after_setup_logger, after_setup_task_logger
 from celery.log import redirect_stdouts_to_logger
 
-from .app import create_app
-
 logger = logbook.Logger(__name__)
 
 
@@ -196,12 +194,19 @@ def mark_timeout():
     db.session.commit()
 
 
+_THRESHOLD_VALUES = ['SMTP', 'SMTP_FROM', 'BASE_URL']
 @queue.task
 @needs_app_context
 def remind_pinned():
-    if APP.config['PIN_REMIND_THRESHOLD'] is None:
+    if APP.config.get('PIN_REMIND_THRESHOLD') is None:
         logger.info("Sending email reminders is disabled for this instance")
         return
+
+    for value in _THRESHOLD_VALUES:
+        if value not in APP.config:
+            logger.error("{} must be specified in the configuration together with PIN_REMIND_THRESHOLD".format(
+                value))
+            return
 
     remind_time = datetime.utcnow() - timedelta(days=APP.config['PIN_REMIND_THRESHOLD'])
     emails = defaultdict(list)
@@ -218,7 +223,7 @@ def remind_pinned():
         body = template.render(beams=beams, base_url=APP.config['BASE_URL'])
         msg = MIMEText(body, 'html')
         msg['Subject'] = 'Pinned beams reminder'
-        msg['From'] = 'Scotty <scotty@infinidat.com>'
+        msg['From'] = APP.config['SMTP_FROM']
         msg['To'] = email
 
         s.send_message(msg)
@@ -369,6 +374,10 @@ def scrub():
 @queue.task
 @needs_app_context
 def check_free_space():
+    if 'FREE_SPACE_THRESHOLD' not in APP.config:
+        logger.info("Free space checking is disabled as FREE_SPACE_THRESHOLD is not defined")
+        return
+
     percent = psutil.disk_usage(APP.config['STORAGE_PATH']).percent
     if percent >= APP.config['FREE_SPACE_THRESHOLD']:
         APP.raven.captureMessage("Used space is {}%".format(percent))
