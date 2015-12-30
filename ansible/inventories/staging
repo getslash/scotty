@@ -1,3 +1,5 @@
 [webapp]
+scotty-staging.lab.il.infinidat.com ansible_ssh_user=root
 
 [db]
+scotty-staging.lab.il.infinidat.com ansible_ssh_user=root

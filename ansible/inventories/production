@@ -1,3 +1,7 @@
 [webapp]
+scotty.infinidat.com ansible_ssh_user=root
+#scotty-telad-01.telad.il.infinidat.com ansible_ssh_user=root
 
 [db]
+scotty.infinidat.com ansible_ssh_user=root production=true
+#scotty-telad-01.telad.il.infinidat.com ansible_ssh_user=root production=true
