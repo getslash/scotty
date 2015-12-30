@@ -14,7 +14,6 @@ Router.map(function() {
   this.route('new-beam', function() {});
   this.route('changelog', function() {});
   this.route('api', function() {});
-  this.route('about', function() {});
   this.route('summary', function() {});
   this.route('tag', {
     path: '/tag/:tag'
@@ -22,7 +21,6 @@ Router.map(function() {
   this.route('not-found', {
     path: "*path"
   });
-  this.route('faq', function() {});
   this.route('pinned');
 
   this.route('beams', function() {
