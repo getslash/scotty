@@ -24,6 +24,9 @@ class InvalidEmail(Exception):
     pass
 
 
+_EMAIL = re.compile("^.*?@infinidat.com$")
+
+
 def _get_token_serializer():
     return TimedSerializer(current_app.config['SECRET_KEY'])
 
@@ -37,7 +40,14 @@ def _get_info(credentials):
     return service.userinfo().get().execute()
 
 
+def is_email_valid(email):
+    return _EMAIL.search(email) is not None
+
+
 def get_or_create_user(email, name):
+    if not is_email_valid(email):
+        raise InvalidEmail()
+
     user = user_datastore.get_user(email)
     if not user:
         user = user_datastore.create_user(
@@ -61,6 +71,9 @@ def login():
     credentials = flow.step2_exchange(request.json['authorizationCode'])
 
     user_info = _get_info(credentials)
+    if user_info.get('hd') != 'infinidat.com':
+        abort(http.client.UNAUTHORIZED)
+
     user = get_or_create_user(user_info['email'], user_info['name'])
     token = _get_token_serializer().dumps({'user_id': user.id})
     login_user(user)
@@ -100,10 +113,10 @@ def restore():
 
 
 def _get_anonymous_user():
-    user = user_datastore.get_user("anonymous@getslash.github.io")
+    user = user_datastore.get_user("anonymous@infinidat.com")
     if not user:
         user = user_datastore.create_user(
-            email="anonymous@getslash.github.io",
+            email="anonymous@infinidat.com",
             name="Anonymous")
         user_datastore.db.session.commit()
 
