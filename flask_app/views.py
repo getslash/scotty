@@ -90,6 +90,7 @@ def get_beams():
             'properties': {
                 'auth_method': {'type': 'string', 'enum': ['rsa', 'password', 'independent']},
                 'user': {'type': 'string'},
+                'comment': {'type': 'string'},
                 'type': {'type': ['string', 'null']},
                 'password': {'type': ['string', 'null']},
                 'directory': {'type': 'string'},
@@ -119,6 +120,7 @@ def create_beam(user):
     beam = Beam(
         start=datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
+        comment=request.json['beam'].get('comment'),
         directory=request.json['beam']['directory'],
         initiator=user.id,
         error=None,
@@ -255,17 +257,22 @@ def remove_tag(beam_id, tag):
     'type': 'object',
     'properties': {
         'completed': {'type': 'boolean'},
-        'error': {'type': ['string', 'null']}
+        'error': {'type': ['string', 'null']},
+        'comment': {'type': ['string', 'null']}
     },
-    'required': ['completed']
 })
 def update_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if beam.pending_deletion or beam.deleted:
         abort(http.client.FORBIDDEN)
 
-    beam.completed = request.json['completed']
-    beam.error = request.json.get('error', None)
+    if 'completed' in request.json:
+        beam.completed = request.json['completed']
+        beam.error = request.json.get('error', None)
+
+    if 'comment' in request.json:
+        beam.comment = request.json['comment']
+
     db.session.commit()
 
     return '{}'

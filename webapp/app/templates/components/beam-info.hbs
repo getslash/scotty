@@ -20,7 +20,19 @@
           {{/if}}
         </tr>
         {{#if model.type}}
-            <tr><td class="icon-td"><i class="fa fa-info-circle"></i></td><td>{{model.type}}</td></tr>
+        <tr><td class="icon-td"><i class="fa fa-info-circle"></i></td><td>{{model.type}}</td></tr>
+        {{/if}}
+        {{#if extended}}
+       <tr>
+           <td class="icon-td"><a {{action "toggleEditing"}} class="pin-btn"><i class="fa fa-comment"></i></a></td>
+          {{#unless editing_comment}}
+          <td>
+          {{#if model.comment}}{{linkify model.comment}}{{else}}<p {{action "toggleEditing"}} class="empty-comment">Click to set a comment</p>{{/if}}
+          </td>
+          {{else}}
+          <td>{{focus-input value=model.comment action="toggleEditing"}}</td>
+          {{/unless}}
+        </tr>
         {{/if}}
      </table>
     </td>

@@ -8,6 +8,7 @@ export default Ember.Component.extend({
   page: 1,
   back: false,
   iframe: false,
+  editing_comment: false,
   file_filter: "",
   sort_props: ['file_name'],
 
@@ -92,6 +93,12 @@ export default Ember.Component.extend({
     },
     clean: function() {
       this.set("file_filter", "");
-    }
+    },
+    toggleEditing: function() {
+      const editing_comment = this.get("editing_comment");
+      if (editing_comment) {
+        this.get("model").save();
+      }
+      this.set("editing_comment", !editing_comment); }
   }
 });

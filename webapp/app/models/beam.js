@@ -11,6 +11,7 @@ export default DS.Model.extend({
   password: DS.attr('string'),
   user: DS.attr('string'),
   directory: DS.attr('string'),
+  comment: DS.attr('string'),
   deleted: DS.attr('boolean'),
   purge_time: DS.attr('number'),
   type: DS.attr('string'),

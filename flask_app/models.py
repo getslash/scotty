@@ -45,6 +45,7 @@ class Beam(db.Model):
     start = db.Column(db.DateTime, index=True)
     size = db.Column(db.BigInteger)
     host = db.Column(db.String)
+    comment = db.Column(db.String)
     directory = db.Column(db.String)
     type_id = db.Column(db.Integer, db.ForeignKey('beam_type.id', name="beam_type_fkey"), nullable=True)
     type = db.relationship("BeamType")
@@ -72,6 +73,7 @@ class Beam(db.Model):
             'completed': self.completed,
             'start': self.start.isoformat() + 'Z',
             'size': self.size,
+            'comment': self.comment,
             'initiator': self.initiator,
             'purge_time': self.get_purge_time(default_threshold),
             'type': None if not self.type else self.type.name,

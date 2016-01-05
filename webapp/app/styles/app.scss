@@ -99,5 +99,11 @@ body {
 }
 
 .filter-box {
-    width: 50% !important;
+  width: 50% !important;
+}
+
+.empty-comment {
+  font-style: italic;
+  color: #cacaca !important;
+  cursor: pointer;
 }
