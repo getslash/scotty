@@ -3,6 +3,7 @@ import logbook
 import http.client
 import urllib.parse
 import psutil
+import re
 from jsonschema import Draft4Validator
 from functools import wraps
 from datetime import datetime
@@ -18,6 +19,16 @@ from .auth import require_user, get_or_create_user, InvalidEmail
 from flask import Blueprint, current_app
 
 views = Blueprint("views", __name__, template_folder="templates")
+
+
+# https://stackoverflow.com/questions/2532053/validate-a-hostname-string?answertab=votes#tab-top
+_ALLOWED_HOSTNAMES = re.compile(r"(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+def _is_valid_hostname(hostname):
+    if len(hostname) > 255:
+        return False
+    if hostname[-1] == ".":
+        hostname = hostname[:-1] # strip exactly one dot from the right, if present
+    return all(_ALLOWED_HOSTNAMES.match(x) for x in hostname.split("."))
 
 
 def validate_schema(schema):
@@ -116,6 +127,9 @@ def create_beam(user):
                 user = get_or_create_user(request.json['beam']['email'], None)
             except InvalidEmail:
                 return 'Invalid email', http.client.CONFLICT
+
+    if not _is_valid_hostname(request.json['beam']['host']):
+        return 'Invalid hostname', http.client.CONFLICT
 
     beam = Beam(
         start=datetime.utcnow(), size=0,
