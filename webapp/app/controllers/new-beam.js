@@ -9,6 +9,7 @@ export default Ember.Controller.extend({
   submitting: false,
   auth_rsa: false,
   auth_password: true,
+  tags: "",
 
   disable_all: function() {
     this.set("auth_rsa", false);
