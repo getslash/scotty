@@ -90,7 +90,7 @@ def get_beams():
             'properties': {
                 'auth_method': {'type': 'string', 'enum': ['rsa', 'password', 'independent']},
                 'user': {'type': 'string'},
-                'comment': {'type': 'string'},
+                'comment': {'type': ['string', 'null']},
                 'type': {'type': ['string', 'null']},
                 'password': {'type': ['string', 'null']},
                 'directory': {'type': 'string'},
@@ -256,7 +256,7 @@ def remove_tag(beam_id, tag):
 @validate_schema({
     'type': 'object',
     'properties': {
-        'completed': {'type': 'boolean'},
+        'beam': {'type': 'object'},
         'error': {'type': ['string', 'null']},
         'comment': {'type': ['string', 'null']}
     },
@@ -266,12 +266,20 @@ def update_beam(beam_id):
     if beam.pending_deletion or beam.deleted:
         abort(http.client.FORBIDDEN)
 
-    if 'completed' in request.json:
-        beam.completed = request.json['completed']
-        beam.error = request.json.get('error', None)
+    if 'beam' in request.json:
+        if len(request.json) > 1:
+            abort(http.client.CONFLICT)
 
-    if 'comment' in request.json:
-        beam.comment = request.json['comment']
+        json = request.json['beam']
+    else:
+        json = request.json
+
+    if 'completed' in request.json:
+        beam.completed = json['completed']
+        beam.error = json.get('error', None)
+
+    if 'comment' in json:
+        beam.comment = json['comment']
 
     db.session.commit()
 
