@@ -1,9 +1,9 @@
-import flask
 import os
+import flask
 import yaml
 from raven.contrib.flask import Sentry
-from flask.ext.security import Security
-from flask.ext.mail import Mail
+from flask.ext.security import Security  # pylint: disable=import-error
+from flask.ext.mail import Mail  # pylint: disable=import-error
 import logbook
 from logbook.compat import redirect_logging
 
@@ -18,7 +18,7 @@ def create_app(config=None):
     app = flask.Flask(__name__, static_folder=os.path.join(ROOT_DIR, "..", "static"))
 
     app.config['COMBADGE_CONTACT_TIMEOUT'] = 60 * 60
-    app.config['SHA512SUM'] ='/usr/bin/sha512sum'
+    app.config['SHA512SUM'] = '/usr/bin/sha512sum'
     _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "..", "conf.d"))
 
     configs = [os.path.join(ROOT_DIR, "app.yml")]
