@@ -228,6 +228,43 @@ def get_file(file_id):
     return jsonify({'file': _dictify_file(file_rec)})
 
 
+@views.route('/files', methods=['GET'])
+def get_files():
+    if "beam_id" not in request.args:
+        abort(http.client.BAD_REQUEST)
+
+    try:
+        beam_id = request.args['beam_id']
+    except ValueError:
+        abort(http.client.BAD_REQUEST)
+
+    query = db.session.query(File).filter_by(beam_id=beam_id)
+
+    if "filter" in request.args and request.args["filter"]:
+        query = query.filter(File.file_name.like("%{}%".format(request.args['filter'])))
+
+    query = query.order_by(File.storage_name)
+
+    total = query.count()
+
+    if "offset" in request.args or "limit" in request.args:
+        if not "offset" in request.args and "limit" in request.args:
+            abort(http.client.BAD_REQUEST)
+
+        try:
+            offset = int(request.args['offset'])
+            limit = int(request.args['limit'])
+        except ValueError:
+            abort(http.client.BAD_REQUEST)
+
+        query = query.offset(offset).limit(limit)
+
+    return jsonify({
+        'files': [_dictify_file(f) for f in query],
+        'meta': {'total': total}
+    })
+
+
 @views.route('/beams/<int:beam_id>/tags/<path:tag>', methods=['POST'])
 def put_tag(beam_id, tag):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()

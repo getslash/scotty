@@ -78,50 +78,46 @@
       </ul>
   {{/if}}
 
-  {{#if model.files.length}}
-    <h4>Files</h4>
-    <center>
-        <i class="fa fa-search"></i>&nbsp;{{input id="file_filter" type="text" class="filter-box" value=file_filter}}
-        &nbsp;<i {{action "clean"}} class="fa fa-times"></i>
-    </center>
-    <table class="layout-table">
-    {{#if display_pagination}}
-    <tr><td>
+  <h4>Files</h4>
+  <center>
+      <i class="fa fa-search"></i>&nbsp;{{input id="file_filter" type="text" class="filter-box" value=text_file_filter action="changeFilter"}}
+      &nbsp;<i {{action "clean"}} class="fa fa-times"></i>
+  </center>
+  <table class="layout-table">
+  {{#if display_pagination}}
+  <tr><td>
       <ul class="pagination">
-      {{#each pages as |page|}}
-        {{#link-to "beam" model (query-params page=page) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
+      {{#each iter_pages as |page|}}
+      {{#link-to "beam" model (query-params page=page file_filter=file_filter) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
       {{/each}}
       </ul>
-    </td></tr>
-    {{/if}}
-    <tr><td>
-    <table class="highlight">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Size</th>
-                <th>Modification Time</th>
-            </tr>
-        </thead>
-        <tbody>
-        {{#each sliced_files as |file|}}
-            {{#if file.file_name}}
-            <tr>
-                <td>
-                    {{#if model.deleted}}{{file.file_name}}{{else}}<a class="collection-item file-link" target="_blank" href={{file.url}}>{{file.file_name}}</a>{{/if}}
-                </td>
-                <td>{{capacity-display file.size}}</td>
-                <td>{{format-date file.mtime}}</td>
-            </tr>
-            {{/if}}
-        {{/each}}
-        </tbody>
-    </table>
-    </td></tr>
-    </table>
-  {{else}}
-    <br/><p>No files were beamed yet.</p>
+  </td></tr>
   {{/if}}
+  <tr><td>
+  <table class="highlight">
+      <thead>
+          <tr>
+              <th>Name</th>
+              <th>Size</th>
+              <th>Modification Time</th>
+          </tr>
+      </thead>
+      <tbody>
+      {{#each files as |file|}}
+          {{#if file.file_name}}
+          <tr>
+              <td>
+                  {{#if model.deleted}}{{file.file_name}}{{else}}<a class="collection-item file-link" target="_blank" href={{file.url}}>{{file.file_name}}</a>{{/if}}
+              </td>
+              <td>{{capacity-display file.size}}</td>
+              <td>{{format-date file.mtime}}</td>
+          </tr>
+          {{/if}}
+      {{/each}}
+      </tbody>
+  </table>
+  </td></tr>
+  </table>
   <br/>
   To download all files:
   <pre>
@@ -190,7 +186,7 @@
                 </tr>
             </thead>
             <tbody>
-            {{#each sliced_files as |file|}}
+            {{#each files as |file|}}
                 {{#if file.file_name}}
                 <tr>
                     <td>

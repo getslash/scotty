@@ -21,9 +21,6 @@ export default DS.Model.extend({
   initiator: DS.belongsTo('user', {
     async: true
   }),
-  files: DS.hasMany('file', {
-    async: true
-  }),
   pins: DS.hasMany('user', {
     async: true
   }),
