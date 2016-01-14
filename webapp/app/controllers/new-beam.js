@@ -78,21 +78,19 @@ export default Ember.Controller.extend({
             self.set("ssh_key", "");
             self.transitionToRoute("beam", beam.id);
           },
-          function(response) {
+          function(result) {
             self.set("submitting", false);
+            const response = result.errors[0];
             var msg = '';
             switch (response.status) {
-              case 0:
-                msg = "Could not contact Scotty. Are you connected to the Infindiat network?";
-                break;
-              case 409:
-                msg = response.responseText;
-                break;
-              case 403:
-                msg = "Your session logged out. Please refresh the application.";
-                break;
-              default:
-                msg = response.statusText;
+            case "409":
+              msg = response.detail;
+              break;
+            case "403":
+              msg = "Your session logged out. Please refresh the application.";
+              break;
+            default:
+              msg = response.statusText || response.message;
             }
             self.set("error", msg);
             beam.deleteRecord();

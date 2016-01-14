@@ -3,12 +3,15 @@ var EmberApp = require('ember-cli/lib/broccoli/ember-app');
 
 module.exports = function(defaults) {
   var app = new EmberApp({
-      'ember-cli-bootstrap-sassy': {
-          'quiet': true
-      },
-      vendorFiles: {
-          'handlebars.js': null
-      }});
+    'ember-cli-bootstrap-sassy': {
+      'quiet': true
+    },
+    babel: {
+      includePolyfill: true
+    },
+    vendorFiles: {
+      'handlebars.js': null
+    }});
 
   // Use `app.import` to add additional libraries to the generated
   // output files.

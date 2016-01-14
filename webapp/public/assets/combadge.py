@@ -106,6 +106,7 @@ def _beam_up(beam_id, path, transporter_addr):
     if os.path.isfile(path):
         _beam_file(transporter, os.path.dirname(path), path)
     elif os.path.isdir(path):
+        logger.info("Entering {0}".format(path))
         for (dirpath, _, filenames) in os.walk(path):
             for filename in filenames:
                 rel_path = os.path.join(dirpath, filename)
@@ -182,7 +183,7 @@ def main():
     handler = SysLogHandler('/dev/log')
     logger.setLevel("DEBUG")
     handler.setLevel("DEBUG")
-    handler.setFormatter(logging.Formatter('combadge: %(message)s'))
+    handler.setFormatter(logging.Formatter('combadge [beam {0}]: %(message)s'.format(beam_id)))
     logger.addHandler(handler)
     logger.info("Combadge forked")
 

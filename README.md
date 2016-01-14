@@ -1,38 +1,8 @@
-Weber-Backend
-=============
+# Scotty
+Scotty is a system for retrieving and storing files which need to be deleted after a period of time. At [Infinidat](http://www.infinidat.com/) we use it to store test logs.
 
-![Build Status](https://secure.travis-ci.org/vmalloc/weber-backend.png?branch=master ) 
+We released Scotty is open-source only recently so we still don't have any documentation about it. If this project sounds interesting to you, please subscribe to this repository and the documentation will come soon.
 
-weber-backend is a Flask application template, intended to get you started with a Flask-powered webapp as quickly as possible. weber-backend includes a database layer through Flask-SQLAlchemy, migrations through Alembic, asynchronous tasks via RQ and Redis, and more.
+## License
 
-weber-backend puts an emphasis on ease of deployment (with *ansible*), and not getting in your way while you focus on your actual app logic.
-
-Getting Started
-===============
-
-1. Check out the repository
-2. Go through the configuration in `flask_app/app.yml` - most configuration options there are self-explanatory, and you might be interested in tweaking them to your needs.
-3. Make sure you have `virtualenv` installed
-4. Run the test server to experiment:
-```
-$ python manage.py testserver
-```
-
-Installation/Deployment
-=======================
-
-See `INSTALLING.md`
-
-Development
-===========
-
-To start developing and testing, bootstrap the development environment with:
-
-```
-$ python manage.py bootstrap --develop
-```
-
-License
-=======
-
-Weber is distributed under the BSD 3-clause license.
+Scotty is distributed under the BSD 3-clause license.
