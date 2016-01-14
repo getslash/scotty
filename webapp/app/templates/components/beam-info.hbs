@@ -167,13 +167,13 @@
     <td style="width: 90%; padding-left: 20px; vertical-align: top">
       {{#if this.model.files.length}}
         <table class="layout-table">
-        {{#if this.display_pagination}}
+        {{#if display_pagination}}
         <tr><td>
-          <ul class="pagination">
-          {{#each this.pages as |page|}}
-            {{#link-to "beam" this.model (query-params page=page) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
-          {{/each}}
-          </ul>
+            <ul class="pagination">
+            {{#each iter_pages as |page|}}
+            {{#link-to "beam" model (query-params page=page file_filter=file_filter) tagName="li" class="waves-effect"}}{{page}}{{/link-to}}
+            {{/each}}
+            </ul>
         </td></tr>
         {{/if}}
         <tr><td>
