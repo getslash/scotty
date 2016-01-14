@@ -18,6 +18,7 @@ export default DS.Model.extend({
   error_message: DS.attr('string'),
   completed: DS.attr('boolean'),
   tags: DS.attr('tags'),
+  files: DS.attr(),
   initiator: DS.belongsTo('user', {
     async: true
   }),

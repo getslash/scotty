@@ -49,7 +49,7 @@ export default Ember.Component.extend({
     } catch (error) {
       Ember.Logger.error(error);
     }
-  }.observes("file_filter", "model", "page", "created"),
+  }.observes("file_filter", "model", "page", "created", "model.files"),
 
   display_pagination: function() {
     return this.get("pages") > 1;
