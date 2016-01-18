@@ -4,15 +4,15 @@
     <div class="nav-wrapper container">
       <a {{action "scottyButton"}} style="cursor: pointer;"><img src="/static/assets/img/scotty.png" id="portrait"><div id="logo-container" class="brand-logo">Scotty</div></a>
       <ul id="nav-mobile" class="right hide-on-med-and-down">
+        <li>{{#link-to "summary"}}Summary{{/link-to}}</li>
+        <li>{{#link-to "pinned"}}Pinned{{/link-to}}</li>
+        <li>{{#link-to "api"}}API{{/link-to}}</li>
         {{#if session.isAuthenticated}}
           <li><a href="#" {{ action 'nothing' }}>{{me.name}}</a></li>
           <li><a href="#" {{ action 'invalidate_session' }}>Log Out</a></li>
         {{else}}
           <li><a href="#" {{action "login"}}>Log In</a></li>
         {{/if}}
-        <li>{{#link-to "summary"}}Summary{{/link-to}}</li>
-        <li>{{#link-to "pinned"}}Pinned{{/link-to}}</li>
-        <li>{{#link-to "api"}}API{{/link-to}}</li>
       </ul>
     </div>
   </nav>

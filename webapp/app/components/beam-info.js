@@ -1,52 +1,68 @@
 import Ember from 'ember';
 
+const limit = 50;
+
 export default Ember.Component.extend({
   session: Ember.inject.service('session'),
   store: Ember.inject.service('store'),
   pinned: false,
-  limit: 50,
-  page: 1,
+  pages: 1,
+  files: [],
   back: false,
   iframe: false,
-  file_filter: "",
-  sort_props: ['file_name'],
+  editing_comment: false,
+  created: false,
+  text_file_filter: "",
 
-  sorted_files: Ember.computed.sort("model.files", "sort_props"),
-
-  filtered_model: function() {
-    var model = this.get("sorted_files");
-    if (this.get("file_filter")) {
-      let file_filter = this.get("file_filter");
-      model = model.filter(function(f) {
-        return f.get("file_name").indexOf(file_filter) !== -1;
-      });
+  didInsertElement: function() {
+    if (this.get("extended")) {
+      this.set("created", true);
+      this.set("text_file_filter", this.get("file_filter"));
     }
-    return model;
-  }.property("file_filter", "sorted_files"),
+  },
 
-  sliced_files: function() {
-    let limit = this.get("limit");
-    let page = this.get("page") - 1;
-    return this.get("filtered_model").slice(limit * page, limit * (page + 1));
-  }.property("limit", "page", "filtered_model"),
+  update_textbox: function() {
+    this.set("text_file_filter", this.get("file_filter"));
+  }.observes("file_filter"),
+
+  get_files: async function() {
+    const query = {
+      offset: (Math.max(0, this.get("page") - 1)) * limit,
+      limit: limit,
+      filter: this.get("file_filter"),
+      beam_id: this.get("model.id")
+    };
+
+    try {
+      const response = await this.get("store").query('file', query);
+      this.set("files", response);
+
+      if (response.meta.total > 0) {
+        const pages = Math.ceil(response.meta.total / limit);
+        this.set("pages", pages);
+        if (this.get("page") > pages) {
+          this.set("page", pages);
+        }
+      } else {
+        this.set("pages", 0);
+      }
+    } catch (error) {
+      Ember.Logger.error(error);
+    }
+  }.observes("file_filter", "model", "page", "created", "model.files"),
 
   display_pagination: function() {
-    return this.get("pages").length > 1;
+    return this.get("pages") > 1;
   }.property("pages"),
 
-  pages: function() {
-    var arr = [];
-    for (var i = 1; i <= Math.ceil(this.get("filtered_model.length") / this.get("limit")); ++i) {
-      arr.push(i);
+  iter_pages: function () {
+    const pages = this.get("pages");
+    let arr = new Array(pages);
+    for (let i=1; i <= pages; ++i) {
+      arr[i - 1] = i;
     }
-
-    let last_page = arr[arr.length - 1];
-    if (this.get("page") > last_page) {
-      this.set("page", last_page);
-    }
-
     return arr;
-  }.property("filtered_model", "limit"),
+  }.property("pages"),
 
   monitor_pins: function() {
     Ember.run.once(this, "update_pinned");
@@ -92,6 +108,17 @@ export default Ember.Component.extend({
     },
     clean: function() {
       this.set("file_filter", "");
+      this.set("text_file_filter", "");
+    },
+    toggleEditing: function() {
+      const editing_comment = this.get("editing_comment");
+      if (editing_comment) {
+        this.get("model").save();
+      }
+      this.set("editing_comment", !editing_comment);
+    },
+    changeFilter: function() {
+      this.set("file_filter", this.get("text_file_filter"));
     }
   }
 });

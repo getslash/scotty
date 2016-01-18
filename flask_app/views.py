@@ -3,6 +3,7 @@ import logbook
 import http.client
 import urllib.parse
 import psutil
+import re
 from jsonschema import Draft4Validator
 from functools import wraps
 from datetime import datetime
@@ -18,6 +19,16 @@ from .auth import require_user, get_or_create_user, InvalidEmail
 from flask import Blueprint, current_app
 
 views = Blueprint("views", __name__, template_folder="templates")
+
+
+# https://stackoverflow.com/questions/2532053/validate-a-hostname-string?answertab=votes#tab-top
+_ALLOWED_HOSTNAMES = re.compile(r"(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+def _is_valid_hostname(hostname):
+    if len(hostname) > 255:
+        return False
+    if hostname[-1] == ".":
+        hostname = hostname[:-1] # strip exactly one dot from the right, if present
+    return all(_ALLOWED_HOSTNAMES.match(x) for x in hostname.split("."))
 
 
 def validate_schema(schema):
@@ -90,6 +101,7 @@ def get_beams():
             'properties': {
                 'auth_method': {'type': 'string', 'enum': ['rsa', 'password', 'independent']},
                 'user': {'type': 'string'},
+                'comment': {'type': ['string', 'null']},
                 'type': {'type': ['string', 'null']},
                 'password': {'type': ['string', 'null']},
                 'directory': {'type': 'string'},
@@ -116,9 +128,13 @@ def create_beam(user):
             except InvalidEmail:
                 return 'Invalid email', http.client.CONFLICT
 
+    if not _is_valid_hostname(request.json['beam']['host']):
+        return 'Invalid hostname', http.client.CONFLICT
+
     beam = Beam(
         start=datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
+        comment=request.json['beam'].get('comment'),
         directory=request.json['beam']['directory'],
         initiator=user.id,
         error=None,
@@ -212,6 +228,43 @@ def get_file(file_id):
     return jsonify({'file': _dictify_file(file_rec)})
 
 
+@views.route('/files', methods=['GET'])
+def get_files():
+    if "beam_id" not in request.args:
+        abort(http.client.BAD_REQUEST)
+
+    try:
+        beam_id = request.args['beam_id']
+    except ValueError:
+        abort(http.client.BAD_REQUEST)
+
+    query = db.session.query(File).filter_by(beam_id=beam_id)
+
+    if "filter" in request.args and request.args["filter"]:
+        query = query.filter(File.file_name.like("%{}%".format(request.args['filter'])))
+
+    query = query.order_by(File.storage_name)
+
+    total = query.count()
+
+    if "offset" in request.args or "limit" in request.args:
+        if not "offset" in request.args and "limit" in request.args:
+            abort(http.client.BAD_REQUEST)
+
+        try:
+            offset = int(request.args['offset'])
+            limit = int(request.args['limit'])
+        except ValueError:
+            abort(http.client.BAD_REQUEST)
+
+        query = query.offset(offset).limit(limit)
+
+    return jsonify({
+        'files': [_dictify_file(f) for f in query],
+        'meta': {'total': total}
+    })
+
+
 @views.route('/beams/<int:beam_id>/tags/<path:tag>', methods=['POST'])
 def put_tag(beam_id, tag):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
@@ -254,18 +307,31 @@ def remove_tag(beam_id, tag):
 @validate_schema({
     'type': 'object',
     'properties': {
-        'completed': {'type': 'boolean'},
-        'error': {'type': ['string', 'null']}
+        'beam': {'type': 'object'},
+        'error': {'type': ['string', 'null']},
+        'comment': {'type': ['string', 'null']}
     },
-    'required': ['completed']
 })
 def update_beam(beam_id):
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if beam.pending_deletion or beam.deleted:
         abort(http.client.FORBIDDEN)
 
-    beam.completed = request.json['completed']
-    beam.error = request.json.get('error', None)
+    if 'beam' in request.json:
+        if len(request.json) > 1:
+            abort(http.client.CONFLICT)
+
+        json = request.json['beam']
+    else:
+        json = request.json
+
+    if 'completed' in request.json:
+        beam.completed = json['completed']
+        beam.error = json.get('error', None)
+
+    if 'comment' in json:
+        beam.comment = json['comment']
+
     db.session.commit()
 
     return '{}'
