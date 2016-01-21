@@ -16,3 +16,14 @@ def test_default_vacuum(scotty, beam, server_config):
     assert beam.purge_time == 0
     assert beam.deleted
 
+
+def test_default_vacuum_pin(scotty, beam, server_config):
+    vacuum_threshold = server_config['VACUUM_THRESHOLD']
+    scotty.pin(beam, True)
+    scotty.sleep(_DAY * vacuum_threshold * 2)
+    beam.update()
+    assert not beam.deleted
+    scotty.pin(beam, False)
+    scotty.sleep(timedelta(seconds=0))
+    beam.update()
+    assert beam.deleted

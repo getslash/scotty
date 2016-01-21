@@ -122,6 +122,10 @@ def require_user(allow_anonymous):
             if current_user.is_authenticated:
                 user = current_user
 
+            test_email = request.headers.get("X-Scotty-Email")
+            if current_app.config.get("TESTING", False) and test_email:
+                user = get_or_create_user(test_email, "Test user")
+
             if not user:
                 if not allow_anonymous:
                     abort(http.client.FORBIDDEN)

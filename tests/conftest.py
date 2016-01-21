@@ -21,10 +21,21 @@ def pytest_addoption(parser):
 
 
 class TestingScotty(Scotty):
+    def __init__(self, *args, **kwargs):
+        super(TestingScotty, self).__init__(*args, **kwargs)
+        self._session.headers['X-Scotty-Email'] = "test@getslash.org"
+
     def sleep(self, time_to_sleep):
         response = self._session.post("{}/sleep".format(self._url),
                            data=json.dumps({'time': time_to_sleep.total_seconds()}))
         response.raise_for_status()
+
+    def pin(self, beam_obj, should_pin):
+        data = {
+            'beam_id': beam_obj.id,
+            'should_pin': should_pin
+        }
+        self._session.put("{}/pin".format(self._url), data=json.dumps(data))
 
 
 @pytest.fixture
