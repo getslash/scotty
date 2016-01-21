@@ -37,6 +37,10 @@ class TestingScotty(Scotty):
         }
         self._session.put("{}/pin".format(self._url), data=json.dumps(data))
 
+    def check_beam_state(self, beam_obj, deleted):
+        assert beam_obj.deleted == deleted
+
+
 
 @pytest.fixture
 def deployment_webapp_url(request):
