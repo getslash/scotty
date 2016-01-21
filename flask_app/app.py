@@ -61,7 +61,12 @@ def create_app(config=None):
     from .auth import auth
     from .views import views
     from .setup import setup
+
     blueprints = [auth, views, setup]
+
+    if app.config.get('TESTING'):
+        from .test_methods import test_methods
+        blueprints.append(test_methods)
 
     from .errors import errors
 
