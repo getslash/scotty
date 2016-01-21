@@ -2,6 +2,7 @@ from datetime import datetime, time
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.security import UserMixin, RoleMixin
 from sqlalchemy.orm import backref
+import flux
 
 db = SQLAlchemy()
 
@@ -63,7 +64,7 @@ class Beam(db.Model):
             return 0
 
         threshold = self.type.vacuum_threshold if self.type is not None else default_threshold
-        days = threshold - (datetime.utcnow() -  datetime.combine(self.start, time(0, 0))).days
+        days = threshold - (flux.current_timeline.datetime.utcnow() - datetime.combine(self.start, time(0, 0))).days
         return max(days, 0)
 
     def to_dict(self, default_threshold):

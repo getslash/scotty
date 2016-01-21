@@ -1,9 +1,9 @@
 import os
 import sys
 import uuid
-import socket
 import tempfile
 import shutil
+import json
 from functools import partial
 
 import requests
@@ -20,6 +20,12 @@ def pytest_addoption(parser):
     parser.addoption("--www-port", action="store", default=8000, type=int)
 
 
+class TestingScotty(Scotty):
+    def sleep(self, time_to_sleep):
+        response = self._session.post("{}/sleep".format(self._url),
+                           data=json.dumps({'time': time_to_sleep.total_seconds()}))
+        response.raise_for_status()
+
 
 @pytest.fixture
 def deployment_webapp_url(request):
@@ -28,8 +34,17 @@ def deployment_webapp_url(request):
 
 
 @pytest.fixture
-def db(request, deployment_webapp_url):
-    webapp = app.create_app()
+def webapp():
+    return app.create_app()
+
+
+@pytest.fixture
+def server_config(webapp):
+    return webapp.config
+
+
+@pytest.fixture
+def db(webapp):
     with webapp.app_context():
         models.db.session.close()
         models.db.drop_all()
@@ -38,7 +53,7 @@ def db(request, deployment_webapp_url):
 
 @pytest.fixture
 def scotty(db, deployment_webapp_url):
-    return Scotty(deployment_webapp_url)
+    return TestingScotty(deployment_webapp_url)
 
 
 @pytest.fixture
@@ -49,7 +64,7 @@ def tempdir(request):
 
 
 @pytest.fixture
-def local_beam_dir(request, tempdir):
+def local_beam_dir(tempdir):
     source_dir = os.path.join(tempdir, 'source')
     os.mkdir(source_dir)
 

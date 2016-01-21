@@ -10,7 +10,7 @@ windows:
       - python manage.py testserver --no-tmux
   - window_name: celery worker
     panes:
-      - .env/bin/celery -A flask_app.tasks worker --loglevel=info
+      - .env/bin/celery -A flask_app.tasks worker --loglevel=info --concurrency=1
       - .env/bin/celery -A flask_app.tasks shell
   - window_name: database
     panes:

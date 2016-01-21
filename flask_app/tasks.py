@@ -3,7 +3,7 @@ import os
 import smtplib
 import subprocess
 from email.mime.text import MIMEText
-from datetime import timedelta, datetime
+from datetime import timedelta
 from collections import defaultdict
 from io import StringIO
 import functools
@@ -30,6 +30,8 @@ from raven.contrib.celery import register_signal
 
 from sqlalchemy.orm import joinedload
 
+import flux
+
 from .app import create_app
 from .models import Beam, db, Pin, File
 
@@ -38,7 +40,7 @@ from .models import Beam, db, Pin, File
 logger = logbook.Logger(__name__)
 
 
-queue = Celery('tasks', broker='redis://localhost')
+queue = Celery('tasks', backend='redis://localhost', broker='redis://localhost')
 queue.conf.update(
     CELERY_TASK_SERIALIZER='json',
     CELERY_ACCEPT_CONTENT=['json'],  # Ignore other content
@@ -93,6 +95,16 @@ def needs_app_context(f):
     return wrapper
 
 
+def testing_method(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        assert APP is not None
+        assert APP.config.get('TESTING', False)
+        return f(*args, **kwargs)
+
+    return wrapper
+
+
 def create_key(s):
     f = StringIO()
     f.write(s)
@@ -123,7 +135,7 @@ Montgomery Scott
 def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
     try:
         beam = db.session.query(Beam).filter_by(id=beam_id).one()
-        delay = datetime.utcnow() - beam.start
+        delay = flux.current_timeline.datetime.utcnow() - beam.start
         if delay.total_seconds() > 10:
             APP.raven.captureMessage("Beam {} took {} to start".format(beam.id, delay))
 
@@ -188,7 +200,7 @@ def vacuum_beam(beam, storage_path):
 @needs_app_context
 def mark_timeout():
     timeout = timedelta(seconds=APP.config['COMBADGE_CONTACT_TIMEOUT'])
-    timed_out = datetime.utcnow() - timeout
+    timed_out = flux.current_timeline.datetime.utcnow() - timeout
     dead_beams = (
         db.session.query(Beam).filter_by(completed=False)
         .filter(Beam.combadge_contacted == False, Beam.start < timed_out))
@@ -214,7 +226,7 @@ def remind_pinned():
                 value))
             return
 
-    remind_time = datetime.utcnow() - timedelta(days=APP.config['PIN_REMIND_THRESHOLD'])
+    remind_time = flux.current_timeline.datetime.utcnow() - timedelta(days=APP.config['PIN_REMIND_THRESHOLD'])
     emails = defaultdict(list)
     pins = (db.session.query(Pin)
             .join(Pin.beam)
@@ -240,6 +252,7 @@ def remind_pinned():
 @queue.task
 @needs_app_context
 def vacuum():
+    now = flux.current_timeline.datetime.utcnow()
     logger.info("Vacuum intiated")
 
     # Make sure that the storage folder is accessable. Whenever deploying scotty to somewhere, one
@@ -258,18 +271,18 @@ def vacuum():
         "WHERE "
         "(NOT beam.pending_deletion AND NOT beam.deleted AND beam.completed)" # Anything which isn't uncompleted or already deleted
         "AND NOT EXISTS (SELECT beam_id FROM pin WHERE pin.beam_id = beam.id) " # which has no pinners
-        "AND ((beam.type_id IS NULL) AND (beam.start < now() - '%s days'::interval)) "
+        "AND ((beam.type_id IS NULL) AND (beam.start < %s - '%s days'::interval)) "
             # Belongs to the default type and the default vacuum threshold has been exceeded
-        , APP.config['VACUUM_THRESHOLD'])
+        , now, APP.config['VACUUM_THRESHOLD'])
     db.engine.execute(
         "UPDATE beam SET pending_deletion=true "
         "FROM beam_type "
         "WHERE "
         "(NOT beam.pending_deletion AND NOT beam.deleted AND beam.completed)" # Anything which isn't uncompleted or already deleted
         "AND NOT EXISTS (SELECT beam_id FROM pin WHERE pin.beam_id = beam.id) " # which has no pinners
-        "AND ((beam.type_id = beam_type.id) AND (beam.start < now() - (beam_type.vacuum_threshold * INTERVAL '1 DAY')))"
+        "AND ((beam.type_id = beam_type.id) AND (beam.start < %s - (beam_type.vacuum_threshold * INTERVAL '1 DAY')))"
             # Belongs to a specific type which its vacuum threshold has been exceeded
-        )
+        , now)
     db.session.commit()
     logger.info("Finished marking vacuum candidates")
 
@@ -317,7 +330,7 @@ def validate_checksum():
         assert checksum == file_.checksum, "Expected checksum of {} is {}. Got {} instead".format(
             full_path, file_.checksum, checksum)
         logger.info("{} validated (last validated: {})".format(full_path, file_.last_validated))
-        file_.last_validated = datetime.utcnow()
+        file_.last_validated = flux.current_timeline.datetime.utcnow()
 
     db.session.commit()
 
@@ -387,6 +400,15 @@ def check_free_space():
     percent = psutil.disk_usage(APP.config['STORAGE_PATH']).percent
     if percent >= APP.config['FREE_SPACE_THRESHOLD']:
         APP.raven.captureMessage("Used space is {}%".format(percent))
+
+
+@queue.task
+@needs_app_context
+@testing_method
+def sleep(t):
+    flux.current_timeline.set_time_factor(0)
+    flux.current_timeline.sleep(t)
+    vacuum()
 
 
 @worker_init.connect

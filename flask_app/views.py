@@ -6,7 +6,6 @@ import psutil
 import re
 from jsonschema import Draft4Validator
 from functools import wraps
-from datetime import datetime
 from sqlalchemy import distinct
 from sqlalchemy.sql import func, false
 from sqlalchemy.exc import IntegrityError
@@ -17,6 +16,7 @@ from .models import Beam, db, File, User, Pin, Tag, BeamType
 from .tasks import beam_up, create_key
 from .auth import require_user, get_or_create_user, InvalidEmail
 from flask import Blueprint, current_app
+import flux
 
 views = Blueprint("views", __name__, template_folder="templates")
 
@@ -132,7 +132,7 @@ def create_beam(user):
         return 'Invalid hostname', http.client.CONFLICT
 
     beam = Beam(
-        start=datetime.utcnow(), size=0,
+        start=flux.current_timeline.datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
         comment=request.json['beam'].get('comment'),
         directory=request.json['beam']['directory'],
@@ -406,7 +406,7 @@ def update_file(file_id):
 
     mtime = request.json.get("mtime")
     if mtime is not None:
-        mtime = datetime.utcfromtimestamp(mtime)
+        mtime = flux.current_timeline.datetime.utcfromtimestamp(mtime)
 
     f.size = size
     f.mtime = mtime
