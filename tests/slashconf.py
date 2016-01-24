@@ -1,13 +1,12 @@
 import os
 import sys
-import uuid
 import tempfile
 import shutil
 import json
+import uuid
 from collections import namedtuple
 from functools import partial
 
-import requests
 from urlobject import URLObject as URL
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -138,31 +137,3 @@ def typed_beam(scotty, local_beam_dir, beam_type, beam_types):
     beam = scotty.get_beam(scotty.beam_up(local_beam_dir, beam_type=beam_type))
     beam_type = beam_types[beam_type] if beam_type else None
     return BeamInfo(beam, beam_type)
-
-
-class Webapp(object):
-
-    def __init__(self, app):
-        super(Webapp, self).__init__()
-        self.app = app
-        from flask.ext.loopback import FlaskLoopback
-        self.loopback = FlaskLoopback(self.app)
-        self.hostname = str(uuid.uuid1())
-
-    def activate(self):
-        self.loopback.activate_address((self.hostname, 80))
-
-    def deactivate(self):
-        self.loopback.deactivate_address((self.hostname, 80))
-
-    def _request(self, method, path, *args, **kwargs):
-        raw_response = kwargs.pop("raw_response", False)
-        if path.startswith("/"):
-            path = path[1:]
-            assert not path.startswith("/")
-        returned = requests.request(method, "http://{0}/{1}".format(self.hostname, path), *args, **kwargs)
-        if raw_response:
-            return returned
-
-        returned.raise_for_status()
-        return returned.json()
