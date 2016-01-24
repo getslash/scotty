@@ -41,6 +41,45 @@ class User(db.Model, UserMixin):
         return self.email == "anonymous@getslash.github.io"
 
 
+class Tracker(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, index=True, unique=True)
+    type = db.Column(db.String, nullable=False)
+    config = db.Column(db.String)
+    url = db.Column(db.String, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'type': self.type,
+            'url': self.url,
+            'config': self.config
+        }
+
+
+class Issue(db.Model):
+    __table_args__ = (db.UniqueConstraint('tracker_id', 'id_in_tracker', name='uix_unique_issue'), )
+
+    id = db.Column(db.Integer, primary_key=True)
+    tracker_id = db.Column(db.Integer, db.ForeignKey('tracker.id', ondelete='CASCADE'), index=True)
+    id_in_tracker = db.Column(db.String, nullable=False)
+    open = db.Column(db.Boolean, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tracker_id': self.tracker_id,
+            'id_in_tracker': self.id_in_tracker,
+            'open': self.open,
+        }
+
+
+beam_issues = db.Table('beam_issues',
+                       db.Column('beam_id', db.Integer(), db.ForeignKey('beam.id', ondelete='CASCADE'), index=True),
+                       db.Column('issue_id', db.Integer(), db.ForeignKey('issue.id', ondelete='CASCADE')))
+
+
 class Beam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     start = db.Column(db.DateTime, index=True)
@@ -58,6 +97,7 @@ class Beam(db.Model):
     initiator = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     files = db.relationship("File", backref=backref("beam", lazy="joined"))
     pins = db.relationship("Pin", backref="beam")
+    issues = db.relationship('Issue', secondary=beam_issues)
 
     def get_purge_time(self, default_threshold):
         if self.size == 0:
@@ -82,7 +122,8 @@ class Beam(db.Model):
             'directory': self.directory,
             'deleted': self.pending_deletion or self.deleted,
             'pins': [u.user_id for u in self.pins],
-            'tags': [t.tag for t in self.tags] # pylint: disable=E1101
+            'tags': [t.tag for t in self.tags],  # pylint: disable=E1101
+            'associated_issues': [i.id for i in self.issues]
         }
 
     def __repr__(self):

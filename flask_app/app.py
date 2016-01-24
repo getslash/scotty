@@ -82,6 +82,12 @@ def create_app(config=None):
     from .users import users
     app.register_blueprint(users, url_prefix="/users")
 
+    from .trackers import trackers
+    app.register_blueprint(trackers, url_prefix="/trackers")
+
+    from .issues import issues
+    app.register_blueprint(issues, url_prefix="/issues")
+
     for code in errors:
         app.errorhandler(code)(errors[code])
 

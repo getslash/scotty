@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import os
 import smtplib
 import subprocess
+import json
 from email.mime.text import MIMEText
 from datetime import timedelta
 from collections import defaultdict
@@ -33,7 +34,7 @@ from sqlalchemy.orm import joinedload
 import flux
 
 from .app import create_app
-from .models import Beam, db, Pin, File
+from .models import Beam, db, Pin, File, Tracker, Issue
 
 
 
@@ -47,8 +48,8 @@ queue.conf.update(
     CELERY_RESULT_SERIALIZER='json',
     CELERY_ENABLE_UTC=True,
     CELERYBEAT_SCHEDULE={
-        'vacuum': {
-            'task': 'flask_app.tasks.vacuum',
+        'nightly': {
+            'task': 'flask_app.tasks.nightly',
             'schedule': crontab(hour=0, minute=0),
         },
         'free-space': {
@@ -265,11 +266,14 @@ def vacuum():
         LEFT JOIN pin ON pin.beam_id = beam.id
         LEFT JOIN beam_type ON beam.type_id = beam_type.id
         LEFT JOIN file ON file.beam_id = beam.id
+        LEFT JOIN beam_issues ON beam_issues.beam_id = beam.id
+        LEFT JOIN issue ON issue.id = beam_issues.issue_id
         WHERE
         NOT beam.pending_deletion
         AND NOT beam.deleted
         AND beam.completed
         AND pin.id IS NULL
+        AND (issue.id is NULL OR NOT issue.open)
         AND (
             file.beam_id IS NULL
             OR (beam.type_id IS NULL) AND (beam.start < %s - '%s days'::interval)
@@ -283,7 +287,34 @@ def vacuum():
         vacuum_beam(beam, APP.config['STORAGE_PATH'])
     logger.info("Vacuum done")
 
-    validate_checksum.delay()
+
+def _refresh_file_tracker(url, _config, issues):
+    with open(url, 'r') as f:
+        data = json.load(f)
+        for issue in issues:
+            issue.open = data[issue.id_in_tracker]
+
+
+@queue.task
+@needs_app_context
+def refresh_issue_trackers():
+    trackers = db.session.query(Tracker)
+    for tracker in trackers:
+        issues = db.session.query(Issue).filter_by(tracker_id=tracker.id)
+        logger.info("Refreshing tracker {} - {} of type {}. Issues: {}", tracker.id, tracker.url, tracker.type, issues)
+        if tracker.type == "file":
+            _refresh_file_tracker(tracker.url, tracker.config, issues)
+            db.session.commit()
+        else:
+            raise ValueError("Unknown tracker type {}".format(tracker.type))
+
+
+@queue.task
+@needs_app_context
+def nightly():
+    refresh_issue_trackers()
+    vacuum()
+    validate_checksum()
 
 
 @queue.task
@@ -400,7 +431,7 @@ def check_free_space():
 def sleep(t):
     flux.current_timeline.set_time_factor(0)
     flux.current_timeline.sleep(t)
-    vacuum()
+    nightly()
 
 
 @worker_init.connect

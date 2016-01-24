@@ -7,7 +7,7 @@ from paramiko.ssh_exception import SSHException
 from flux import current_timeline
 from flask import Blueprint, abort, request, current_app, jsonify
 from .auth import require_user, get_or_create_user, InvalidEmail
-from .models import Beam, db, User, Pin, Tag, BeamType
+from .models import Beam, db, User, Pin, Tag, BeamType, Issue
 from .utils import validate_schema, is_valid_hostname
 from .tasks import create_key, beam_up
 
@@ -21,7 +21,7 @@ _ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email']
 def get_all():
     query = (
         db.session.query(Beam)
-        .options(joinedload(Beam.pins), joinedload(Beam.type))
+        .options(joinedload(Beam.pins), joinedload(Beam.type), joinedload(Beam.issues))
         .filter_by(pending_deletion=False, deleted=False)
         .order_by(Beam.start.desc()))
     query_params = []
@@ -201,4 +201,25 @@ def remove_tag(beam_id, tag):
     if t:
         db.session.delete(t)
         db.session.commit()
+    return ''
+
+
+@beams.route('/<int:beam_id>/issues/<int:issue_id>', methods=['POST', 'DELETE'])
+def set_issue_association(beam_id, issue_id):
+    beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    if not beam:
+        abort(http.client.NOT_FOUND)
+
+    issue = db.session.query(Issue).filter_by(id=issue_id).first()
+    if not issue:
+        abort(http.client.NOT_FOUND)
+
+    if request.method == 'POST':
+        beam.issues.append(issue)
+    elif request.method == 'DELETE':
+        beam.issues.remove(issue)
+    else:
+        raise AssertionError()
+
+    db.session.commit()
     return ''

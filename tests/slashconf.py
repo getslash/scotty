@@ -22,6 +22,62 @@ BeamType = namedtuple('BeamType', ('name', 'threshold'))
 BeamInfo = namedtuple('BeamInfo', ('beam', 'type'))
 
 
+class FileTracker(object):
+    class Issue(object):
+        def __init__(self, tracker, id_in_scotty, id_in_tracker):
+            self._id_in_tracker = id_in_tracker
+            self._id_in_scotty = id_in_scotty
+            self._tracker = tracker
+
+        @property
+        def id_in_scotty(self):
+            return self._id_in_scotty
+
+        def set_state(self, open_):
+            self._tracker.set_state(self._id_in_tracker, open_)
+
+    def __init__(self, scotty, path, id_):
+        self._scotty = scotty
+        self._path = path
+        self._id = id_
+        self._issues = {}
+
+    @classmethod
+    def create(cls, scotty):
+        fd, path = tempfile.mkstemp()
+        os.close(fd)
+        id_ = scotty.create_tracker('tests_tracker', 'file', path, '')
+        return cls(scotty, path, id_)
+
+    def dump(self):
+        with open(self._path, 'w') as f:
+            json.dump(self._issues, f)
+
+    def delete(self):
+        os.unlink(self._path)
+
+    def create_issue(self):
+        id_in_tracker = str(uuid.uuid4())
+        self._issues[id_in_tracker] = True
+        id_in_scotty = self._scotty.create_issue(self._id, id_in_tracker)
+        issue = self.Issue(self, id_in_scotty, id_in_tracker)
+        self.dump()
+        return issue
+
+    def set_state(self, issue_id, open_):
+        self._issues[issue_id] = open_
+        self.dump()
+
+    @property
+    def path(self):
+        return self._path
+
+    @property
+    def id(self):
+        return self._id
+
+
+
 class TestingScotty(Scotty):
     def __init__(self, *args, **kwargs):
         super(TestingScotty, self).__init__(*args, **kwargs)
@@ -37,7 +93,7 @@ class TestingScotty(Scotty):
             'beam_id': beam_obj.id,
             'should_pin': should_pin
         }
-        self._session.put("{}/pin".format(self._url), data=json.dumps(data))
+        self._session.put("{}/pin".format(self._url), data=json.dumps(data)).raise_for_status()
 
     def check_beam_state(self, beam_obj, deleted):
         assert beam_obj.deleted == deleted
@@ -96,6 +152,16 @@ def tempdir():
     d = tempfile.mkdtemp()
     slash.add_critical_cleanup(partial(shutil.rmtree, d))
     return d
+
+
+@slash.fixture
+def tracker(scotty):
+    return FileTracker.create(scotty)
+
+
+@slash.fixture
+def issue(tracker):
+    return tracker.create_issue()
 
 
 @slash.fixture
