@@ -73,6 +73,15 @@ def create_app(config=None):
     for blueprint in blueprints:
         app.register_blueprint(blueprint)
 
+    from .beams import beams
+    app.register_blueprint(beams, url_prefix="/beams")
+
+    from .files import files
+    app.register_blueprint(files, url_prefix="/files")
+
+    from .users import users
+    app.register_blueprint(users, url_prefix="/users")
+
     for code in errors:
         app.errorhandler(code)(errors[code])
 
