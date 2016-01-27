@@ -1,6 +1,6 @@
 import http
 from flask import Blueprint, jsonify, abort
-from .models import db, User
+from ..models import db, User
 
 
 users = Blueprint("users", __name__, template_folder="templates")

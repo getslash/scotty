@@ -7,9 +7,9 @@ from paramiko.ssh_exception import SSHException
 from flux import current_timeline
 from flask import Blueprint, abort, request, current_app, jsonify
 from .auth import require_user, get_or_create_user, InvalidEmail
-from .models import Beam, db, User, Pin, Tag, BeamType, Issue
+from ..models import Beam, db, User, Pin, Tag, BeamType, Issue
 from .utils import validate_schema, is_valid_hostname
-from .tasks import create_key, beam_up
+from ..tasks import create_key, beam_up
 
 
 

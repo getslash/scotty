@@ -4,7 +4,7 @@ import logbook
 import psutil
 from sqlalchemy.sql import func
 from flask import Blueprint, current_app, send_from_directory, jsonify, request, redirect, abort
-from .models import Beam, db, Pin, Tag
+from ..models import Beam, db, Pin, Tag
 from .auth import require_user
 from .utils import validate_schema
 

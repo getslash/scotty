@@ -1,7 +1,7 @@
 import http
 from flask import Blueprint, request, jsonify
 from .utils import validate_schema
-from .models import db, Tracker
+from ..models import db, Tracker
 
 trackers = Blueprint("trackers", __name__, template_folder="templates")
 

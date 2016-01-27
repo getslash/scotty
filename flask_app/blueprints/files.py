@@ -5,7 +5,7 @@ import logbook
 from flux import current_timeline
 from flask import Blueprint, request, jsonify, abort, current_app
 from .utils import validate_schema
-from .models import db, File, Beam
+from ..models import db, File, Beam
 
 
 files = Blueprint("files", __name__, template_folder="templates")

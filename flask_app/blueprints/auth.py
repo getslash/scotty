@@ -1,15 +1,14 @@
-import re
 import os
 import http.client
 from functools import wraps
 from httplib2 import Http
 from oauth2client.client import flow_from_clientsecrets
 from apiclient.discovery import build
+from itsdangerous import TimedSerializer, BadSignature
 from flask import request, jsonify, Blueprint, current_app, abort
 from flask.ext.security import SQLAlchemyUserDatastore
 from flask.ext.login import login_user, logout_user, current_user
-from .models import Role, User, db
-from itsdangerous import TimedSerializer, BadSignature
+from ..models import Role, User, db
 
 
 auth = Blueprint("auth", __name__, template_folder="templates")
