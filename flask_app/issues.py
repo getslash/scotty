@@ -1,3 +1,4 @@
+import http
 from flask import Blueprint, request, jsonify
 from .utils import validate_schema
 from .models import db, Issue
@@ -26,3 +27,14 @@ def create():
     db.session.add(issue)
     db.session.commit()
     return jsonify({'issue': issue.to_dict()})
+
+
+@issues.route('/<int:issue>', methods=['DELETE'])
+def delete(issue):
+    issue = db.session.query(Issue).filter_by(id=issue).first()
+    if not issue:
+        return 'Issue not found', http.client.NOT_FOUND
+
+    db.session.delete(issue)
+    db.session.commit()
+    return ''

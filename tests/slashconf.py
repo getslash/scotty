@@ -36,6 +36,9 @@ class FileTracker(object):
         def set_state(self, open_):
             self._tracker.set_state(self._id_in_tracker, open_)
 
+        def delete(self):
+            self._tracker._scotty.delete_issue(self._id_in_scotty)
+
     def __init__(self, scotty, path, id_):
         self._scotty = scotty
         self._path = path
