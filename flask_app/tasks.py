@@ -260,29 +260,21 @@ def vacuum():
     os.stat(os.path.join(APP.config['STORAGE_PATH'], ".test"))
 
     db.engine.execute(
-        "UPDATE beam SET pending_deletion=true "
-        "WHERE "
-        "(NOT beam.pending_deletion AND NOT beam.deleted AND beam.completed)" # Anything which isn't uncompleted or already deleted
-        "AND NOT EXISTS (SELECT beam_id FROM pin WHERE pin.beam_id = beam.id) " # which has no pinners
-        "AND (NOT EXISTS (SELECT beam_id FROM file WHERE file.beam_id = beam.id)) " # And has no files
-        )
-    db.engine.execute(
-        "UPDATE beam SET pending_deletion=true "
-        "WHERE "
-        "(NOT beam.pending_deletion AND NOT beam.deleted AND beam.completed)" # Anything which isn't uncompleted or already deleted
-        "AND NOT EXISTS (SELECT beam_id FROM pin WHERE pin.beam_id = beam.id) " # which has no pinners
-        "AND ((beam.type_id IS NULL) AND (beam.start < %s - '%s days'::interval)) "
-            # Belongs to the default type and the default vacuum threshold has been exceeded
-        , now, APP.config['VACUUM_THRESHOLD'])
-    db.engine.execute(
-        "UPDATE beam SET pending_deletion=true "
-        "FROM beam_type "
-        "WHERE "
-        "(NOT beam.pending_deletion AND NOT beam.deleted AND beam.completed)" # Anything which isn't uncompleted or already deleted
-        "AND NOT EXISTS (SELECT beam_id FROM pin WHERE pin.beam_id = beam.id) " # which has no pinners
-        "AND ((beam.type_id = beam_type.id) AND (beam.start < %s - (beam_type.vacuum_threshold * INTERVAL '1 DAY')))"
-            # Belongs to a specific type which its vacuum threshold has been exceeded
-        , now)
+        """UPDATE beam SET pending_deletion=true WHERE EXISTS (
+        SELECT beam.id FROM beam
+        LEFT JOIN pin ON pin.beam_id = beam.id
+        LEFT JOIN beam_type ON beam.type_id = beam_type.id
+        LEFT JOIN file ON file.beam_id = beam.id
+        WHERE
+        NOT beam.pending_deletion
+        AND NOT beam.deleted
+        AND beam.completed
+        AND pin.id IS NULL
+        AND (
+            file.beam_id IS NULL
+            OR (beam.type_id IS NULL) AND (beam.start < %s - '%s days'::interval)
+            OR (beam.type_id IS NOT NULL) AND (beam.start < %s - (beam_type.vacuum_threshold * INTERVAL '1 DAY'))
+        ))""", now, APP.config['VACUUM_THRESHOLD'], now)
     db.session.commit()
     logger.info("Finished marking vacuum candidates")
 
