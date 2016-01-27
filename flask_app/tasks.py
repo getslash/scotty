@@ -276,8 +276,8 @@ def vacuum():
         AND (issue.id is NULL OR NOT issue.open)
         AND (
             file.beam_id IS NULL
-            OR (beam.type_id IS NULL) AND (beam.start < %s - '%s days'::interval)
-            OR (beam.type_id IS NOT NULL) AND (beam.start < %s - (beam_type.vacuum_threshold * INTERVAL '1 DAY'))
+            OR ((beam.type_id IS NULL) AND (beam.start < %s - '%s days'::interval))
+            OR ((beam.type_id IS NOT NULL) AND (beam.start < %s - (beam_type.vacuum_threshold * INTERVAL '1 DAY')))
         ))""", now, APP.config['VACUUM_THRESHOLD'], now)
     db.session.commit()
     logger.info("Finished marking vacuum candidates")
