@@ -18,3 +18,14 @@ def test_issue_deletion(beam, issue):
     issue.delete()
     beam.update()
     assert len(beam.associated_issues) == 0
+
+
+def test_tracker_deletion(beam, tracker, issue):
+    beam, _ = beam
+    assert len(beam.associated_issues) == 0
+    beam.set_issue_association(issue.id_in_scotty, True)
+    beam.update()
+    assert beam.associated_issues == [issue.id_in_scotty]
+    tracker.delete_from_scotty()
+    beam.update()
+    assert len(beam.associated_issues) == 0

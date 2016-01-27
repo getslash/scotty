@@ -37,3 +37,14 @@ def create():
     db.session.commit()
 
     return jsonify({'tracker': tracker_model.to_dict()})
+
+
+@trackers.route('/<int:tracker>', methods=['DELETE'])
+def delete(tracker):
+    tracker = db.session.query(Tracker).filter_by(id=tracker).first()
+    if not tracker:
+        return 'Tracker not found', http.client.NOT_FOUND
+
+    db.session.delete(tracker)
+    db.session.commit()
+    return ''

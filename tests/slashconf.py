@@ -79,6 +79,9 @@ class FileTracker(object):
     def id(self):
         return self._id
 
+    def delete_from_scotty(self):
+        self._scotty.delete_tracker(self._id)
+
 
 
 class TestingScotty(Scotty):
