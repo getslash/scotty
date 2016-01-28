@@ -48,3 +48,47 @@ def delete(tracker):
     db.session.delete(tracker)
     db.session.commit()
     return ''
+
+
+@trackers.route('/<int:tracker>', methods=['GET'])
+def get(tracker):
+    tracker = db.session.query(Tracker).filter_by(id=tracker).first()
+    if not tracker:
+        return 'Tracker not found', http.client.NOT_FOUND
+
+    return jsonify({'tracker': tracker.to_dict()})
+
+
+@trackers.route('/<int:tracker>', methods=['PUT'])
+@validate_schema({
+    'type': 'object',
+    'properties': {
+        'tracker': {
+            'type': 'object',
+            'properties': {
+                'name': {'type': 'string'},
+                'url': {'type': 'string'},
+                'config': {'type': 'string'},
+            },
+        }
+    },
+    'required': ['tracker']
+})
+def update(tracker):
+    tracker_data = request.json['tracker']
+    tracker = db.session.query(Tracker).filter_by(id=tracker).first()
+    if not tracker:
+        return 'Tracker not found', http.client.NOT_FOUND
+
+    if 'name' in tracker_data:
+        tracker.name = tracker_data['name']
+
+    if 'url' in tracker_data:
+        tracker.url = tracker_data['url']
+
+    if 'config' in tracker_data:
+        tracker.config = tracker_data['config']
+
+    db.session.commit()
+
+    return jsonify({'tracker': tracker.to_dict()})

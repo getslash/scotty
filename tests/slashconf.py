@@ -82,6 +82,8 @@ class FileTracker(object):
     def delete_from_scotty(self):
         self._scotty.delete_tracker(self._id)
 
+    def update(self, *args, **kwargs):
+        self._scotty.update_tracker(self._id, *args, **kwargs)
 
 
 class TestingScotty(Scotty):
