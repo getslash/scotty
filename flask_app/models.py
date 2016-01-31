@@ -101,8 +101,17 @@ class Beam(db.Model):
     issues = db.relationship('Issue', secondary=beam_issues)
 
     def get_purge_time(self, default_threshold):
+        if not self.completed:
+            return None
+
         if self.size == 0:
             return 0
+
+        if self.pins:
+            return None
+
+        if any(i.open for i in self.issues):
+            return None
 
         threshold = self.type.vacuum_threshold if self.type is not None else default_threshold
         days = threshold - (flux.current_timeline.datetime.utcnow() - datetime.combine(self.start, time(0, 0))).days

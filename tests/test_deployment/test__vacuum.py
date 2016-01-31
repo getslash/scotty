@@ -22,22 +22,25 @@ def test_default_vacuum(scotty, typed_beam, server_config, should_pin, issue, is
     if issue_handling is not IssueHandling.none:
         beam.set_issue_association(issue.id_in_scotty, True)
 
-    assert beam.purge_time == vacuum_threshold
-    for i in range(vacuum_threshold - 1):
-        scotty.sleep(_DAY)
-        beam.update()
-        assert beam.purge_time == vacuum_threshold - i - 1
-        scotty.check_beam_state(beam, False)
-
-    scotty.sleep(_DAY)
     beam.update()
-    assert beam.purge_time == 0
 
     pin_active = should_pin
     issue_active = issue_handling is not IssueHandling.none
 
     def should_vaccuum():
         return not pin_active and not issue_active
+
+    assert beam.purge_time == (vacuum_threshold if should_vaccuum() else None)
+    for i in range(vacuum_threshold - 1):
+        scotty.sleep(_DAY)
+        beam.update()
+        assert beam.purge_time == (vacuum_threshold - i - 1 if should_vaccuum() else None)
+        scotty.check_beam_state(beam, False)
+
+    scotty.sleep(_DAY)
+    beam.update()
+    assert beam.purge_time == (0 if should_vaccuum() else None)
+
 
     if pin_active:
         scotty.check_beam_state(beam, should_vaccuum())

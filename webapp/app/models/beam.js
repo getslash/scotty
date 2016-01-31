@@ -48,7 +48,7 @@ export default DS.Model.extend({
   }.property("purge_today").readOnly(),
 
   should_display_purge_str: function() {
-    return this.get("completed") && !this.get("has_pinners");
+    return this.get("purge_time") != null;
   }.property("has_pinners", "completed").readOnly(),
 
   num_of_pins: function() {
