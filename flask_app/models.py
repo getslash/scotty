@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, time
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.security import UserMixin, RoleMixin
@@ -54,7 +55,7 @@ class Tracker(db.Model):
             'name': self.name,
             'type': self.type,
             'url': self.url,
-            'config': self.config
+            'config': json.loads(self.config)
         }
 
 

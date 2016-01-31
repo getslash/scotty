@@ -41,7 +41,7 @@ def test_tracker_deletion(beam, tracker, issue):
     assert len(beam.associated_issues) == 0
 
 
-_TRACKER_PARAMS = frozenset(['url', 'config', 'name'])
+_TRACKER_PARAMS = frozenset(['url', 'name', 'config'])
 @slash.parametrize('params', powerset(_TRACKER_PARAMS))
 def test_tracker_modification(scotty, tracker, params):
     def _get_tracker_data():
@@ -53,6 +53,9 @@ def test_tracker_modification(scotty, tracker, params):
 
     unmodified_params = _TRACKER_PARAMS - params
     kwargs = {p: str(uuid.uuid4()) for p in params}
+    if 'config' in kwargs:
+        kwargs['config'] = {'value': str(uuid.uuid4())}
+
     tracker.update(**kwargs)
 
     data = _get_tracker_data()
