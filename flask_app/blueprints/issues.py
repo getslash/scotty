@@ -38,3 +38,12 @@ def delete(issue):
     db.session.delete(issue)
     db.session.commit()
     return ''
+
+
+@issues.route('/<int:issue>', methods=['GET'])
+def get(issue):
+    issue = db.session.query(Issue).filter_by(id=issue).first()
+    if not issue:
+        return 'Issue not found', http.client.NOT_FOUND
+
+    return jsonify({'issue': issue.to_dict()})
