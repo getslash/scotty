@@ -2,7 +2,6 @@ from __future__ import absolute_import
 import os
 import smtplib
 import subprocess
-import json
 from email.mime.text import MIMEText
 from datetime import timedelta
 from collections import defaultdict
@@ -34,6 +33,7 @@ from sqlalchemy.orm import joinedload
 import flux
 
 from .app import create_app
+from . import issue_trackers
 from .models import Beam, db, Pin, File, Tracker, Issue
 
 
@@ -288,25 +288,15 @@ def vacuum():
     logger.info("Vacuum done")
 
 
-def _refresh_file_tracker(url, _config, issues):
-    with open(url, 'r') as f:
-        data = json.load(f)
-        for issue in issues:
-            issue.open = data[issue.id_in_tracker]
-
-
 @queue.task
 @needs_app_context
 def refresh_issue_trackers():
     trackers = db.session.query(Tracker)
     for tracker in trackers:
         issues = db.session.query(Issue).filter_by(tracker_id=tracker.id)
-        logger.info("Refreshing tracker {} - {} of type {}. Issues: {}", tracker.id, tracker.url, tracker.type, issues)
-        if tracker.type == "file":
-            _refresh_file_tracker(tracker.url, tracker.config, issues)
-            db.session.commit()
-        else:
-            raise ValueError("Unknown tracker type {}".format(tracker.type))
+        logger.info("Refreshing tracker {} - {} of type {}", tracker.id, tracker.url, tracker.type)
+        issue_trackers.refresh(tracker, issues)
+        db.session.commit()
 
 
 @queue.task
