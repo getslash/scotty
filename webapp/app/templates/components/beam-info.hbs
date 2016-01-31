@@ -33,6 +33,18 @@
           <td>{{focus-input value=model.comment action="toggleEditing"}}</td>
           {{/unless}}
         </tr>
+        <tr>
+          <td class="icon-td"><i class="fa fa-ticket"></i></td>
+          <td>
+          {{#if model.associated_issues}}
+              {{#each model.associated_issues as |issue|}}
+                  <span>{{issue.id_in_tracker}}</span>
+              {{/each}}
+          {{else}}
+              <p>No associated issues</p>
+          {{/if}}
+          </td>
+        </tr>
         {{/if}}
      </table>
     </td>

@@ -25,6 +25,9 @@ export default DS.Model.extend({
   pins: DS.hasMany('user', {
     async: true
   }),
+  associated_issues: DS.hasMany('issue', {
+    async: true
+  }),
   pinners: "",
   tick: 1,
 
