@@ -59,6 +59,15 @@ def get(tracker):
     return jsonify({'tracker': tracker.to_dict()})
 
 
+@trackers.route('/by_name/<tracker_name>', methods=['GET'])
+def get_by_name(tracker_name):
+    tracker = db.session.query(Tracker).filter_by(name=tracker_name).first()
+    if not tracker:
+        return 'Tracker not found', http.client.NOT_FOUND
+
+    return jsonify({'tracker': tracker.to_dict()})
+
+
 @trackers.route('/<int:tracker>', methods=['PUT'])
 @validate_schema({
     'type': 'object',

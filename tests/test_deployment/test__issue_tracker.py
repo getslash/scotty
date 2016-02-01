@@ -41,6 +41,10 @@ def test_tracker_deletion(beam, tracker, issue):
     assert len(beam.associated_issues) == 0
 
 
+def test_tracker_get_by_name(tracker, scotty):
+    assert scotty.get_tracker_id('tests_tracker') == tracker.id
+
+
 _TRACKER_PARAMS = frozenset(['url', 'name', 'config'])
 @slash.parametrize('params', powerset(_TRACKER_PARAMS))
 def test_tracker_modification(scotty, tracker, params):
