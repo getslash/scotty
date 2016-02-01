@@ -38,7 +38,7 @@
           <td>
           {{#if model.associated_issues}}
               {{#each model.associated_issues as |issue|}}
-                  <a href="{{issue.url}}" target="_blank" class="issue-{{if issue.open "open" "closed"}}">{{issue.id_in_tracker}}</a>
+                  <span class="issue-box"><a href="{{issue.url}}" target="_blank" class="issue-{{if issue.open "open" "closed"}}">{{issue.id_in_tracker}}</a>&nbsp;<i {{action "removeIssue" issue.id}} class="fa fa-times issue-delete"></i></span>&nbsp;
               {{/each}}
           {{else}}
               <p>No associated issues</p>

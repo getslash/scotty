@@ -119,6 +119,18 @@ export default Ember.Component.extend({
     },
     changeFilter: function() {
       this.set("file_filter", this.get("text_file_filter"));
+    },
+    removeIssue: async function(issue) {
+      const model = this.get("model");
+      const beam_id = this.get("model.id");
+      try {
+        await Ember.$.ajax({
+          type: "delete",
+          url: `/beams/${beam_id}/issues/${issue}`})
+      } catch (error) {
+        Ember.Logger.error(error);
+      }
+      model.reload();
     }
   }
 });
