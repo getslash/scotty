@@ -58,21 +58,30 @@ class Tracker(db.Model):
             'config': json.loads(self.config)
         }
 
+    def issue_url(self, issue_id):
+        if self.type == 'jira':
+            return '{}/browse/{}'.format(self.url, issue_id)
+        else:
+            return ''
+
 
 class Issue(db.Model):
     __table_args__ = (db.UniqueConstraint('tracker_id', 'id_in_tracker', name='uix_unique_issue'), )
 
     id = db.Column(db.Integer, primary_key=True)
     tracker_id = db.Column(db.Integer, db.ForeignKey('tracker.id', ondelete='CASCADE'), index=True)
+    tracker = db.relationship("Tracker")
     id_in_tracker = db.Column(db.String, nullable=False)
     open = db.Column(db.Boolean, nullable=False)
 
     def to_dict(self):
+        url = self.tracker.issue_url(self.id_in_tracker)
         return {
             'id': self.id,
             'tracker_id': self.tracker_id,
             'id_in_tracker': self.id_in_tracker,
             'open': self.open,
+            'url': url,
         }
 
 
