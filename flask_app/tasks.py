@@ -266,14 +266,16 @@ def vacuum():
         LEFT JOIN pin ON pin.beam_id = beam.id
         LEFT JOIN beam_type ON beam.type_id = beam_type.id
         LEFT JOIN file ON file.beam_id = beam.id
-        LEFT JOIN beam_issues ON beam_issues.beam_id = beam.id
-        LEFT JOIN issue ON issue.id = beam_issues.issue_id
         WHERE
         NOT beam.pending_deletion
         AND NOT beam.deleted
         AND beam.completed
         AND pin.id IS NULL
-        AND (issue.id is NULL OR NOT issue.open)
+        AND NOT EXISTS (
+            SELECT id FROM beam_issues
+            INNER JOIN issue ON issue.id = beam_issues.issue_id
+            WHERE beam_issues.beam_id = beam.id
+            AND issue.open)
         AND (
             file.beam_id IS NULL
             OR ((beam.type_id IS NULL) AND (beam.start < %s - '%s days'::interval))

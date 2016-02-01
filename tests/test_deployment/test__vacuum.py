@@ -1,6 +1,8 @@
 import enum
 from datetime import timedelta
 import slash
+from ..slashconf import issue
+
 
 _DAY = timedelta(days=1)
 
@@ -66,3 +68,37 @@ def test_default_vacuum(scotty, typed_beam, server_config, should_pin, issue, is
         scotty.check_beam_state(beam, should_vaccuum())
 
     scotty.check_beam_state(beam, should_vaccuum())
+
+
+def test_multiple_issues(tracker, scotty, beam, server_config):
+    vacuum_threshold = server_config['VACUUM_THRESHOLD']
+    beam, _ = beam
+
+    issue1 = issue(tracker)
+    issue2 = issue(tracker)
+    for i in [issue1, issue2]:
+        beam.set_issue_association(i.id_in_scotty, True)
+
+    beam.update()
+
+    assert beam.purge_time is None
+    scotty.sleep(_DAY * vacuum_threshold)
+
+    beam.update()
+    assert beam.purge_time is None
+    scotty.check_beam_state(beam, False)
+
+    scotty.sleep(_DAY)
+    beam.update()
+    assert beam.purge_time is None
+
+    issue1.set_state(False)
+    scotty.sleep(timedelta(seconds=0))
+    beam.update()
+    assert beam.purge_time is None
+    scotty.check_beam_state(beam, False)
+
+    issue2.set_state(False)
+    scotty.sleep(timedelta(seconds=0))
+    beam.update()
+    scotty.check_beam_state(beam, True)
