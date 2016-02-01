@@ -45,6 +45,10 @@ def test_tracker_get_by_name(tracker, scotty):
     assert scotty.get_tracker_id('tests_tracker') == tracker.id
 
 
+def test_create_issue_twice(issue, tracker, scotty):
+    assert scotty.create_issue(tracker.id, issue.id_in_tracker)
+
+
 _TRACKER_PARAMS = frozenset(['url', 'name', 'config'])
 @slash.parametrize('params', powerset(_TRACKER_PARAMS))
 def test_tracker_modification(scotty, tracker, params):

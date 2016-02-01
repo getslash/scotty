@@ -33,6 +33,10 @@ class FileTracker(object):
         def id_in_scotty(self):
             return self._id_in_scotty
 
+        @property
+        def id_in_tracker(self):
+            return self._id_in_tracker
+
         def set_state(self, open_):
             self._tracker.set_state(self._id_in_tracker, open_)
 

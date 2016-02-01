@@ -1,4 +1,5 @@
 import http
+import sqlalchemy
 from flask import Blueprint, request, jsonify
 from .utils import validate_schema
 from ..models import db, Issue
@@ -25,7 +26,14 @@ def create():
     data = request.json['issue']
     issue = Issue(tracker_id=data['tracker_id'], id_in_tracker=data['id_in_tracker'], open=True)
     db.session.add(issue)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except sqlalchemy.exc.IntegrityError:
+        db.session.rollback()
+        issue = db.session.query(Issue).filter_by(
+            tracker_id=data['tracker_id'], id_in_tracker=data['id_in_tracker']).first()
+        if not issue:
+            raise
     return jsonify({'issue': issue.to_dict()})
 
 
