@@ -62,6 +62,21 @@
   <tr><td class="icon-td"><i class="fa fa-folder"></i></td><td>{{model.directory}}</td></tr>
 </table>
 {{/if}}
+{{#if extended}}
+    <div class="row">
+        <form class="col s12">
+            <div class="row">
+                <div class="input-field col s9">
+                    {{input type="text" value=issueIdInTracker}}
+                    <label>Issue ID</label>
+                </div>
+                <div class="input-field col s3">
+                    <a class="btn" {{action "addIssue"}}> Add issue</a>
+                </div>
+            </div>
+        </form>
+    </div>
+{{/if}}
 {{#if model.deleted}}
   <br/><p style='font-style: italic'>Deleted.</p>
 {{else}}
