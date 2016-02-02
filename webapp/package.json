@@ -44,7 +44,7 @@
     "ember-simple-auth": "^1.0.1",
     "ember-truth-helpers": "1.2.0",
     "linkify": "0.2.1",
-    "materialize-css": "^0.97.1",
+    "materialize-css": "^0.97.5",
     "torii": "^0.6.1"
   }
 }
