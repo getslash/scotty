@@ -151,6 +151,7 @@ def beam_types(server_config, db, webapp):
     with webapp.app_context():
         return {
             'short': _beam_type('short', server_config['VACUUM_THRESHOLD'] - 2),
+            'long_term': _beam_type('long_term', 99999),
             'long': _beam_type('long', server_config['VACUUM_THRESHOLD'] + 2)}
 
 
@@ -215,3 +216,9 @@ def typed_beam(scotty, local_beam_dir, beam_type, beam_types):
     beam = scotty.get_beam(scotty.beam_up(local_beam_dir, beam_type=beam_type))
     beam_type = beam_types[beam_type] if beam_type else None
     return BeamInfo(beam, beam_type)
+
+
+@slash.fixture
+def long_term_beam(scotty, local_beam_dir, beam_types):
+    beam = scotty.get_beam(scotty.beam_up(local_beam_dir, beam_type='long_term'))
+    return beam

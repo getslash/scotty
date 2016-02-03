@@ -261,7 +261,7 @@ def vacuum():
     os.stat(os.path.join(APP.config['STORAGE_PATH'], ".test"))
 
     db.engine.execute(
-        """UPDATE beam SET pending_deletion=true WHERE EXISTS (
+        """UPDATE beam SET pending_deletion=true WHERE beam.id IN (
         SELECT beam.id FROM beam
         LEFT JOIN pin ON pin.beam_id = beam.id
         LEFT JOIN beam_type ON beam.type_id = beam_type.id
