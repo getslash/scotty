@@ -137,3 +137,35 @@ def test_multiple_issues_and_multiple_beams(local_beam_dir, tracker, scotty, ser
     states[beam1] = True
     validate()
     scotty.check_beam_state(long_term_beam, False)
+
+
+def test_rolling_vacuum(local_beam_dir, scotty, server_config):
+    vacuum_threshold = server_config['VACUUM_THRESHOLD']
+    beams = []
+
+    pinned_beam = scotty.get_beam(scotty.beam_up(local_beam_dir))
+    scotty.pin(pinned_beam, True)
+
+    def validate():
+        for beam_data in beams:
+            beam = beam_data['beam']
+            beam.update()
+            assert beam.purge_time == max(0, beam_data['expected_purge_time'])
+            scotty.check_beam_state(beam, beam.purge_time == 0)
+
+        pinned_beam.update()
+        assert pinned_beam.purge_time is None
+        scotty.check_beam_state(pinned_beam, False)
+
+
+    for _ in range(vacuum_threshold + 5):
+        beams.append({
+            'beam': scotty.get_beam(scotty.beam_up(local_beam_dir)),
+            'expected_purge_time': vacuum_threshold})
+        validate()
+        scotty.sleep(_DAY)
+        for beam_data in beams:
+            beam_data['expected_purge_time'] -= 1
+
+        validate()
+
