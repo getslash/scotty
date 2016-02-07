@@ -45,8 +45,12 @@ def test_tracker_get_by_name(tracker, scotty):
     assert scotty.get_tracker_id('tests_tracker') == tracker.id
 
 
-def test_create_issue_twice(issue, tracker, scotty):
-    assert scotty.create_issue(tracker.id, issue.id_in_tracker)
+@slash.parameters.toggle('add_spaces')
+def test_create_issue_twice(issue, tracker, scotty, add_spaces):
+    new_name = issue.id_in_tracker
+    if add_spaces:
+        new_name = '  ' + new_name + '  '
+    assert scotty.create_issue(tracker.id, new_name) == issue.id_in_scotty
 
 
 _TRACKER_PARAMS = frozenset(['url', 'name', 'config'])
