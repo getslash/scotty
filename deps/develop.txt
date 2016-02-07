@@ -1,4 +1,4 @@
 Flask-Loopback
-pytest
+slash
 tmuxp
 livereload

@@ -25,6 +25,9 @@ export default DS.Model.extend({
   pins: DS.hasMany('user', {
     async: true
   }),
+  associated_issues: DS.hasMany('issue', {
+    async: true
+  }),
   pinners: "",
   tick: 1,
 
@@ -45,7 +48,7 @@ export default DS.Model.extend({
   }.property("purge_today").readOnly(),
 
   should_display_purge_str: function() {
-    return this.get("completed") && !this.get("has_pinners");
+    return this.get("purge_time") != null;
   }.property("has_pinners", "completed").readOnly(),
 
   num_of_pins: function() {

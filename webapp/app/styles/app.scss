@@ -107,3 +107,18 @@ body {
   color: #cacaca !important;
   cursor: pointer;
 }
+
+.issue-closed {
+  text-decoration: line-through;
+}
+
+.issue-box {
+  border-radius: 3px;
+  background: color("blue", "lighten-5");
+  padding: 2px 5px;
+  cursor: pointer;
+}
+
+.issue-delete {
+  color: color("blue", "darken-4");
+}

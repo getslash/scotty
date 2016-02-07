@@ -13,13 +13,20 @@ export default Ember.Component.extend({
   editing_comment: false,
   created: false,
   text_file_filter: "",
+  tracker: 1,
+  issueId: null,
 
   didInsertElement: function() {
     if (this.get("extended")) {
       this.set("created", true);
       this.set("text_file_filter", this.get("file_filter"));
+      this.$('select').material_select();
     }
   },
+
+  trackers: function() {
+    return this.get("store").findAll("tracker");
+  }.property(),
 
   update_textbox: function() {
     this.set("text_file_filter", this.get("file_filter"));
@@ -119,6 +126,39 @@ export default Ember.Component.extend({
     },
     changeFilter: function() {
       this.set("file_filter", this.get("text_file_filter"));
-    }
+    },
+    removeIssue: async function(issue) {
+      const model = this.get("model");
+      const beam_id = this.get("model.id");
+      try {
+        await Ember.$.ajax({
+          type: "delete",
+          url: `/beams/${beam_id}/issues/${issue}`});
+      } catch (error) {
+        Ember.Logger.error(error);
+      }
+      model.reload();
+    },
+    addIssue: async function() {
+      const model = this.get("model");
+      const beam_id = this.get("model.id");
+      const issue = this.get("store").createRecord(
+        "issue",
+        {
+          tracker_id: 1,
+          id_in_tracker: this.get("issueIdInTracker")
+        }
+      );
+
+      try {
+        await issue.save();
+        await Ember.$.ajax({
+          type: "post",
+          url: `/beams/${beam_id}/issues/${issue.get("id")}`});
+      } catch (error) {
+        Ember.Logger.error(error);
+      }
+      model.reload();
+    },
   }
 });

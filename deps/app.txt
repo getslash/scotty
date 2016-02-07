@@ -18,3 +18,6 @@ oauth2client
 google-api-python-client
 jsonschema
 psutil
+flux>=1.3.4
+jira
+confetti

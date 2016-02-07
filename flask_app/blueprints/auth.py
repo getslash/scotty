@@ -1,15 +1,14 @@
-import re
 import os
 import http.client
 from functools import wraps
 from httplib2 import Http
 from oauth2client.client import flow_from_clientsecrets
 from apiclient.discovery import build
+from itsdangerous import TimedSerializer, BadSignature
 from flask import request, jsonify, Blueprint, current_app, abort
 from flask.ext.security import SQLAlchemyUserDatastore
 from flask.ext.login import login_user, logout_user, current_user
-from .models import Role, User, db
-from itsdangerous import TimedSerializer, BadSignature
+from ..models import Role, User, db
 
 
 auth = Blueprint("auth", __name__, template_folder="templates")
@@ -55,7 +54,7 @@ def get_or_create_user(email, name):
 @auth.route("/login", methods=['POST'])
 def login():
     flow = flow_from_clientsecrets(
-        os.path.join(os.path.dirname(__file__), 'client_secret.json'),
+        os.path.join(os.path.dirname(__file__), '..', 'client_secret.json'),
         scope="https://www.googleapis.com/auth/userinfo.profile",
         redirect_uri=request.host_url[:-1])
     credentials = flow.step2_exchange(request.json['authorizationCode'])
@@ -121,6 +120,10 @@ def require_user(allow_anonymous):
 
             if current_user.is_authenticated:
                 user = current_user
+
+            test_email = request.headers.get("X-Scotty-Email")
+            if current_app.config.get("TESTING", False) and test_email:
+                user = get_or_create_user(test_email, "Test user")
 
             if not user:
                 if not allow_anonymous:

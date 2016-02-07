@@ -1,7 +1,9 @@
+import json
 from datetime import datetime, time
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.security import UserMixin, RoleMixin
 from sqlalchemy.orm import backref
+import flux
 
 db = SQLAlchemy()
 
@@ -40,6 +42,54 @@ class User(db.Model, UserMixin):
         return self.email == "anonymous@getslash.github.io"
 
 
+class Tracker(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, index=True, unique=True)
+    type = db.Column(db.String, nullable=False)
+    config = db.Column(db.String)
+    url = db.Column(db.String, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'type': self.type,
+            'url': self.url,
+            'config': json.loads(self.config)
+        }
+
+    def issue_url(self, issue_id):
+        if self.type == 'jira':
+            return '{}/browse/{}'.format(self.url, issue_id)
+        else:
+            return ''
+
+
+class Issue(db.Model):
+    __table_args__ = (db.UniqueConstraint('tracker_id', 'id_in_tracker', name='uix_unique_issue'), )
+
+    id = db.Column(db.Integer, primary_key=True)
+    tracker_id = db.Column(db.Integer, db.ForeignKey('tracker.id', ondelete='CASCADE'), index=True)
+    tracker = db.relationship("Tracker")
+    id_in_tracker = db.Column(db.String, nullable=False)
+    open = db.Column(db.Boolean, nullable=False)
+
+    def to_dict(self):
+        url = self.tracker.issue_url(self.id_in_tracker)
+        return {
+            'id': self.id,
+            'tracker_id': self.tracker_id,
+            'id_in_tracker': self.id_in_tracker,
+            'open': self.open,
+            'url': url,
+        }
+
+
+beam_issues = db.Table('beam_issues',
+                       db.Column('beam_id', db.Integer(), db.ForeignKey('beam.id', ondelete='CASCADE'), index=True),
+                       db.Column('issue_id', db.Integer(), db.ForeignKey('issue.id', ondelete='CASCADE')))
+
+
 class Beam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     start = db.Column(db.DateTime, index=True)
@@ -57,13 +107,23 @@ class Beam(db.Model):
     initiator = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     files = db.relationship("File", backref=backref("beam", lazy="joined"))
     pins = db.relationship("Pin", backref="beam")
+    issues = db.relationship('Issue', secondary=beam_issues)
 
     def get_purge_time(self, default_threshold):
+        if not self.completed:
+            return None
+
         if self.size == 0:
             return 0
 
+        if self.pins:
+            return None
+
+        if any(i.open for i in self.issues):
+            return None
+
         threshold = self.type.vacuum_threshold if self.type is not None else default_threshold
-        days = threshold - (datetime.utcnow() -  datetime.combine(self.start, time(0, 0))).days
+        days = threshold - (flux.current_timeline.datetime.utcnow() - datetime.combine(self.start, time(0, 0))).days
         return max(days, 0)
 
     def to_dict(self, default_threshold):
@@ -81,7 +141,8 @@ class Beam(db.Model):
             'directory': self.directory,
             'deleted': self.pending_deletion or self.deleted,
             'pins': [u.user_id for u in self.pins],
-            'tags': [t.tag for t in self.tags] # pylint: disable=E1101
+            'tags': [t.tag for t in self.tags],  # pylint: disable=E1101
+            'associated_issues': [i.id for i in self.issues]
         }
 
     def __repr__(self):

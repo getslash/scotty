@@ -33,6 +33,18 @@
           <td>{{focus-input value=model.comment action="toggleEditing"}}</td>
           {{/unless}}
         </tr>
+        <tr>
+          <td class="icon-td"><i class="fa fa-ticket"></i></td>
+          <td>
+          {{#if model.associated_issues}}
+              {{#each model.associated_issues as |issue|}}
+                  <span class="issue-box"><a href="{{issue.url}}" target="_blank" class="issue-{{if issue.open "open" "closed"}}">{{issue.id_in_tracker}}</a>&nbsp;<i {{action "removeIssue" issue.id}} class="fa fa-times issue-delete"></i></span>&nbsp;
+              {{/each}}
+          {{else}}
+              <p>No associated issues</p>
+          {{/if}}
+          </td>
+        </tr>
         {{/if}}
      </table>
     </td>
@@ -49,6 +61,21 @@
 <table class="layout-table">
   <tr><td class="icon-td"><i class="fa fa-folder"></i></td><td>{{model.directory}}</td></tr>
 </table>
+{{/if}}
+{{#if extended}}
+    <div class="row">
+        <form class="col s12">
+            <div class="row">
+                <div class="input-field col s9">
+                    {{input type="text" value=issueIdInTracker}}
+                    <label>Issue ID</label>
+                </div>
+                <div class="input-field col s3">
+                    <a class="btn" {{action "addIssue"}}> Add issue</a>
+                </div>
+            </div>
+        </form>
+    </div>
 {{/if}}
 {{#if model.deleted}}
   <br/><p style='font-style: italic'>Deleted.</p>

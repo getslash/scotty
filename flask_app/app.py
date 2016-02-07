@@ -1,12 +1,11 @@
 import os
-import flask
-import yaml
 from raven.contrib.flask import Sentry
-from flask.ext.security import Security  # pylint: disable=import-error
-from flask.ext.mail import Mail  # pylint: disable=import-error
+import yaml
 import logbook
 from logbook.compat import redirect_logging
-
+import flask
+from flask.ext.security import Security  # pylint: disable=import-error
+from flask.ext.mail import Mail  # pylint: disable=import-error
 
 
 def create_app(config=None):
@@ -55,18 +54,22 @@ def create_app(config=None):
 
     models.db.init_app(app)
 
-    from . import auth
-    Security(app, auth.user_datastore, register_blueprint=False)
-
-    from .auth import auth
-    from .views import views
-    from .setup import setup
-    blueprints = [auth, views, setup]
-
     from .errors import errors
+    from .blueprints import auth, beams, files, issues, trackers, user_datastore, users, views
 
-    for blueprint in blueprints:
-        app.register_blueprint(blueprint)
+    Security(app, user_datastore, register_blueprint=False)
+
+    app.register_blueprint(auth)
+    app.register_blueprint(beams, url_prefix="/beams")
+    app.register_blueprint(files, url_prefix="/files")
+    app.register_blueprint(issues, url_prefix="/issues")
+    app.register_blueprint(trackers, url_prefix="/trackers")
+    app.register_blueprint(users, url_prefix="/users")
+    app.register_blueprint(views)
+
+    if app.config.get('TESTING'):
+        from .blueprints import test_methods
+        app.register_blueprint(test_methods)
 
     for code in errors:
         app.errorhandler(code)(errors[code])
