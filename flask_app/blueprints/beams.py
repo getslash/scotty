@@ -164,7 +164,7 @@ def update(beam_id):
     else:
         json = request.json
 
-    if 'completed' in request.json:
+    if 'completed' in json:
         beam.completed = json['completed']
         beam.error = json.get('error', None)
 
