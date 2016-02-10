@@ -96,11 +96,15 @@ def create(user):
     if not is_valid_hostname(request.json['beam']['host']):
         return 'Invalid hostname', http.client.CONFLICT
 
+    directory = request.json['beam']['directory']
+    if directory == '/':
+        return 'Invalid beam directory', http.client.CONFLICT
+
     beam = Beam(
         start=current_timeline.datetime.utcnow(), size=0,
         host=request.json['beam']['host'],
         comment=request.json['beam'].get('comment'),
-        directory=request.json['beam']['directory'],
+        directory=directory,
         initiator=user.id,
         error=None,
         combadge_contacted=False,
