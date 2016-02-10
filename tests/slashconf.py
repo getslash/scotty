@@ -207,6 +207,7 @@ def download_dir(tempdir):
 @slash.fixture
 def beam(scotty, local_beam_dir):
     beam = scotty.get_beam(scotty.beam_up(local_beam_dir))
+    assert beam.completed
     return BeamInfo(beam, None)
 
 
