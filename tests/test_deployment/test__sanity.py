@@ -1,4 +1,3 @@
-import time
 import subprocess
 import http.client
 import slash
