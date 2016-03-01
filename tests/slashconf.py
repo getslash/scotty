@@ -173,6 +173,11 @@ def tracker(scotty):
 
 
 @slash.fixture
+def faulty_tracker(scotty):
+    return scotty.create_tracker('faulty_tracker', 'faulty', '', '')
+
+
+@slash.fixture
 def issue(tracker):
     return tracker.create_issue()
 
