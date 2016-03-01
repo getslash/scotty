@@ -25,7 +25,7 @@ trackers = Blueprint("trackers", __name__, template_folder="templates")
 })
 def create():
     tracker = request.json['tracker']
-    if tracker['type'] not in ('jira', 'file'):
+    if tracker['type'] not in ('jira', 'file', 'faulty'):
         return 'Bad tracker type', http.client.BAD_REQUEST
 
     tracker_model = Tracker(

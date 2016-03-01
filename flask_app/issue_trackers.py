@@ -17,6 +17,10 @@ def _refresh_file(url, issues):
             issue.open = data[issue.id_in_tracker]
 
 
+def _refresh_faulty():
+    raise Exception("Tracker Error")
+
+
 def _refresh_jira(url, config, issues):
     config = confetti.Config(json.loads(config))
     jira = JIRA(url, basic_auth=(config.root.username, config.root.password))
@@ -42,5 +46,7 @@ def refresh(tracker, issues):
         _refresh_file(tracker.url, issues)
     elif tracker.type == "jira":
         _refresh_jira(tracker.url, tracker.config, issues)
+    elif tracker.type == "faulty":
+        _refresh_faulty()
     else:
         raise ValueError("Unknown tracker type {}".format(tracker.type))

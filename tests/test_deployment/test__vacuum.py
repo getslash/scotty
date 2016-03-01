@@ -106,6 +106,38 @@ def test_multiple_issues(tracker, scotty, beam, server_config, long_term_beam):
     scotty.check_beam_state(long_term_beam, False)
 
 
+def test_faulty_tracker(tracker, scotty, beam, issue, server_config, faulty_tracker, local_beam_dir):
+    vacuum_threshold = server_config['VACUUM_THRESHOLD']
+
+    beam = scotty.get_beam(scotty.beam_up(local_beam_dir))
+
+    beam_with_issue = scotty.get_beam(scotty.beam_up(local_beam_dir))
+    beam_with_issue.set_issue_association(issue.id_in_scotty, True)
+    beam_with_issue.update()
+
+    faulty_issue = scotty.create_issue(faulty_tracker, '1')
+    beam_with_faulty_issue = scotty.get_beam(scotty.beam_up(local_beam_dir))
+    beam_with_faulty_issue.set_issue_association(faulty_issue, True)
+    beam_with_faulty_issue.update()
+
+    assert beam_with_issue.purge_time is None
+    assert beam_with_faulty_issue.purge_time is None
+    assert beam.purge_time is vacuum_threshold
+    scotty.sleep(_DAY * vacuum_threshold)
+
+    for beam in [beam_with_faulty_issue, beam_with_faulty_issue, beam]:
+        beam.update()
+
+    scotty.check_beam_state(beam, True)
+    scotty.check_beam_state(beam_with_faulty_issue, False)
+    scotty.check_beam_state(beam_with_issue, False)
+
+    issue.set_state(False)
+    scotty.sleep(_DAY)
+    beam_with_issue.update()
+    scotty.check_beam_state(beam_with_issue, True)
+
+
 def test_multiple_issues_and_multiple_beams(local_beam_dir, tracker, scotty, server_config, long_term_beam):
     vacuum_threshold = server_config['VACUUM_THRESHOLD']
     beam1 = scotty.get_beam(scotty.beam_up(local_beam_dir))
