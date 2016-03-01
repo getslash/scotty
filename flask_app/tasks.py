@@ -297,14 +297,21 @@ def refresh_issue_trackers():
     for tracker in trackers:
         issues = db.session.query(Issue).filter_by(tracker_id=tracker.id)
         logger.info("Refreshing tracker {} - {} of type {}", tracker.id, tracker.url, tracker.type)
-        issue_trackers.refresh(tracker, issues)
+        try:
+            issue_trackers.refresh(tracker, issues)
+        except Exception:
+            APP.raven.captureException()
+
         db.session.commit()
 
 
 @queue.task
 @needs_app_context
 def nightly():
-    refresh_issue_trackers()
+    try:
+        refresh_issue_trackers()
+    except Exception:
+        APP.raven.captureException()
     vacuum()
     validate_checksum()
 
