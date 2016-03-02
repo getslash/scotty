@@ -3,14 +3,14 @@
     <div class="row">
       <div class="col s8">New Beam</div>
       <div class="col s4">
-        <a id="beam-submit" {{action 'beam'}} class="waves-effect waves-light btn {{if submitting "disabled"}}"><i class="mdi-action-backup left"></i>beam it up, scotty</a>
+        <a id="beam-submit" onclick={{perform beam}} class="waves-effect waves-light btn {{if beam.isRunning "disabled"}}"><i class="mdi-action-backup left"></i>beam it up, scotty</a>
       </div>
     </div>
   </div>
   <form class="col s12">
     <div class="row">
       <div class="col s12">
-        {{#if submitting}}
+        {{#if beam.isRunning}}
         <div class="progress">
           <div class="indeterminate"></div>
         </div>

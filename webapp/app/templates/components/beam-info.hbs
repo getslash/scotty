@@ -38,7 +38,7 @@
           <td>
           {{#if model.associated_issues}}
               {{#each model.associated_issues as |issue|}}
-                  <span class="issue-box"><a href="{{issue.url}}" target="_blank" class="issue-{{if issue.open "open" "closed"}}">{{issue.id_in_tracker}}</a>&nbsp;<i {{action "removeIssue" issue.id}} class="fa fa-times issue-delete"></i></span>&nbsp;
+                  <span class="issue-box"><a href="{{issue.url}}" target="_blank" class="issue-{{if issue.open "open" "closed"}}">{{issue.id_in_tracker}}</a>&nbsp;<i onclick={{perform remove_issue issue.id}} class="fa fa-times issue-delete"></i></span>&nbsp;
               {{/each}}
           {{else}}
               <p>No associated issues</p>
@@ -71,7 +71,7 @@
                     <label>Issue ID</label>
                 </div>
                 <div class="input-field col s3">
-                    <a class="btn" {{action "addIssue"}}> Add issue</a>
+                    <a class="btn" onclick={{perform add_issue}}> Add issue</a>
                 </div>
             </div>
         </form>
@@ -86,7 +86,7 @@
 {{/if}}
 {{#if session.isAuthenticated}}
   {{#unless model.deleted}}
-    <br/><p><a {{action "pin" pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if pinned}}Unpin{{else}}Pin{{/if}}</a></p>
+    <br/><p><a onclick={{perform pin pinned}} class="pin-btn"><i class="fa fa-thumb-tack"></i>&nbsp;{{#if pinned}}Unpin{{else}}Pin{{/if}}</a></p>
   {{/unless}}
 {{/if}}
 
@@ -107,7 +107,7 @@
 
   <h4>Files</h4>
   <center>
-      <i class="fa fa-search"></i>&nbsp;{{input id="file_filter" type="text" class="filter-box" value=text_file_filter action="changeFilter"}}
+      <i class="fa fa-search"></i>&nbsp;{{input id="file_filter" type="text" class="filter-box" value=text_file_filter keyUp=(perform change_file_filter)}}
       &nbsp;<i {{action "clean"}} class="fa fa-times"></i>
   </center>
   <table class="layout-table">
