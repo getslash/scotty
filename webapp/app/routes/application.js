@@ -44,7 +44,6 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
 
   relative_time_update: task(function * () {
     for (;;) {
-      Ember.Logger.info("yi");
       let beams = this.store.peekAll("beam").content;
       for (var i = 0; i < beams.length; i++) {
         let beam = beams[i].getRecord();
