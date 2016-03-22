@@ -25,6 +25,9 @@ issues = Blueprint("issues", __name__, template_folder="templates")
 def create():
     data = request.json['issue']
     id_in_tracker = data['id_in_tracker'].strip()
+    if not id_in_tracker:
+        return 'Invalid issue id', http.client.CONFLICT
+
     issue = Issue(tracker_id=data['tracker_id'], id_in_tracker=id_in_tracker, open=True)
     db.session.add(issue)
     try:
