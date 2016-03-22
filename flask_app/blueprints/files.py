@@ -64,7 +64,7 @@ def get_all():
     if "filter" in request.args and request.args["filter"]:
         query = query.filter(File.file_name.like("%{}%".format(request.args['filter'])))
 
-    query = query.order_by(File.storage_name)
+    query = query.order_by(File.file_name)
 
     total = query.count()
 
