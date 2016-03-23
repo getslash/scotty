@@ -1,5 +1,6 @@
 import Ember from 'ember';
 import ApplicationRouteMixin from 'ember-simple-auth/mixins/application-route-mixin';
+import { task, timeout } from 'ember-concurrency';
 
 export default Ember.Route.extend(ApplicationRouteMixin, {
   actions: {
@@ -24,6 +25,7 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
       this.transitionTo("index");
     }
   },
+
   model: function() {
     var self = this;
     if (!this.store.recordIsLoaded("info", "1")) {
@@ -38,5 +40,17 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
     }
 
     return this.store.find("info", "1");
-  }
+  },
+
+  relative_time_update: task(function * () {
+    for (;;) {
+      let beams = this.store.peekAll("beam").content;
+      for (var i = 0; i < beams.length; i++) {
+        let beam = beams[i].getRecord();
+        beam.set("tick", beam.get("tick") + 1);
+      }
+
+      yield timeout(60000);
+    }
+  }).on("init")
 });

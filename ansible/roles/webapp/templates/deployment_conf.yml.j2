@@ -1,4 +1,5 @@
-SQLALCHEMY_DATABASE_URI: "postgresql://{{app_name}}:{{app_name}}@localhost/{{app_name}}"
+SQLALCHEMY_DATABASE_URI: "postgresql://{{app_name}}:{{app_name}}@{% if groups['db'][0] != groups['webapp'][0] %}{{groups['db'][0]}}{% else %}localhost{% endif %}/{{app_name}}"
+
 STORAGE_PATH: /var/scotty
 SENTRY_DSN: "{{sentry_dsn}}"
 

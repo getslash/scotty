@@ -63,8 +63,9 @@ class FileTracker(object):
     def delete(self):
         os.unlink(self._path)
 
-    def create_issue(self):
-        id_in_tracker = str(uuid.uuid4())
+    def create_issue(self, id_in_tracker=None):
+        if id_in_tracker is None:
+            id_in_tracker = str(uuid.uuid4())
         self._issues[id_in_tracker] = True
         id_in_scotty = self._scotty.create_issue(self._id, id_in_tracker)
         issue = self.Issue(self, id_in_scotty, id_in_tracker)

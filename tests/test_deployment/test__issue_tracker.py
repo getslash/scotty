@@ -1,3 +1,5 @@
+import http
+import requests
 import slash
 import uuid
 from itertools import chain, combinations
@@ -6,6 +8,13 @@ from itertools import chain, combinations
 def powerset(iterable):
     s = list(iterable)
     return (frozenset(p) for p in chain.from_iterable((combinations(s, r)) for r in range(len(s)+1)))
+
+
+def test_empty_issue(tracker):
+    with slash.assert_raises(requests.exceptions.HTTPError) as e:
+        tracker.create_issue(' ')
+
+    assert e.exception.response.status_code == http.client.CONFLICT
 
 
 def test_issue_creation(beam, issue):

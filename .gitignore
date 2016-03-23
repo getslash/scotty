@@ -58,3 +58,4 @@ celerybeat.pid
 client_secret.json
 webapp/tmp
 conf.d
+tests/.cache

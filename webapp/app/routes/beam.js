@@ -1,36 +1,23 @@
 import Ember from 'ember';
-import App from '../app';
 import Materialize from '../mixins/materialize';
+import { task, timeout } from 'ember-concurrency';
 
 export default Ember.Route.extend(Materialize, {
+  beam: null,
+
   model: function(data) {
-    return this.store.find('beam', data.beam_id);
+    const self = this;
+    return this.store.find('beam', data.beam_id).then(function(beam) {
+      self.get('refresh').perform(beam);
+      return beam;
+    });
   },
-  deactivate: function() {
-    this._super();
-    this.get('pollster').stop();
-  },
-  afterModel: function(model) {
-    this._super();
-    var self = this;
 
-    if (Ember.isNone(this.get('pollster'))) {
-      this.set('pollster', App.Pollster.create({
-        onPoll: function() {
-          var model = self.get("controller.model");
-          if (model.get('completed')) {
-            return false;
-          } else {
-            model.reload();
-            return true;
-          }
-        }
-      }));
+  refresh: task(function * (beam) {
+    while (!beam.get('completed')) {
+      yield beam.reload();
+      yield timeout(1000 * 5);
     }
+  }).cancelOn('deactivate').drop()
 
-    if (!model.get('completed')) {
-      model.reload();
-      this.get('pollster').start();
-    }
-  }
 });

@@ -1,14 +1,30 @@
 import Ember from 'ember';
 import Materialize from '../mixins/materialize';
-import App from '../app';
+import { task, timeout } from 'ember-concurrency';
 
 export default Ember.Route.extend(Materialize, {
   actions: {
     scottyButton: function() {
-      this.update();
+      this.get("update").perform();
       return false;
     }
   },
+
+  update: task(function * () {
+    yield this.store.findAll("beam", {reload: true});
+    Ember.run.scheduleOnce('afterRender', function() {
+      Ember.$('.tooltipped').tooltip({
+        delay: 50
+      });
+    });
+  }).drop(),
+
+  refresh: task(function * () {
+    for (;;) {
+      yield this.get("update").perform();
+      yield timeout(1000 * 5 * 60);
+    }
+  }).on("activate").cancelOn('deactivate').drop(),
 
   model: function() {
     var self = this;
@@ -17,31 +33,5 @@ export default Ember.Route.extend(Materialize, {
         return !beam.get("deleted");
       });
     });
-  },
-
-  update: function() {
-    this.store.findAll("beam", {reload: true}).then(function() {
-      Ember.run.scheduleOnce('afterRender', function() {
-        Ember.$('.tooltipped').tooltip({
-          delay: 50
-        });
-      });
-    });
-  },
-
-  afterModel: function() {
-    this._super();
-    var self = this;
-
-    if (Ember.isNone(this.get('pollster'))) {
-      this.set('pollster', App.Pollster.create({
-        onPoll: function() {
-          self.update();
-          return true;
-        }
-      }));
-      this.get('pollster').start();
-      this.get('pollster').set("interval", 1000 * 60 * 5);
-    }
   }
 });

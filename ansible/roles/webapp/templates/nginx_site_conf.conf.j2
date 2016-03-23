@@ -26,6 +26,9 @@ server {
 
     location /file_contents {
         alias /var/scotty;
+        types {
+          text/plain    log txt;
+        }
     }
 
 
