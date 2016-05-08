@@ -112,11 +112,13 @@ def register_file():
         f = File(beam_id=beam_id, file_name=file_name, size=None, status="pending")
         db.session.add(f)
         db.session.commit()
+    else:
+        logbook.info("Got upload request for a existing file: {} @ {} ({})", file_name, beam_id, f.status)
+
+    if not f.storage_name:
         f.storage_name = "{}/{}-{}".format(
             _assure_beam_dir(beam.id), f.id, f.file_name.replace("/", "__").replace("\\", "__"))
         db.session.commit()
-    else:
-        logbook.info("Got upload request for a existing file: {} @ {} ({})", file_name, beam_id, f.status)
 
     if not beam.combadge_contacted:
         beam.combadge_contacted = True
