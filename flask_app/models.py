@@ -179,3 +179,12 @@ class File(db.Model):
 
     def __repr__(self):
         return "<File(id='%s', name='%s', beam='%s')>" % (self.id, self.file_name, self.beam_id)
+
+
+class Key(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String, nullable=False, unique=True)
+    key = db.Column(db.String, nullable=False)
+
+    def to_dict(self):
+        return {'id': self.id, 'description': self.description}

@@ -7,7 +7,7 @@ from paramiko.ssh_exception import SSHException
 from flux import current_timeline
 from flask import Blueprint, abort, request, current_app, jsonify
 from .auth import require_user, get_or_create_user, InvalidEmail
-from ..models import Beam, db, User, Pin, Tag, BeamType, Issue
+from ..models import Beam, db, User, Pin, Tag, BeamType, Issue, Key
 from .utils import validate_schema, is_valid_hostname
 from ..tasks import create_key, beam_up
 
@@ -64,7 +64,7 @@ def get_all():
         'beam': {
             'type': 'object',
             'properties': {
-                'auth_method': {'type': 'string', 'enum': ['rsa', 'password', 'independent']},
+                'auth_method': {'type': 'string', 'enum': ['rsa', 'password', 'independent', 'stored_key']},
                 'user': {'type': 'string'},
                 'comment': {'type': ['string', 'null']},
                 'type': {'type': ['string', 'null']},
@@ -72,6 +72,7 @@ def get_all():
                 'directory': {'type': 'string'},
                 'email': {'type': 'string'},
                 'ssh_key': {'type': ['string', 'null']},
+                'stored_key': {'type': ['string', 'null']},
                 'tags': {'type': 'array', 'items': {'type': 'string'}},
             },
             'required': ['auth_method', 'host', 'directory']
@@ -80,11 +81,20 @@ def get_all():
     'required': ['beam']
 })
 def create(user):
+    ssh_key = None
     if request.json['beam']['auth_method'] == 'rsa':
         try:
             create_key(request.json['beam']['ssh_key'])
+            ssh_key = request.json['beam']['ssh_key']
         except SSHException:
             return 'Invalid RSA key', http.client.CONFLICT
+    elif request.json['beam']['auth_method'] == 'stored_key':
+        if 'stored_key' not in request.json['beam']:
+            return 'No stored key was specified', http.client.CONFLICT
+        key = db.session.query(Key).filter_by(id=int(request.json['beam']['stored_key'])).first()
+        if not key:
+            return 'Invalid stored key id', http.client.CONFLICT
+        ssh_key = key.key
 
     if user.is_anonymous_user:
         if 'email' in request.json['beam']:
@@ -130,7 +140,7 @@ def create(user):
     if request.json['beam']['auth_method'] != 'independent':
         beam_up.delay(
             beam.id, beam.host, beam.directory, request.json['beam']['user'], request.json['beam']['auth_method'],
-            request.json['beam'].get('ssh_key', None), request.json['beam'].get('password', ''))
+            ssh_key, request.json['beam'].get('password', ''))
 
     return jsonify(
         {'beam': beam.to_dict(current_app.config['VACUUM_THRESHOLD'])})
