@@ -8,15 +8,22 @@ export default Ember.Controller.extend({
   ssh_key: "",
   password: "",
   auth_rsa: false,
-  auth_password: true,
+  auth_password: false,
+  auth_stored_key: true,
   tags: "",
+  selected_key: null,
 
   clear_auth_fields: function() {
     this.set("auth_rsa", false);
     this.set("ssh_key", "");
     this.set("auth_password", false);
+    this.set("auth_stored_key", false);
     this.set("password", "");
   },
+
+  model_change: function() {
+    this.set("selected_key", this.get("model.firstObject"));
+  }.observes("model"),
 
   beam: task(function * () {
     if (!this.get("user")) {
@@ -50,6 +57,12 @@ export default Ember.Controller.extend({
       auth_method = "rsa";
     } else if (this.get("auth_password")) {
       auth_method = "password";
+    } else if (this.get("auth_stored_key")) {
+      auth_method = "stored_key";
+      if (this.get("stored_key") === null) {
+        this.set("error", "No stored key selected");
+        return;
+      }
     } else {
       throw "Invalid mode";
     }
@@ -61,7 +74,8 @@ export default Ember.Controller.extend({
       auth_method: auth_method,
       user: this.get("user"),
       directory: this.get("directory"),
-      tags: this.get("tags").split(","),
+      stored_key: this.get("selected_key"),
+      tags: this.get("tags").split(",")
     });
 
     try {
@@ -84,7 +98,7 @@ export default Ember.Controller.extend({
     }
 
     this.clear_auth_fields();
-    this.set("auth_password", true);
+    this.set("auth_stored_key", true);
     this.transitionToRoute("beam", beam.id);
 
   }).drop(),
@@ -97,6 +111,13 @@ export default Ember.Controller.extend({
     method_password: function() {
       this.clear_auth_fields();
       this.set("auth_password", true);
+    },
+    method_stored_key: function() {
+      this.clear_auth_fields();
+      this.set("auth_stored_key", true);
+    },
+    key_select: function(selected_key) {
+      this.set("selected_key", selected_key);
     }
   }
 });

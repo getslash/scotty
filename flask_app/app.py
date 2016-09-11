@@ -55,7 +55,7 @@ def create_app(config=None):
     models.db.init_app(app)
 
     from .errors import errors
-    from .blueprints import auth, beams, files, issues, trackers, user_datastore, users, views
+    from .blueprints import auth, beams, files, issues, trackers, user_datastore, users, views, keys
 
     Security(app, user_datastore, register_blueprint=False)
 
@@ -65,6 +65,7 @@ def create_app(config=None):
     app.register_blueprint(issues, url_prefix="/issues")
     app.register_blueprint(trackers, url_prefix="/trackers")
     app.register_blueprint(users, url_prefix="/users")
+    app.register_blueprint(keys, url_prefix="/keys")
     app.register_blueprint(views)
 
     if app.config.get('TESTING'):

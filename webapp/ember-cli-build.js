@@ -36,13 +36,13 @@ module.exports = function(defaults) {
 
   var fontTree = pickFiles('bower_components/fontawesome/fonts', {
     srcDir: '/',
-    files: ['fontawesome-webfont.eot','fontawesome-webfont.ttf','fontawesome-webfont.svg','fontawesome-webfont.woff'],
+    files: ['fontawesome-webfont.eot','fontawesome-webfont.ttf','fontawesome-webfont.svg','fontawesome-webfont.woff','fontawesome-webfont.woff2'],
     destDir: '/fonts'
   });
 
-  var robotoTree = pickFiles('bower_components/materialize/font', {
+  var robotoTree = pickFiles('bower_components/materialize/fonts', {
     srcDir: '/',
-    destDir: '/font'
+    destDir: '/fonts'
   });
 
   return mergeTrees([app.toTree(), fontTree, robotoTree], {overwrite: true});

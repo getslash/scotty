@@ -147,7 +147,7 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
         ssh_client.set_missing_host_key_policy(AutoAddPolicy())
 
         kwargs = {'username': username, 'look_for_keys': False}
-        if auth_method == 'rsa':
+        if auth_method in ('rsa', 'stored_key'):
             kwargs['pkey'] = create_key(pkey)
         elif auth_method == 'password':
             kwargs['password'] = password

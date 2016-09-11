@@ -7,6 +7,7 @@ export default DS.Model.extend({
   size: DS.attr('number'),
   host: DS.attr('string'),
   ssh_key: DS.attr('string'),
+  stored_key: DS.belongsTo('key'),
   auth_method: DS.attr('string'),
   password: DS.attr('string'),
   user: DS.attr('string'),

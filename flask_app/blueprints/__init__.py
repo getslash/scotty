@@ -6,3 +6,4 @@ from .test_methods import test_methods
 from .trackers import trackers
 from .users import users
 from .views import views
+from .keys import keys

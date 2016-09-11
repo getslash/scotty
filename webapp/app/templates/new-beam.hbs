@@ -3,7 +3,7 @@
     <div class="row">
       <div class="col s8">New Beam</div>
       <div class="col s4">
-        <a id="beam-submit" onclick={{perform beam}} class="waves-effect waves-light btn {{if beam.isRunning "disabled"}}"><i class="mdi-action-backup left"></i>beam it up, scotty</a>
+        <a id="beam-submit" onclick={{perform beam}} class="waves-effect waves-light btn {{if beam.isRunning "disabled"}}"><i class="material-icons left">backup</i>beam it up, scotty</a>
       </div>
     </div>
   </div>
@@ -20,17 +20,17 @@
     </div>
     <div class="row">
       <div class="input-field col s3">
-        <i class="mdi-social-person prefix"></i>
+        <i class="material-icons prefix">person</i>
         {{input id="user" type="text" class="validate valid" value=user}}
         <label class="active" for="user">SSH user</label>
       </div>
       <div class="input-field col s3">
-        <i class="mdi-hardware-desktop-windows prefix"></i>
+        <i class="material-icons prefix">desktop_windows</i>
         {{input id="host" type="text" class="validate" value=host}}
         <label class="active" for="icon_prefix">Host</label>
       </div>
       <div class="input-field col s6">
-        <i class="mdi-file-folder-open prefix"></i>
+        <i class="material-icons prefix">folder_open</i>
         {{input id="directory" type="text" class="validate" value=directory}}
         <label class="active" for="directory">Directory</label>
       </div>
@@ -46,22 +46,35 @@
       <div class="col s3">
       <p>Authentication:</p>
         <div class="collection">
+          <a href="#" {{action "method_stored_key"}} class="collection-item {{if auth_stored_key "active"}}">Stored Key</a>
           <a href="#" {{action "method_rsa"}} class="collection-item {{if auth_rsa "active"}}">RSA Key</a>
           <a href="#" {{action "method_password"}} class="collection-item {{if auth_password "active"}}">Password</a>
         </div>
       </div>
-      <div class="input-field col s9">
-        {{#if auth_rsa}}
+      {{#if auth_rsa}}
+        <div class="input-field col s9">
           <i class="mdi-communication-vpn-key prefix"></i>
           {{textarea id="ssh_key" class="materialize-textarea validate" value=ssh_key}}
           <label class="active" for="ssh_key">RSA key</label>
-        {{/if}}
-        {{#if auth_password}}
+        </div>
+      {{/if}}
+      {{#if auth_password}}
+        <div class="input-field col s9">
           <i class="mdi-communication-vpn-key prefix"></i>
           {{input id="password" type="password" class="validate" value=password}}
           <label class="active" for="password">Password</label>
+        </div>
+      {{/if}}
+      {{#if auth_stored_key}}
+        <div class="col s4">
+          <p>Stored Key:</p>
+          <div class="collection">
+            {{#each model as |key|}}
+              <a href="#" {{action "key_select" key}} class="collection-item {{if (eq key.id this.selected_key.id) "active"}}">{{key.description}}</a>
+            {{/each}}
+          </div>
+        </div>
         {{/if}}
-      </div>
     </div>
   </form>
 {{/page-card}}
