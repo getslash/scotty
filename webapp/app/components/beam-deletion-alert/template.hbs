@@ -1,0 +1,14 @@
+{{#if deleted}}
+  <div class="alert alert-warning" role="alert">
+    <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+    This beam has been deleted.
+  </div>
+{{else}}
+  {{#if (not-eq purge_time null)}}
+    <div class="alert alert-info" role="alert">
+    <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+      This beam will be deleted <strong>{{purge_str}}</strong>.
+    </div>
+  {{/if}}
+{{/if}}
+

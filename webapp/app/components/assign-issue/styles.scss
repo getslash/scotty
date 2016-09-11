@@ -1,0 +1,17 @@
+@import 'common';
+
+.component {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 10px;
+};
+
+.text {
+  color: $grey-text;
+  cursor: pointer;
+  font-style: italic;
+};
+
+.control {
+  padding-right: 0;
+}

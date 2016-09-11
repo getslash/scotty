@@ -1,0 +1,37 @@
+.small-beam-img {
+  max-height: 96px;
+};
+
+.beam-details-col {
+  display: flex;
+  flex-direction: column;
+  width: 250px;
+};
+
+.beam-folder {
+  padding-top: 10px;
+  width: 250px;
+};
+
+$beam-highlight: #eee;
+
+.beam {
+  cursor: pointer;
+}
+
+.selected-beam {
+  background-color: $alert-info-bg;
+  border-color: $alert-info-border;
+}
+
+.unselected-beam {
+  &:hover {
+    background-color: $beam-highlight;
+  }
+}
+
+.list-container {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+}

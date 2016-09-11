@@ -1,0 +1,36 @@
+<center>
+  {{search-box class="filter-box" value_change=(action "filter_change") textbox=file_filter_value}}
+  {{#if files}}
+    <table class="table table-hover table-condensed">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Size</th>
+          <th>Modification Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each files as |file|}}
+          {{#if file.file_name}}
+            <tr>
+              <td>
+                {{#if beam.deleted}}{{file.file_name}}{{else}}<a class="collection-item file-link" target="_blank" href={{file.url}}>{{file-name file.file_name}}</a>{{/if}}
+              </td>
+              <td>{{capacity-display file.size}}</td>
+              <td>{{format-date file.mtime}}</td>
+            </tr>
+          {{/if}}
+        {{/each}}
+      </tbody>
+    </table>
+    {{#if (gt pages 1)}}
+      <ul class="pagination">
+        {{#each this.iter_pages as |page|}}
+          <li>{{#link-to "beams.beam" beam (query-params file_filter=file_filter file_page=page)}}{{page}}{{/link-to}}</li>
+        {{/each}}
+      </ul>
+    {{/if}}
+  {{else}}
+    <h3 class="no-beams">No files were beamed up.</h3>
+  {{/if}}
+</center>

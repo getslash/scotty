@@ -1,7 +1,7 @@
 /* global require, module */
 var EmberApp = require('ember-cli/lib/broccoli/ember-app');
 
-module.exports = function(defaults) {
+module.exports = function() {
   var app = new EmberApp({
     'ember-cli-bootstrap-sassy': {
       'quiet': true
@@ -29,7 +29,6 @@ module.exports = function(defaults) {
 
   app.import("bower_components/moment/moment.js");
   app.import("bower_components/numeral/numeral.js");
-  app.import("bower_components/materialize/dist/js/materialize.min.js");
 
   var mergeTrees = require('broccoli-merge-trees');
   var pickFiles = require('broccoli-static-compiler');
@@ -40,10 +39,5 @@ module.exports = function(defaults) {
     destDir: '/fonts'
   });
 
-  var robotoTree = pickFiles('bower_components/materialize/fonts', {
-    srcDir: '/',
-    destDir: '/fonts'
-  });
-
-  return mergeTrees([app.toTree(), fontTree, robotoTree], {overwrite: true});
+  return mergeTrees([app.toTree(), fontTree], {overwrite: true});
 };

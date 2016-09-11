@@ -7,7 +7,6 @@
     "ember-qunit-notifications": "0.1.0",
     "fontawesome": "~4.5.0",
     "loader.js": "ember-cli/loader.js#3.4.0",
-    "materialize": "^0.97.5",
     "moment": "^2.9.0",
     "numeral": "^1.5.3"
   }

@@ -1,0 +1,25 @@
+<div class="component">
+  {{#unless editing_comment}}
+    <a {{action "toggle_editing"}}><i class="fa fa-ticket"></i></a>&nbsp;
+    <p {{action "toggle_editing"}} class="text">Click to assign an issue</p>
+  {{else}}
+      <div class="row">
+        <div class="col-xs-4 control">
+          {{#x-select class="form-control" value=dest as |xs|}}
+            {{#each trackers as |tracker|}}
+              {{#xs.option value=trackdf}}{{tracker.name}}{{/xs.option}}
+            {{/each}}
+          {{/x-select}}
+        </div>
+        <div class="col-xs-4 control">
+          {{input class="form-control" value=name placeholder="Issue"}}
+        </div>
+        <div class="col-xs-2 control">
+          <button class="btn btn-primary" type="submit" {{action "toggle_editing" true}}>Assign</button>
+        </div>
+        <div class="col-xs-2 control">
+          <button class="btn btn-danger" type="submit" {{action "toggle_editing" false}}>Cancel</button>
+        </div>
+      </div>
+  {{/unless}}
+</div>

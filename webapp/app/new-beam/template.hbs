@@ -1,0 +1,47 @@
+<div class="container">
+  {{#if error}}
+    <div class="alert alert-danger" role="alert">
+      {{error}}
+    </div>
+  {{/if}}
+
+  <h1>Beam Up</h1><br/>
+  <div class="row">
+    <form>
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="user">SSH user</label>
+          {{input id="user" type="text" class="form-control" value=user placeholder="User"}}
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="host">Host</label>
+          {{input id="host" type="text" class="form-control" value=host placeholder="Host"}}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="directory">Directory</label>
+          {{input id="directory" type="text" class="form-control" value=directory placeholder="Directory"}}
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="form-group">
+        <label>Tags</label>
+        {{tag-box onchange=(action (mut tags)) selected=tags message="Press enter to add a tag"}}
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    {{auth-method keys=model auth=(mut this.auth)}}
+  </div>
+  <div class="row">
+    <div class="col-md-2 col-md-offset-10" style="text-align: right">
+      <button class="btn btn-primary" type="submit" {{action "submit"}}>Beam up</button>
+    </div>
+  </div>
+</div>

@@ -1,8 +1,7 @@
 import Ember from 'ember';
-import Materialize from '../mixins/materialize';
 import { task, timeout } from 'ember-concurrency';
 
-export default Ember.Route.extend(Materialize, {
+export default Ember.Route.extend({
   beam: null,
 
   model: function(data) {

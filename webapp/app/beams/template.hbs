@@ -1,0 +1,14 @@
+<div class="container-fluid">
+  <div class="beam-list">
+    {{#if this.sortedModel}}
+      {{beam-list beams=this.sortedModel selected_id=this.selected_id beam_selection=(action "beam_selection")}}
+    {{else}}
+      <div class="item"><h3 class="no-beams">No beams to show.</h3></div>
+    {{/if}}
+  </div>
+  <div class="outlet-layout">
+    <div class="outlet-frame">
+      {{outlet}}
+    </div>
+  </div>
+</div>
