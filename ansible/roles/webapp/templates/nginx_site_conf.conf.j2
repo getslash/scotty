@@ -10,15 +10,13 @@ server {
 server {
     listen 80;
     server_name {{inventory_hostname}};
-    gzip_static on;
-    gzip_http_version   1.1;
-    gzip_proxied        expired no-cache no-store private auth;
-    gzip_disable        "MSIE [1-6]\.";
-    gzip_vary           on;
 
-    location /static {
-       alias {{static_root}};
-    }
+    gzip_static on;
+    gzip on;
+    gzip_proxied any;
+    gzip_types text/plain text/xml text/css application/x-javascript application/javascript;
+    gzip_vary on;
+    gzip_disable "MSIE [1-6]\.(?!.*SV1)";
 
     location = / {
        rewrite ^/$ /static/index.html;
