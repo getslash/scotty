@@ -14,7 +14,7 @@
           {{#if file.file_name}}
             <tr>
               <td>
-                {{#if beam.deleted}}{{file.file_name}}{{else}}<a class="collection-item file-link" target="_blank" href={{file.url}}>{{file-name file.file_name}}</a>{{/if}}
+                {{#if model.beam.deleted}}{{file.file_name}}{{else}}<a class="collection-item file-link" target="_blank" href={{file.url}}>{{file-name file.file_name}}</a>{{/if}}
               </td>
               <td>{{capacity-display file.size}}</td>
               <td>{{format-date file.mtime}}</td>
@@ -26,7 +26,7 @@
     {{#if (gt pages 1)}}
       <ul class="pagination">
         {{#each this.iter_pages as |page|}}
-          <li>{{#link-to "beams.beam" beam (query-params file_filter=file_filter file_page=page)}}{{page}}{{/link-to}}</li>
+          <li>{{#link-to "beams.beam" model (query-params file_filter=file_filter file_page=page)}}{{page}}{{/link-to}}</li>
         {{/each}}
       </ul>
     {{/if}}

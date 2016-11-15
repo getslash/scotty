@@ -21,7 +21,7 @@ export default Ember.Component.extend({
       offset: (Math.max(0, this.get("page") - 1)) * FILES_PER_PAGE,
       limit: FILES_PER_PAGE,
       filter: this.get("file_filter"),
-      beam_id: this.get("beam.id")
+      beam_id: this.get("model.beam.id")
     };
 
     const response = yield this.get("store").query('file', query);
@@ -38,9 +38,14 @@ export default Ember.Component.extend({
     }
   }).restartable(),
 
+  didReceiveAttrs() {
+    this._super(...arguments);
+    this.get("get_files").perform();
+  },
+
   watch_file_properties: function() {
     this.get("get_files").perform();
-  }.observes("file_filter", "beam", "page", "beam.files"),
+  }.observes("file_filter", "page", "model.beam.files"),
 
   update_searchbox: function() {
     this.set("file_filter_value", this.get("file_filter"));
