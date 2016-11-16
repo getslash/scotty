@@ -1,0 +1,5 @@
+{{#each tags as |tag|}}
+  {{#link-to "beams.beam" beam_id (query-params tag=tag)}}
+    <span class="label label-primary tag"><i class="fa fa-tag" aria-hidden="true"></i> {{tag}}</span>
+  {{/link-to}}
+{{/each}}

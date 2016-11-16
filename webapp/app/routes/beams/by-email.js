@@ -1,10 +1,7 @@
-import FilteredBeams from '../filtered-beams';
+import Ember from 'ember';
 
-export default FilteredBeams.extend({
+export default Ember.Route.extend({
   model: function(params) {
-    return this.store.query("beam", {
-      email: params.email
-    });
-  },
-  what: "email"
+    this.transitionTo('beams', {queryParams: {email: params.email}});
+  }
 });

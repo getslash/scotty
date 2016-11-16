@@ -1,11 +1,7 @@
-import FilteredBeams from '../filtered-beams';
+import Ember from 'ember';
 
-export default FilteredBeams.extend({
+export default Ember.Route.extend({
   model: function(params) {
-    return this.store.query("beam", {
-      uid: params.uid
-    });
-  },
-  what: "user"
-
+    this.transitionTo('beams', {queryParams: {uid: params.uid}});
+  }
 });

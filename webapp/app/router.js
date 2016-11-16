@@ -7,28 +7,27 @@ const Router = Ember.Router.extend({
 });
 
 Router.map(function() {
+  // this.route('index', function() {
+  // });
   this.route('setup', function() {});
   this.route('login', function() {});
-  this.route('beam', {
-    path: '/beam/:beam_id'
-  });
   this.route('new-beam', function() {});
   this.route('changelog', function() {});
   this.route('api', function() {});
-  this.route('summary', function() {});
   this.route('tag', {
     path: '/tag/:tag'
   });
   this.route('not-found', {
     path: "*path"
   });
-  this.route('pinned');
 
   this.route('beams', function() {
     this.route('by-user', { path: '/by_user/:uid' });
     this.route('by-email', { path: '/by_email/:email' });
+    this.route('beam', { path: '/:id' });
   });
   this.route('filtered-beams');
+  this.route('summary');
 });
 
 export default Router;

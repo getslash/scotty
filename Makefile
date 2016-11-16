@@ -8,7 +8,7 @@ clean:
 	find . -name "*.pyc" -delete
 
 test:
-	python manage.py unittest
+	make -C webapp test
 
 webapp:
 	python manage.py frontend build

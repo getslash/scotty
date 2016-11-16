@@ -1,4 +1,3 @@
-import Ember from 'ember';
 import DS from 'ember-data';
 /* global moment */
 
@@ -34,46 +33,5 @@ export default DS.Model.extend({
 
   relative_time: function() {
     return moment(this.get("start")).fromNow();
-  }.property("start", "tick"),
-
-  purge_str: function() {
-    var purge_time = this.get("purge_time");
-
-    if (purge_time === 0) {
-      return "today";
-    } else if (purge_time === 1) {
-      return "in 1 day";
-    } else {
-      return "in " + purge_time + " days";
-    }
-  }.property("purge_today").readOnly(),
-
-  should_display_purge_str: function() {
-    return this.get("purge_time") != null;
-  }.property("has_pinners", "completed").readOnly(),
-
-  num_of_pins: function() {
-    return this.get("pins").get("length");
-  }.property("pins"),
-
-  has_pinners: function() {
-    return this.get("pins").get("length") > 0;
-  }.property("pins"),
-
-  pins_change: function() {
-    Ember.run.once(this, "join_pinners");
-  }.observes("pins"),
-
-  join_pinners: function() {
-    var self = this;
-    this.get("pins").then(function(pins) {
-      self.set("pinners", pins.map(function(p) {
-        return p.get("name");
-      }).toArray().join(", "));
-    });
-  },
-
-  img: function() {
-    return (this.get("completed") ? (this.get("error_message") != null ? "/static/assets/img/folder-error.gif" : "/static/assets/img/folder-regular.gif") : "/static/assets/img/folder-beaming.gif");
-  }.property("completed", "error_message")
+  }.property("start", "tick")
 });

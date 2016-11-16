@@ -1,0 +1,49 @@
+{{#if model.beam.error_message}}
+  <div class="alert alert-danger" role="alert">
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+    <span class="sr-only">Error:</span>
+    {{model.beam.error_message}}
+  </div>
+{{/if}}
+
+{{beam-deletion-alert deleted=model.beam.deleted purge_time=model.beam.purge_time}}
+<div class="row">
+  <div class="col-lg-10 col-md-9">
+    <div class="row">
+      <div class="col-md-4">
+        {{#beam-detail icon="fa-hashtag"}}{{model.beam.id}}{{/beam-detail}}
+        {{#beam-detail icon="fa-user"}}{{model.beam.initiator.display_name}}{{/beam-detail}}
+        {{#beam-detail icon="fa-desktop"}}{{model.beam.host}}{{/beam-detail}}
+        {{#if model.beam.type}}
+          {{#beam-detail icon="fa-info-circle"}}{{model.beam.type}}{{/beam-detail}}
+        {{/if}}
+      </div>
+      <div class="col-md-8">
+        {{#beam-detail icon="fa-clock-o"}}{{model.beam.relative_time}}{{/beam-detail}}
+        {{#beam-detail icon="fa-database"}}{{capacity-display model.beam.size}}{{/beam-detail}}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-12">
+        {{#beam-detail icon="fa-folder"}}{{model.beam.directory}}{{/beam-detail}}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-2 col-md-3" style="text-align: right;">
+    {{beam-img class="small-beam-img" beam=model.beam}}
+  </div>
+</div>
+{{beam-comment beam=model.beam}}
+{{assign-issue trackers=model.trackers submit=(perform assign_issue)}}
+{{beam-pinner beam=(mut model.beam) store=store session=session refresh_beam=(action "refresh_beam")}}
+<div class="row" style="margin-bottom: 10px">
+  <div class="col-xs-6">
+    <h4 class="subtitle">Tags</h4>
+    {{tag-list tags=model.beam.tags beam_id=model.beam.id}}
+  </div>
+  <div class="col-xs-6">
+    <h4 class="subtitle">Issues</h4>
+    {{issue-list issues=model.beam.associated_issues remove_issue=(perform remove_issue)}}
+  </div>
+</div>
+{{beam-files model=model page=(mut file_page) file_filter=(mut file_filter)}}

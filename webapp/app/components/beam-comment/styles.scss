@@ -1,0 +1,21 @@
+@import 'common';
+
+.beam-comment {
+  display: flex;
+  flex-direction: row;
+};
+
+.icon {
+  color: $link-color;
+  padding-right: 5px;
+};
+
+.empty-comment {
+  color: $grey-text;
+  cursor: pointer;
+  font-style: italic;
+};
+
+.comment {
+  font-style: italic;
+};

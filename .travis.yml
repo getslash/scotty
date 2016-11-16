@@ -1,9 +1,10 @@
-language: python
-sudo: false
-python:
-  - 3.4
-addons:
-  postgresql: "9.4"
-install:
-  - pip install virtualenv
-script: python manage.py travis-test
+language: ruby
+rvm:
+  - 2.2
+node_js:
+  - "6"
+before_script:
+  - "npm install -g jshint"
+  - "gem install scss_lint"
+script:
+  - make test
