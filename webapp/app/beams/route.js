@@ -11,10 +11,6 @@ export default Ember.Route.extend({
   tag: null,
   email: null,
   actions: {
-    scotty_button: function() {
-      this.refresh();
-      return false;
-    },
     beam_selected: function(beam) {
       this.controllerFor("beams").set("selected_id", beam);
     }
