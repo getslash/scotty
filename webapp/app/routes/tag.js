@@ -2,6 +2,6 @@ import Ember from 'ember';
 
 export default Ember.Route.extend({
   model: function(params) {
-    this.transitionTo('beams', {queryParams: {tag: params.tag}});
+      window.history.replaceState( {}, 'beams', '/#/beams?tag=' + params.tag);
   }
 });
