@@ -1,5 +1,5 @@
 {{#each beams as |beam|}}
-  <div class="{{if (not-eq beam beams.lastObject) "spaced-item"}} item beam {{if (eq selected_id beam.id) "selected-beam" "unselected-beam"}}" {{action "beam_click" beam.id}}>
+  <div class="{{if (not-eq beam beams.lastObject) "spaced-item"}} item beam {{if (eq selected_id beam.id) "selected-beam" "unselected-beam"}}" onclick="" {{action "beam_click" beam.id}}>
     <div class="container">
       <div class="row">
         <div class="col-md-7">
