@@ -14,7 +14,7 @@ export default Ember.Component.extend({
       const name = this.get("name");
       if (editing_comment) {
         if (submit && name) {
-          this.sendAction("submit", this.get("dest"), name);
+          this.get("submit")(this.get("dest"), name);
         }
       }
       this.set("editing_comment", !editing_comment);

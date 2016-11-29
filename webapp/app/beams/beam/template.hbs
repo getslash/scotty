@@ -35,7 +35,7 @@
 </div>
 {{beam-comment beam=model.beam}}
 {{assign-issue trackers=model.trackers submit=(perform assign_issue)}}
-{{beam-pinner beam=(mut model.beam) store=store session=session refresh_beam=(action "refresh_beam")}}
+{{beam-pinner beam=(mut model.beam) store=store session=session on_pin_change=(action "refresh_beam")}}
 <div class="row" style="margin-bottom: 10px">
   <div class="col-xs-6">
     <h4 class="subtitle">Tags</h4>
@@ -43,7 +43,7 @@
   </div>
   <div class="col-xs-6">
     <h4 class="subtitle">Issues</h4>
-    {{issue-list issues=model.beam.associated_issues remove_issue=(perform remove_issue)}}
+    {{issue-list issues=model.beam.associated_issues on_issue_removal=(perform remove_issue)}}
   </div>
 </div>
 {{beam-files model=model page=(mut file_page) file_filter=(mut file_filter)}}

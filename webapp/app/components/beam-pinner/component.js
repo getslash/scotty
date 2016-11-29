@@ -14,7 +14,7 @@ export default Ember.Component.extend({
         should_pin: !pinned
       })
     });
-    this.sendAction("refresh_beam");
+    this.get("on_pin_change")();
   }).restartable(),
 
   monitor_pins: function() {

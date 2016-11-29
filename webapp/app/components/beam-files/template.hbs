@@ -1,5 +1,5 @@
 <center>
-  {{search-box class="filter-box" value_change=(action "filter_change") textbox=file_filter_value}}
+  {{search-box class="filter-box" on_change=(action "filter_change") textbox=file_filter_value}}
   {{#if files}}
     <table class="table table-hover table-condensed">
       <thead>
