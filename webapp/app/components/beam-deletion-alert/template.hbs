@@ -4,10 +4,10 @@
     This beam has been deleted.
   </div>
 {{else}}
-  {{#if (not-eq purge_time null)}}
+  {{#if (not-eq purgeTime null)}}
     <div class="alert alert-info" role="alert">
     <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
-      This beam will be deleted <strong>{{purge_str}}</strong>.
+      This beam will be deleted <strong>{{purgeString}}</strong>.
     </div>
   {{/if}}
 {{/if}}

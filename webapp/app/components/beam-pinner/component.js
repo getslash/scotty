@@ -14,21 +14,21 @@ export default Ember.Component.extend({
         should_pin: !pinned
       })
     });
-    this.get("on_pin_change")();
+    this.get("onChange")();
   }).restartable(),
 
-  monitor_pins: function() {
-    this.get("update_pinned").perform();
+  monitorPins: function() {
+    this.get("updatePinned").perform();
   }.observes("beam.pins", "session.data.authenticated.id").on("init"),
 
-  update_pinned: task(function * () {
+  updatePinned: task(function * () {
     const store = this.get("store");
 
     if (this.get("session.data.authenticated.id") === undefined) {
       this.set("pinned", false);
     } else {
       const me = yield store.find("user", this.get("session.data.authenticated.id"));
-      this.set("pinned", this.get("beam.pins").contains(me));
+      this.set("pinned", this.get("beam.pins").includes(me));
     }
   }).drop()
 });

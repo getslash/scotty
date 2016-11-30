@@ -1,7 +1,7 @@
 import Ember from 'ember';
 
 export default Ember.Component.extend({
-  editing_comment: false,
+  editing: false,
   dest: null,
 
   didReceiveAttrs: function() {
@@ -9,15 +9,15 @@ export default Ember.Component.extend({
   },
 
   actions: {
-    toggle_editing: function(submit) {
-      const editing_comment = this.get("editing_comment");
+    toggle: function(submit) {
+      const editing = this.get("editing");
       const name = this.get("name");
-      if (editing_comment) {
+      if (editing) {
         if (submit && name) {
           this.get("submit")(this.get("dest"), name);
         }
       }
-      this.set("editing_comment", !editing_comment);
+      this.set("editing", !editing);
     },
 
     change: function(selected) {

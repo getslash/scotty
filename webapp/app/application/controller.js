@@ -1,9 +1,7 @@
 import Ember from 'ember';
 
 export default Ember.Controller.extend({
-  queryParams: ['view'],
-  view: "",
-  modal_content: "",
+  modalContent: "",
   session: Ember.inject.service('session'),
 
   iframe: function() {
@@ -11,26 +9,17 @@ export default Ember.Controller.extend({
   }.property("view"),
 
   actions: {
-    login_error: function(error) {
-      this.set('modal_content', 'There was an error logging you in: ' + error);
+    loginError: function(error) {
+      this.set('modalContent', 'There was an error logging you in: ' + error);
       Ember.Logger.error(error);
       Ember.$('#appmodal').openModal();
     },
-    invalidate_session: function() {
+    logout: function() {
       this.get('session').invalidate();
     }
   },
 
   me: function() {
     return this.store.find("user", this.get("session.data.authenticated.id"));
-  }.property("session.data.authenticated.id"),
-
-  background_change: function() {
-    var view = this.get("view");
-    if (view === "iframe") {
-      Ember.$('body').addClass("iframe");
-    } else {
-      Ember.$('body').removeClass("iframe");
-    }
-  }.observes("view")
+  }.property("session.data.authenticated.id")
 });

@@ -25,13 +25,13 @@ export default Base.extend({
       url: "/logout",
     });
   },
-  authenticate: function(auth_code) {
+  authenticate: function(authCode) {
     return new Ember.RSVP.Promise(function(resolve, reject) {
       Ember.$.ajax({
         type: "POST",
         url: "/login",
         contentType: 'application/json',
-        data: JSON.stringify(auth_code)
+        data: JSON.stringify(authCode)
       }).then(
         function(data) {
           resolve(data);

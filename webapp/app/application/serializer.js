@@ -7,9 +7,5 @@ export default DS.RESTSerializer.extend({
   },
   keyForRelationship: function(link) {
     return Ember.String.underscore(link);
-  },
-
-  attrs: {
-    errorMessage: "error"
   }
 });

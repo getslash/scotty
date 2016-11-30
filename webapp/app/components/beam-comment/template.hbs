@@ -1,13 +1,13 @@
 <div class="beam-comment">
-  <a {{action "toggle_editing"}}><i class="fa fa-comment icon"></i></a>
-  {{#unless editing_comment}}
+  <a {{action "toggle"}}><i class="fa fa-comment icon"></i></a>
+  {{#unless editing}}
     {{#if beam.comment}}
       <p class="comment">{{linkify beam.comment}}</p>
     {{else}}
-      <p {{action "toggle_editing"}} class="empty-comment">Click to set a comment</p>
+      <p {{action "toggle"}} class="empty-comment">Click to set a comment</p>
     {{/if}}
   {{else}}
-    {{focus-input value=beam.comment action="toggle_editing"}}
+    {{focus-input value=beam.comment action="toggle"}}
   {{/unless}}
 </div>
 

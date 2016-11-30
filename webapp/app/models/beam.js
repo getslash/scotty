@@ -5,17 +5,17 @@ export default DS.Model.extend({
   start: DS.attr('date'),
   size: DS.attr('number'),
   host: DS.attr('string'),
-  ssh_key: DS.attr('string'),
-  stored_key: DS.belongsTo('key'),
-  auth_method: DS.attr('string'),
+  sshKey: DS.attr('string'),
+  storedKey: DS.belongsTo('key'),
+  authMethod: DS.attr('string'),
   password: DS.attr('string'),
   user: DS.attr('string'),
   directory: DS.attr('string'),
   comment: DS.attr('string'),
   deleted: DS.attr('boolean'),
-  purge_time: DS.attr('number'),
+  purgeTime: DS.attr('number'),
   type: DS.attr('string'),
-  error_message: DS.attr('string'),
+  errorMessage: DS.attr('string'),
   completed: DS.attr('boolean'),
   tags: DS.attr('tags'),
   files: DS.attr(),
@@ -25,13 +25,13 @@ export default DS.Model.extend({
   pins: DS.hasMany('user', {
     async: true
   }),
-  associated_issues: DS.hasMany('issue', {
+  associatedIssues: DS.hasMany('issue', {
     async: true
   }),
   pinners: "",
   tick: 1,
 
-  relative_time: function() {
+  relativeTime: function() {
     return moment(this.get("start")).fromNow();
   }.property("start", "tick")
 });

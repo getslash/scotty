@@ -1,12 +1,12 @@
-{{#if model.beam.error_message}}
+{{#if model.beam.errorMessage}}
   <div class="alert alert-danger" role="alert">
     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
     <span class="sr-only">Error:</span>
-    {{model.beam.error_message}}
+    {{model.beam.errorMessage}}
   </div>
 {{/if}}
 
-{{beam-deletion-alert deleted=model.beam.deleted purge_time=model.beam.purge_time}}
+{{beam-deletion-alert deleted=model.beam.deleted purgeTime=model.beam.purgeTime}}
 <div class="row">
   <div class="col-lg-10 col-md-9">
     <div class="row">
@@ -19,7 +19,7 @@
         {{/if}}
       </div>
       <div class="col-md-8">
-        {{#beam-detail icon="fa-clock-o"}}{{model.beam.relative_time}}{{/beam-detail}}
+        {{#beam-detail icon="fa-clock-o"}}{{model.beam.relativeTime}}{{/beam-detail}}
         {{#beam-detail icon="fa-database"}}{{capacity-display model.beam.size}}{{/beam-detail}}
       </div>
     </div>
@@ -34,16 +34,19 @@
   </div>
 </div>
 {{beam-comment beam=model.beam}}
-{{assign-issue trackers=model.trackers submit=(perform assign_issue)}}
-{{beam-pinner beam=(mut model.beam) store=store session=session on_pin_change=(action "refresh_beam")}}
+{{assign-issue trackers=model.trackers submit=(perform assignIssue)}}
+{{beam-pinner beam=(mut model.beam) store=store session=session onChange=(action "refresh")}}
 <div class="row" style="margin-bottom: 10px">
   <div class="col-xs-6">
     <h4 class="subtitle">Tags</h4>
-    {{tag-list tags=model.beam.tags beam_id=model.beam.id}}
+    {{tag-list tags=model.beam.tags beamId=model.beam.id}}
   </div>
   <div class="col-xs-6">
     <h4 class="subtitle">Issues</h4>
-    {{issue-list issues=model.beam.associated_issues on_issue_removal=(perform remove_issue)}}
+    {{#each modeo.beam.associatedIssues as |issue|}}
+      AA
+    {{/each}}
+    {{issue-list issues=model.beam.associatedIssues onRemoval=(perform removeIssue)}}
   </div>
 </div>
-{{beam-files model=model page=(mut file_page) file_filter=(mut file_filter)}}
+{{beam-files model=model page=(mut filePage) fileFilter=(mut fileFilter)}}

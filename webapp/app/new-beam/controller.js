@@ -2,16 +2,16 @@ import Ember from 'ember';
 import { task } from 'ember-concurrency';
 
 const Auth = Ember.Object.extend({
-  method: "stored_key",
+  method: "storedKey",
   key: "",
   password: "",
-  stored_key: "",
+  storedKey: "",
 
-  get_auth_method: function() {
+  getAuthMethod: function() {
     switch (this.get("method")) {
     case "key":
       return "rsa";
-    case "stored_key":
+    case "storedKey":
       return "stored_key";
     case "password":
       return "password";
@@ -28,24 +28,24 @@ export default Ember.Controller.extend({
   directory: "",
   tags: [],
 
-  model_change: Ember.observer("model", function() {
+  modelChange: Ember.observer("model", function() {
     const model = this.get("model");
     if (model.get("length") > 0) {
-      this.set("auth.stored_key", model.objectAt(0));
+      this.set("auth.storedKey", model.objectAt(0));
     }
   }),
 
-  beam_up: task(function * () {
-    const auth_method = this.get("auth").get_auth_method();
+  beamUp: task(function * () {
+    const authMethod = this.get("auth").getAuthMethod();
 
     const beam = this.store.createRecord("beam", {
       host: this.get("host"),
       ssh_key: this.get("auth.key"),
       password: this.get("auth.password"),
-      auth_method: auth_method,
+      authMethod: authMethod,
       user: this.get("user"),
       directory: this.get("directory"),
-      stored_key: this.get("auth.stored_key"),
+      storedKey: this.get("auth.storedKey"),
       tags: this.get("tags")
     });
 
@@ -104,11 +104,7 @@ export default Ember.Controller.extend({
         return;
       }
 
-      this.get("beam_up").perform();
-    },
-
-    stuff: function(hi) {
-      console.log(hi);
+      this.get("beamUp").perform();
     }
   }
 });

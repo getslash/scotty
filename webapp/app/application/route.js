@@ -3,28 +3,6 @@ import ApplicationRouteMixin from 'ember-simple-auth/mixins/application-route-mi
 import { task, timeout } from 'ember-concurrency';
 
 export default Ember.Route.extend(ApplicationRouteMixin, {
-  actions: {
-    login: function() {
-      var self = this;
-
-      this.get('torii').open('google-oauth2').then(function(authorization) {
-          return self.get('session').authenticate('authenticator:token', authorization).then(
-            function(data) {
-              return data;
-            },
-            function(error) {
-              self.controllerFor('application').send('login_error', error);
-            }
-          );
-        },
-        function(error) {
-          self.controllerFor('application').send('login_error', error);
-        });
-    },
-    scotty_button: function() {
-      this.transitionTo("index");
-    }
-  },
 
   model: function() {
     var self = this;
@@ -42,7 +20,7 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
     return this.store.find("info", "1");
   },
 
-  relative_time_update: task(function * () {
+  updateRelativeTime: task(function * () {
     for (;;) {
       let beams = this.store.peekAll("beam").content;
       for (var i = 0; i < beams.length; i++) {
@@ -52,5 +30,29 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
 
       yield timeout(60000);
     }
-  }).on("init")
+  }).on("init"),
+
+  actions: {
+    login: function() {
+      var self = this;
+
+      this.get('torii').open('google-oauth2').then(function(authorization) {
+        return self.get('session').authenticate('authenticator:token', authorization).then(
+          function(data) {
+            return data;
+          },
+          function(error) {
+            self.controllerFor('application').send('loginError', error);
+          }
+        );
+      },
+      function(error) {
+        self.controllerFor('application').send('loginError', error);
+      });
+    },
+
+    scottyClicked: function() {
+      this.transitionTo("index");
+    }
+  }
 });

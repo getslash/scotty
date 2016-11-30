@@ -5,7 +5,7 @@
         <div class="form-group">
           <label for="method">Authentication Method</label>
           {{#x-select id="method" class="form-control" value=auth.method as |xs|}}
-            {{#xs.option value="stored_key"}}Stored Key{{/xs.option}}
+            {{#xs.option value="storedKey"}}Stored Key{{/xs.option}}
             {{#xs.option value="password"}}Password{{/xs.option}}
             {{#xs.option value="key"}}Custom Key{{/xs.option}}
           {{/x-select}}
@@ -13,9 +13,9 @@
       </div>
       <div class="col-md-6">
         <div class="form-group">
-          {{#if (eq auth.method "stored_key")}}
-            <label for="stored_key">Stored Key</label>
-            {{#x-select id="stored_key" class="form-control" value=auth.stored_key as |xs|}}
+          {{#if (eq auth.method "storedKey")}}
+            <label for="storedKey">Stored Key</label>
+            {{#x-select id="storedKey" class="form-control" value=auth.storedKey as |xs|}}
               {{#each keys as |key|}}
                 {{#xs.option value=key}}{{key.description}}{{/xs.option}}
               {{/each}}

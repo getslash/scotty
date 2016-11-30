@@ -5,7 +5,7 @@ export default Ember.Component.extend({
   selected: [],
 
   actions: {
-    handle_key_down(dropdown, e) {
+    keyDown(dropdown, e) {
       if (e.keyCode !== 13) { return; }
       let text = e.target.value;
       if (text.length > 0 && this.get('names').indexOf(text) === -1) {

@@ -11,7 +11,7 @@ export default Ember.Route.extend({
 
 
   afterModel: function(model, transision) {
-    transision.send("beam_selected", model.beam.id);
+    transision.send("beamSelected", model.beam.id);
     this.get('refresh').perform(model.beam);
   },
 

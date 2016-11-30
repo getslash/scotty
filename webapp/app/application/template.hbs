@@ -9,7 +9,7 @@
         <span class="icon-bar"></span>
       </button>
       <div class="navbar-header">
-        <img src="/static/assets/img/scotty.png" class="navbar-brand-img scotty-button" {{action "scotty_button"}} alt="refresh">
+        <img src="/static/assets/img/scotty.png" class="navbar-brand-img scotty-button" {{action "scottyClicked"}} alt="refresh">
       </div>
     </div>
     <ul class="nav navbar-nav">
@@ -20,7 +20,7 @@
     <ul class="nav navbar-nav navbar-right">
       {{#if session.isAuthenticated}}
         <li>{{#link-to "beams" (query-params uid=me.id)}}{{me.name}}{{/link-to}}</li>
-        <li><a href="#" {{ action 'invalidate_session' }}>Log Out</a></li>
+        <li><a href="#" {{action "logout"}}>Log Out</a></li>
       {{else}}
         <li><a href="#" {{action "login"}}>Log In</a></li>
       {{/if}}
