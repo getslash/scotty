@@ -12,7 +12,6 @@ Router.map(function() {
   this.route('setup', function() {});
   this.route('login', function() {});
   this.route('new-beam', function() {});
-  this.route('changelog', function() {});
   this.route('api', function() {});
   this.route('tag', {
     path: '/tag/:tag'
