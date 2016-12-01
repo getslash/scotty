@@ -3,7 +3,7 @@ import DS from 'ember-data';
 export default DS.Model.extend({
   name: DS.attr('string'),
   email: DS.attr('string'),
-  display_name: function() {
+  displayName: function() {
     if (this.get('name')) {
       return this.get('name');
     }
