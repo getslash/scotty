@@ -52,7 +52,7 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
     },
 
     scottyClicked: function() {
-      this.transitionTo("index");
+      this.transitionTo("beams", {queryParams: {tag: undefined}});
     }
   }
 });
