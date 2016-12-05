@@ -21,6 +21,7 @@
       <div class="col-md-8">
         {{#beam-detail icon="fa-clock-o"}}{{model.beam.relativeTime}}{{/beam-detail}}
         {{#beam-detail icon="fa-database"}}{{capacity-display model.beam.size}}{{/beam-detail}}
+        {{beam-pinner beam=(mut model.beam) store=store session=session onChange=(action "refresh")}}
       </div>
     </div>
     <div class="row">
@@ -34,7 +35,6 @@
   </div>
 </div>
 {{beam-comment beam=model.beam}}
-{{beam-pinner beam=(mut model.beam) store=store session=session onChange=(action "refresh")}}
 <div class="row" style="margin-bottom: 10px">
   <div class="col-xs-6">
     <h4 class="subtitle">Tags</h4>
