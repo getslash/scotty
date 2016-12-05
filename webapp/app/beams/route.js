@@ -2,8 +2,6 @@ import Ember from 'ember';
 import { task, timeout } from 'ember-concurrency';
 
 export default Ember.Route.extend({
-  tag: null,
-  email: null,
   queryParams: {
     tag: {refreshModel: true},
     email: {refreshModel: true},
