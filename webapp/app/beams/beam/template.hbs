@@ -1,12 +1,16 @@
-{{#if model.beam.errorMessage}}
-  <div class="alert alert-danger" role="alert">
-    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-    <span class="sr-only">Error:</span>
-    {{model.beam.errorMessage}}
+<div class="row">
+  <div class="col-lg-6 col-lg-offset-3 col-md-12">
+    {{#if model.beam.errorMessage}}
+      <div class="alert alert-danger" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        {{model.beam.errorMessage}}
+      </div>
+    {{else}}
+      {{beam-deletion-alert deleted=model.beam.deleted purgeTime=model.beam.purgeTime}}
+    {{/if}}
   </div>
-{{/if}}
-
-{{beam-deletion-alert deleted=model.beam.deleted purgeTime=model.beam.purgeTime}}
+</div>
 <div class="row">
   <div class="col-lg-10 col-md-9">
     <div class="row">

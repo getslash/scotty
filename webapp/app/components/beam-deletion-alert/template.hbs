@@ -5,10 +5,14 @@
   </div>
 {{else}}
   {{#if (not-eq purgeTime null)}}
-    <div class="alert alert-info" role="alert">
+    <div class="alert alert-warning" role="alert">
     <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
       This beam will be deleted <strong>{{purgeString}}</strong>.
     </div>
+  {{else}}
+    <div class="alert alert-info" role="alert">
+    <span class="glyphicon glyphicon-pushpin" aria-hidden="true"></span>
+      This beam is not scheduled for deletion at the moment.
+    </div>
   {{/if}}
 {{/if}}
-
