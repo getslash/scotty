@@ -34,7 +34,6 @@
   </div>
 </div>
 {{beam-comment beam=model.beam}}
-{{assign-issue trackers=model.trackers submit=(perform assignIssue)}}
 {{beam-pinner beam=(mut model.beam) store=store session=session onChange=(action "refresh")}}
 <div class="row" style="margin-bottom: 10px">
   <div class="col-xs-6">
@@ -43,10 +42,7 @@
   </div>
   <div class="col-xs-6">
     <h4 class="subtitle">Issues</h4>
-    {{#each modeo.beam.associatedIssues as |issue|}}
-      AA
-    {{/each}}
-    {{issue-list issues=model.beam.associatedIssues onRemoval=(perform removeIssue)}}
+    {{issue-list trackers=model.trackers onAssign=(perform assignIssue) issues=model.beam.associatedIssues onRemoval=(perform removeIssue)}}
   </div>
 </div>
 {{beam-files model=model page=(mut filePage) fileFilter=(mut fileFilter)}}

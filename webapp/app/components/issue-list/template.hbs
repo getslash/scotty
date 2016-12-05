@@ -1,8 +1,33 @@
 {{#each issues as |issue|}}
-  <span class="label label-primary">
+  <span class="label label-primary ticket">
     <i class="fa fa-ticket" aria-hidden="true"></i>&nbsp;
     <a class="issue-name" href="{{issue.url}}" target="_blank">{{issue.idInTracker}}</a>&nbsp;
-    <i onclick="" {{action "confirm" issue}} class="fa fa-times issue-delete"></i>
+    <i onclick="" {{action "remove" issue}} class="fa fa-times issue-delete"></i>
   </span>
 {{/each}}
-
+{{#if this.adding}}
+  <div class="container-fluid assigner">
+    <div class="row">
+      <div class="col-xs-6 col-lg-4 control form-group">
+        <label><small>Tracker</small></label>
+        {{#x-select class="form-control" value=tracker as |xs|}}
+          {{#each trackers as |tracker|}}
+            {{#xs.option value=tracker}}{{tracker.name}}{{/xs.option}}
+          {{/each}}
+        {{/x-select}}
+      </div>
+      <div class="col-xs-6 col-lg-4 control form-group">
+        <label><small>Ticket</small></label>
+        {{input class="form-control" value=idInTracker placeholder="Issue"}}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-12 control">
+        <button class="btn btn-sm btn-primary" type="submit" {{action "toggle" true}}>Assign</button>
+        <button class="btn btn-sm btn-danger" type="submit" {{action "toggle" false}}>Cancel</button>
+      </div>
+    </div>
+  </div>
+{{else}}
+  <span class="label label-primary ticket clickable" onclick="" {{action "click"}}>+</span>
+{{/if}}
