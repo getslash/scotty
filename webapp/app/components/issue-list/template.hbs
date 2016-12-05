@@ -2,7 +2,7 @@
   <span class="label label-primary ticket">
     <i class="fa fa-ticket" aria-hidden="true"></i>&nbsp;
     <a class="issue-name" href="{{issue.url}}" target="_blank">{{issue.idInTracker}}</a>&nbsp;
-    <i onclick="" {{action "remove" issue}} class="fa fa-times issue-delete"></i>
+    <i onclick="" {{action "remove" issue}} class="fa fa-times clickable"></i>
   </span>
 {{/each}}
 {{#if this.adding}}
