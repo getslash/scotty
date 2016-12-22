@@ -2,6 +2,19 @@
   color: $label-color;
 }
 
-.issue-delete {
+.clickable {
   cursor: pointer;
+}
+
+.control {
+  padding-left: 0;
+}
+
+.ticket {
+  margin-right: 5px;
+}
+
+.assigner {
+  margin-bottom: 10px;
+  margin-top: 15px;
 }

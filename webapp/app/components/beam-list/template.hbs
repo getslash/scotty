@@ -1,16 +1,16 @@
 {{#each beams as |beam|}}
-  <div class="{{if (not-eq beam beams.lastObject) "spaced-item"}} item beam {{if (eq selected_id beam.id) "selected-beam" "unselected-beam"}}" onclick="" {{action "beam_click" beam.id}}>
+  <div class="{{if (not-eq beam beams.lastObject) "spaced-item"}} item beam {{if (eq selectedId beam.id) "selected-beam" "unselected-beam"}}" onclick="" {{action "beamClick" beam.id}}>
     <div class="container">
       <div class="row">
         <div class="col-md-7">
-          {{#beam-detail icon="fa-user"}}{{beam.initiator.display_name}}{{/beam-detail}}
+          {{#beam-detail icon="fa-user"}}{{beam.initiator.displayName}}{{/beam-detail}}
           {{#beam-detail icon="fa-desktop"}}{{partial-host beam.host}}{{/beam-detail}}
           {{#if model.type}}
             {{#beam-detail icon="fa-info-circle"}}{{beam.type}}{{/beam-detail}}
           {{/if}}
         </div>
         <div class="col-md-5">
-          {{#beam-detail icon="fa-clock-o"}}{{beam.relative_time}}{{/beam-detail}}
+          {{#beam-detail icon="fa-clock-o"}}{{beam.relativeTime}}{{/beam-detail}}
           {{#beam-detail icon="fa-database"}}{{capacity-display beam.size}}{{/beam-detail}}
         </div>
       </div>

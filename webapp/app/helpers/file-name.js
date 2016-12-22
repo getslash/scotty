@@ -1,10 +1,10 @@
 import Ember from 'ember';
 
-export function fileName(params/*, hash*/) {
-  if (params[0].startsWith("./")) {
-    params[0] = params[0].slice(2);
+export function fileName([value]) {
+  if (value.startsWith("./")) {
+    return value.slice(2);
   }
-  return params;
+  return value;
 }
 
 export default Ember.Helper.helper(fileName);

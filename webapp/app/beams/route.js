@@ -8,22 +8,14 @@ export default Ember.Route.extend({
     uid: {refreshModel: true}
   },
 
-  tag: null,
-  email: null,
-  actions: {
-    beam_selected: function(beam) {
-      this.controllerFor("beams").set("selected_id", beam);
-    }
-  },
-
-  periodic_refresh: task(function * () {
+  periodicRefresh: task(function * () {
     for (;;) {
       yield timeout(1000 * 60 * 5);
       this.refresh();
     }
   }).on("activate").cancelOn('deactivate').drop(),
 
-  get_beams: function(params) {
+  getBeams: function(params) {
     if (params.tag) {
       return this.store.query("beam", {tag: params.tag});
     } else if (params.email) {
@@ -36,8 +28,14 @@ export default Ember.Route.extend({
   },
 
   model: function(params) {
-    return this.get_beams(params).then(function(data) {
+    return this.getBeams(params).then(function(data) {
       return data.filterBy("deleted", false);
     });
+  },
+
+  actions: {
+    beamSelected: function(beam) {
+      this.controllerFor("beams").set("selectedId", beam);
+    }
   }
 });

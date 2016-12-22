@@ -1,7 +1,7 @@
 {{#if session.isAuthenticated}}
   {{#unless beam.deleted}}
     <div class="pin-btn">
-      <a onclick={{perform pin pinned}}><i class="fa fa-thumb-tack"></i>&nbsp;{{#if pinned}}Unpin{{else}}Pin{{/if}}</a>
+      <a alt="pin" onclick={{perform pin pinned}}><i class="fa fa-thumb-tack {{if pinned "pinned" "unpinned"}}"></i> {{#if pinned}}Unpin{{else}}Pin{{/if}}</a>
     </div>
   {{/unless}}
 {{/if}}

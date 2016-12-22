@@ -1,13 +1,18 @@
 import Ember from 'ember';
 
 export default Ember.Controller.extend({
+  tag: null,
+  email: null,
+  uid: null,
+  queryParams: ['tag', 'email', 'uid'],
+
   sortKeys: ['start:desc'],
   sortedModel: Ember.computed.sort('model', 'sortKeys'),
-  selected_id: null,
+  selectedId: null,
 
   actions: {
-    beam_selection: function(beam_id) {
-      this.transitionToRoute("beams.beam", beam_id);
+    beamSelection: function(beamId) {
+      this.transitionToRoute("beams.beam", beamId);
     }
   }
 });

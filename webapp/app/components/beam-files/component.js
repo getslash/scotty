@@ -7,7 +7,7 @@ export default Ember.Component.extend({
   store: Ember.inject.service(),
   pages: 1,
 
-  iter_pages: function () {
+  pagesList: function () {
     const pages = this.get("pages");
     let arr = new Array(pages);
     for (let i=1; i <= pages; ++i) {
@@ -16,11 +16,11 @@ export default Ember.Component.extend({
     return arr;
   }.property("pages"),
 
-  get_files: task(function * () {
+  getFiles: task(function * () {
     const query = {
       offset: (Math.max(0, this.get("page") - 1)) * FILES_PER_PAGE,
       limit: FILES_PER_PAGE,
-      filter: this.get("file_filter"),
+      filter: this.get("fileFilter"),
       beam_id: this.get("model.beam.id")
     };
 
@@ -40,20 +40,20 @@ export default Ember.Component.extend({
 
   didReceiveAttrs() {
     this._super(...arguments);
-    this.get("get_files").perform();
+    this.get("getFiles").perform();
   },
 
-  watch_file_properties: function() {
-    this.get("get_files").perform();
-  }.observes("file_filter", "page", "model.beam.files"),
+  watchFileProperties: function() {
+    this.get("getFiles").perform();
+  }.observes("fileFilter", "page", "model.beam.files"),
 
-  update_searchbox: function() {
-    this.set("file_filter_value", this.get("file_filter"));
-  }.on("init").observes("file_filter"),
+  updateSearchbox: function() {
+    this.set("filterValue", this.get("fileFilter"));
+  }.on("init").observes("fileFilter"),
 
   actions: {
-    filter_change: function(new_filter) {
-      this.set("file_filter", new_filter);
+    filterChange: function(newFilter) {
+      this.set("fileFilter", newFilter);
     }
   }
 });

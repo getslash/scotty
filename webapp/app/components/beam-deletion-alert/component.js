@@ -1,15 +1,15 @@
 import Ember from 'ember';
 
 export default Ember.Component.extend({
-  purge_str: function() {
-    var purge_time = this.get("purge_time");
+  purgeString: function() {
+    var purgeTime = this.get("purgeTime");
 
-    if (purge_time === 0) {
+    if (purgeTime === 0) {
       return "today";
-    } else if (purge_time === 1) {
+    } else if (purgeTime === 1) {
       return "tomorrow";
     } else {
-      return "in " + purge_time + " days";
+      return "in " + purgeTime + " days";
     }
-  }.property("purge_time").readOnly()
+  }.property("purgeTime").readOnly()
 });

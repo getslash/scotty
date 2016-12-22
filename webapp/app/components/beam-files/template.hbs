@@ -1,5 +1,5 @@
 <center>
-  {{search-box class="filter-box" value_change=(action "filter_change") textbox=file_filter_value}}
+  {{search-box class="filter-box" onChange=(action "filterChange") textbox=filterValue}}
   {{#if files}}
     <table class="table table-hover table-condensed">
       <thead>
@@ -11,10 +11,10 @@
       </thead>
       <tbody>
         {{#each files as |file|}}
-          {{#if file.file_name}}
+          {{#if file.fileName}}
             <tr>
               <td>
-                {{#if model.beam.deleted}}{{file.file_name}}{{else}}<a class="collection-item file-link" target="_blank" href={{file.url}}>{{file-name file.file_name}}</a>{{/if}}
+                {{#if model.beam.deleted}}{{file.fileName}}{{else}}<a class="collection-item file-link" target="_blank" href={{file.url}}>{{file-name file.fileName}}</a>{{/if}}
               </td>
               <td>{{capacity-display file.size}}</td>
               <td>{{format-date file.mtime}}</td>
@@ -25,8 +25,8 @@
     </table>
     {{#if (gt pages 1)}}
       <ul class="pagination">
-        {{#each this.iter_pages as |page|}}
-          <li>{{#link-to "beams.beam" model (query-params file_filter=file_filter file_page=page)}}{{page}}{{/link-to}}</li>
+        {{#each this.pagesList as |page|}}
+          <li>{{#link-to "beams.beam" model (query-params fileFilter=fileFilter filePage=page)}}{{page}}{{/link-to}}</li>
         {{/each}}
       </ul>
     {{/if}}

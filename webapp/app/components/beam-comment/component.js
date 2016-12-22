@@ -1,15 +1,15 @@
 import Ember from 'ember';
 
 export default Ember.Component.extend({
-  editing_comment: false,
+  editing: false,
 
   actions: {
-    toggle_editing: function() {
-      const editing_comment = this.get("editing_comment");
-      if (editing_comment) {
+    toggle: function() {
+      const editing = this.get("editing");
+      if (editing) {
         this.get("beam").save();
       }
-      this.set("editing_comment", !editing_comment);
+      this.set("editing", !editing);
     }
   }
 });

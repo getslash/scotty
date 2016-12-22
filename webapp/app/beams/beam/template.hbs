@@ -1,26 +1,31 @@
-{{#if model.beam.error_message}}
-  <div class="alert alert-danger" role="alert">
-    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-    <span class="sr-only">Error:</span>
-    {{model.beam.error_message}}
+<div class="row">
+  <div class="col-lg-6 col-lg-offset-3 col-md-12">
+    {{#if model.beam.errorMessage}}
+      <div class="alert alert-danger" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        {{model.beam.errorMessage}}
+      </div>
+    {{else}}
+      {{beam-deletion-alert deleted=model.beam.deleted purgeTime=model.beam.purgeTime}}
+    {{/if}}
   </div>
-{{/if}}
-
-{{beam-deletion-alert deleted=model.beam.deleted purge_time=model.beam.purge_time}}
+</div>
 <div class="row">
   <div class="col-lg-10 col-md-9">
     <div class="row">
       <div class="col-md-4">
         {{#beam-detail icon="fa-hashtag"}}{{model.beam.id}}{{/beam-detail}}
-        {{#beam-detail icon="fa-user"}}{{model.beam.initiator.display_name}}{{/beam-detail}}
+        {{#beam-detail icon="fa-user"}}{{model.beam.initiator.displayName}}{{/beam-detail}}
         {{#beam-detail icon="fa-desktop"}}{{model.beam.host}}{{/beam-detail}}
         {{#if model.beam.type}}
           {{#beam-detail icon="fa-info-circle"}}{{model.beam.type}}{{/beam-detail}}
         {{/if}}
       </div>
       <div class="col-md-8">
-        {{#beam-detail icon="fa-clock-o"}}{{model.beam.relative_time}}{{/beam-detail}}
+        {{#beam-detail icon="fa-clock-o"}}{{model.beam.relativeTime}}{{/beam-detail}}
         {{#beam-detail icon="fa-database"}}{{capacity-display model.beam.size}}{{/beam-detail}}
+        {{beam-pinner beam=(mut model.beam) store=store session=session onChange=(action "refresh")}}
       </div>
     </div>
     <div class="row">
@@ -34,16 +39,14 @@
   </div>
 </div>
 {{beam-comment beam=model.beam}}
-{{assign-issue trackers=model.trackers submit=(perform assign_issue)}}
-{{beam-pinner beam=(mut model.beam) store=store session=session refresh_beam=(action "refresh_beam")}}
 <div class="row" style="margin-bottom: 10px">
   <div class="col-xs-6">
     <h4 class="subtitle">Tags</h4>
-    {{tag-list tags=model.beam.tags beam_id=model.beam.id}}
+    {{tag-list tags=model.beam.tags beamId=model.beam.id}}
   </div>
   <div class="col-xs-6">
     <h4 class="subtitle">Issues</h4>
-    {{issue-list issues=model.beam.associated_issues remove_issue=(perform remove_issue)}}
+    {{issue-list trackers=model.trackers onAssign=(perform assignIssue) issues=model.beam.associatedIssues onRemoval=(perform removeIssue)}}
   </div>
 </div>
-{{beam-files model=model page=(mut file_page) file_filter=(mut file_filter)}}
+{{beam-files model=model page=(mut filePage) fileFilter=(mut fileFilter)}}
