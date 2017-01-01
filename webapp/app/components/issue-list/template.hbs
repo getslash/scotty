@@ -2,7 +2,9 @@
   <span class="label label-primary ticket">
     <i class="fa fa-ticket" aria-hidden="true"></i>&nbsp;
     <a class="issue-name" href="{{issue.url}}" target="_blank">{{issue.idInTracker}}</a>&nbsp;
-    <i onclick="" {{action "remove" issue}} class="fa fa-times clickable"></i>
+    {{#if mutable}}
+      <i onclick="" {{action "remove" issue}} class="fa fa-times clickable"></i>
+    {{/if}}
   </span>
 {{/each}}
 {{#if this.adding}}
@@ -29,5 +31,7 @@
     </div>
   </div>
 {{else}}
-  <span class="label label-primary ticket clickable" onclick="" {{action "click"}}>+</span>
+  {{#if mutable}}
+    <span class="label label-primary ticket clickable" onclick="" {{action "click"}}>+</span>
+  {{/if}}
 {{/if}}

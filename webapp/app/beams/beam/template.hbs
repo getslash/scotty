@@ -25,7 +25,9 @@
       <div class="col-md-8">
         {{#beam-detail icon="fa-clock-o"}}{{model.beam.relativeTime}}{{/beam-detail}}
         {{#beam-detail icon="fa-database"}}{{capacity-display model.beam.size}}{{/beam-detail}}
-        {{beam-pinner beam=(mut model.beam) store=store session=session onChange=(action "refresh")}}
+        {{#unless model.beam.deleted}}
+          {{beam-pinner beam=(mut model.beam) store=store session=session onChange=(action "refresh")}}
+        {{/unless}}
       </div>
     </div>
     <div class="row">
@@ -46,7 +48,7 @@
   </div>
   <div class="col-xs-6">
     <h4 class="subtitle">Issues</h4>
-    {{issue-list trackers=model.trackers onAssign=(perform assignIssue) issues=model.beam.associatedIssues onRemoval=(perform removeIssue)}}
+    {{issue-list mutable=(not model.beam.deleted) trackers=model.trackers onAssign=(perform assignIssue) issues=model.beam.associatedIssues onRemoval=(perform removeIssue)}}
   </div>
 </div>
 {{beam-files model=model page=(mut filePage) fileFilter=(mut fileFilter)}}
