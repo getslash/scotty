@@ -30,10 +30,6 @@ module.exports = function(environment) {
 
   };
 
-  ENV['simple-auth'] = {
-    store: 'session-store:local-storage'
-  };
-
   if (environment === 'development') {
     // ENV.APP.LOG_RESOLVER = true;
     // ENV.APP.LOG_ACTIVE_GENERATION = true;
