@@ -6,6 +6,7 @@ const FILES_PER_PAGE = 20;
 export default Ember.Component.extend({
   store: Ember.inject.service(),
   pages: 1,
+  total: 0,
 
   pagesList: function () {
     const pages = this.get("pages");
@@ -27,6 +28,7 @@ export default Ember.Component.extend({
     const response = yield this.get("store").query('file', query);
     this.set("files", response);
 
+      this.set("total", response.meta.total);
     if (response.meta.total > 0) {
       const pages = Math.ceil(response.meta.total / FILES_PER_PAGE);
       this.set("pages", pages);

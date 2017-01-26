@@ -3,6 +3,7 @@ import ApplicationRouteMixin from 'ember-simple-auth/mixins/application-route-mi
 import { task, timeout } from 'ember-concurrency';
 
 export default Ember.Route.extend(ApplicationRouteMixin, {
+  routeAfterAuthentication: null,
 
   model: function() {
     var self = this;
