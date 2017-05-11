@@ -35,7 +35,7 @@ module.exports = function() {
 
   var fontTree = pickFiles('bower_components/fontawesome/fonts', {
     srcDir: '/',
-    files: ['fontawesome-webfont.eot','fontawesome-webfont.ttf','fontawesome-webfont.svg','fontawesome-webfont.woff','fontawesome-webfont.woff2'],
+    files: ['fontawesome-webfont.eot','fontawesome-webfont.ttf','fontawesome-webfont.svg','fontawesome-webfont.woff'],
     destDir: '/fonts'
   });
 
