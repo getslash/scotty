@@ -95,28 +95,27 @@ def _beam_file(transporter, base_path, path):
 
 def _beam_up(beam_id, path, transporter_addr):
     logger.info("Contacting transporter %s", transporter_addr)
-    transporter = socket.socket()
-    transporter.connect((transporter_addr, 9000))
+    with closing(socket.socket()) as transporter:
+        transporter.connect((transporter_addr, 9000))
 
-    beam_id = int(beam_id)
-    transporter.sendall(struct.pack('!Q', beam_id))
+        beam_id = int(beam_id)
+        transporter.sendall(struct.pack('!Q', beam_id))
 
-    transporter.sendall(struct.pack('!BH', ClientMessages.ProtocolVersion, 2))
+        transporter.sendall(struct.pack('!BH', ClientMessages.ProtocolVersion, 2))
 
-    if os.path.isfile(path):
-        _beam_file(transporter, os.path.dirname(path), path)
-    elif os.path.isdir(path):
-        logger.info("Entering {0}".format(path))
-        for (dirpath, _, filenames) in os.walk(path):
-            for filename in filenames:
-                rel_path = os.path.join(dirpath, filename)
-                if os.path.isfile(rel_path):
-                    _beam_file(transporter, path, rel_path)
-                else:
-                    logger.info("Skipping non-file {0}".format(rel_path))
+        if os.path.isfile(path):
+            _beam_file(transporter, os.path.dirname(path), path)
+        elif os.path.isdir(path):
+            logger.info("Entering {0}".format(path))
+            for (dirpath, _, filenames) in os.walk(path):
+                for filename in filenames:
+                    rel_path = os.path.join(dirpath, filename)
+                    if os.path.isfile(rel_path):
+                        _beam_file(transporter, path, rel_path)
+                    else:
+                        logger.info("Skipping non-file {0}".format(rel_path))
 
-    transporter.sendall(struct.pack('!B', ClientMessages.BeamComplete))
-    transporter.close()
+        transporter.sendall(struct.pack('!B', ClientMessages.BeamComplete))
 
 
 def beam_up(beam_id, path, transporter_addr):
