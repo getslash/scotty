@@ -1,9 +1,9 @@
 {{#each issues as |issue|}}
   <span class="label label-primary ticket">
-    <i class="fa fa-ticket" aria-hidden="true"></i>&nbsp;
+    {{fa-icon "ticket"}}&nbsp;
     <a class="issue-name" href="{{issue.url}}" target="_blank">{{issue.idInTracker}}</a>&nbsp;
     {{#if mutable}}
-      <i onclick="" {{action "remove" issue}} class="fa fa-times clickable"></i>
+      {{fa-icon "times" click=(action "remove" issue) class="clickable"}}
     {{/if}}
   </span>
 {{/each}}

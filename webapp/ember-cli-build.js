@@ -25,19 +25,10 @@ module.exports = function() {
   // modules that you would like to import into your application
   // please specify an object with the list of modules as keys
   // along with the exports of each module as its value.
-  app.import('bower_components/fontawesome/css/font-awesome.min.css');
-
   app.import("bower_components/moment/moment.js");
   app.import("bower_components/numeral/numeral.js");
 
   var mergeTrees = require('broccoli-merge-trees');
   var pickFiles = require('broccoli-static-compiler');
-
-  var fontTree = pickFiles('bower_components/fontawesome/fonts', {
-    srcDir: '/',
-    files: ['fontawesome-webfont.eot','fontawesome-webfont.ttf','fontawesome-webfont.svg','fontawesome-webfont.woff'],
-    destDir: '/fonts'
-  });
-
-  return mergeTrees([app.toTree(), fontTree], {overwrite: true});
+  return app.toTree();
 };
