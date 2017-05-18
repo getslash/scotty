@@ -72,10 +72,3 @@ def summary():
 @views.route("/combadge")
 def get_combadge():
     return redirect("/static/assets/combadge.py")
-
-
-@views.route("/")
-def index():
-    if not os.path.isdir(current_app.static_folder):
-        return send_from_directory(os.path.join(os.path.dirname(__file__), '..', 'webapp', 'app'), 'index.html')
-    return send_from_directory(current_app.static_folder, 'index.html')

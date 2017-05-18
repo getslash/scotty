@@ -33,6 +33,6 @@ def post():
     return '{}'
 
 
-@keys.route('/', methods=['GET'])
+@keys.route('', methods=['GET'])
 def get_all():
     return jsonify({'keys': [k.to_dict() for k in db.session.query(Key)]})
