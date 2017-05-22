@@ -3,6 +3,7 @@ import sqlalchemy
 from flask import Blueprint, request, jsonify
 from .utils import validate_schema
 from ..models import db, Issue
+from ..issue_trackers import is_valid_issue
 
 issues = Blueprint("issues", __name__, template_folder="templates")
 
@@ -29,6 +30,9 @@ def create():
         return 'Invalid issue id', http.client.CONFLICT
 
     issue = Issue(tracker_id=data['tracker_id'], id_in_tracker=id_in_tracker, open=True)
+    if not is_valid_issue(issue):
+        return "Invalid Issue", http.client.BAD_REQUEST
+
     db.session.add(issue)
     try:
         db.session.commit()
