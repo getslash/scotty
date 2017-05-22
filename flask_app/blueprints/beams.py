@@ -185,6 +185,11 @@ def update(beam_id):
     if 'comment' in json:
         beam.comment = json['comment']
 
+    if 'tags' in json:
+        db.session.query(Tag).filter_by(beam_id=beam_id).delete()
+        for tag in json['tags']:
+            db.session.add(Tag(beam_id=beam_id, tag=tag))
+
     db.session.commit()
 
     return '{}'

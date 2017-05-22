@@ -1,5 +1,17 @@
-{{#each tags as |tag|}}
-  {{#link-to "beams.beam" beamId (query-params tag=tag)}}
-    <span class="label label-primary tag">{{fa-icon "tag"}} {{tag}}</span>
-  {{/link-to}}
-{{/each}}
+{{#if modifying}}
+  <div style="display: flex; flex-direction: row;">
+    <div style="flex-grow: 1">
+      {{tag-box onchange=onchange selected=tags message="Press enter to add a tag"}}
+    </div>
+    <button class="btn btn-sm btn-primary" type="submit" style="margin-left: 5px" {{action "modify" false}}>Apply</button>
+  </div>
+{{else}}
+  {{#each tags as |tag|}}
+    {{#link-to "beams.beam" beamId (query-params tag=tag)}}
+      <span class="label label-primary tag">{{fa-icon "tag"}} {{tag}} </span>
+    {{/link-to}}
+  {{/each}}
+  {{#if mutable}}
+    <span class="label label-info ticket clickable" onclick="" {{action "modify" true}}>{{fa-icon "pencil"}}&nbsp;&nbsp;edit</span>
+  {{/if}}
+{{/if}}

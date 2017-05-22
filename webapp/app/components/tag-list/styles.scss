@@ -7,5 +7,9 @@ a:active {
 };
 
 .tag {
-  display: inline-block;
+  margin-right: 5px;
+};
+
+.clickable {
+  cursor: pointer;
 }
