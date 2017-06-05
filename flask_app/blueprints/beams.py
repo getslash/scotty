@@ -22,7 +22,6 @@ def get_all():
     query = (
         db.session.query(Beam)
         .options(joinedload(Beam.pins), joinedload(Beam.type), joinedload(Beam.issues))
-        .filter_by(pending_deletion=False, deleted=False)
         .order_by(Beam.start.desc()))
     query_params = []
     for param in request.values:
