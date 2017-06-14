@@ -57,7 +57,7 @@ def _beam_file(transporter, base_path, path):
 
     transporter.sendall(struct.pack('!B', ClientMessages.StartBeamingFile))
 
-    should_compress = os.path.splitext(path)[1] == ".log"
+    should_compress = os.path.splitext(path)[1] not in ['.gz', '.bz2', '.xz', '.zst', '.tgz', '.tbz2', '.txz']
     store_path = path.replace(base_path, ".", 1) if base_path else path
     if should_compress:
         store_path += ".gz"
