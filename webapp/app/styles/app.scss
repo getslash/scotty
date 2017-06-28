@@ -1,7 +1,7 @@
 $screen-lg-min: 1500px;
 @import 'bootstrap';
+$grey-text: #cacaca;
 @import 'pod-styles';
-@import 'common';
 
 body {
   font-family: 'Lato', sans-serif;
@@ -69,5 +69,4 @@ $border-color: #eee;
 @import 'fonts';
 
 @import 'ember-power-select/themes/bootstrap';
-// $ember-power-select-line-height: 34px;
 @import 'ember-power-select';

@@ -38,6 +38,11 @@ export default Ember.Controller.extend({
   actions: {
     refresh: function() {
       this.get("model.beam").reload();
+    },
+
+    tagChange: function(newTags) {
+      this.set("model.beam.tags", newTags);
+      this.get("model.beam").save();
     }
   }
 });

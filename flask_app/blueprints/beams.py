@@ -22,7 +22,6 @@ def get_all():
     query = (
         db.session.query(Beam)
         .options(joinedload(Beam.pins), joinedload(Beam.type), joinedload(Beam.issues))
-        .filter_by(pending_deletion=False, deleted=False)
         .order_by(Beam.start.desc()))
     query_params = []
     for param in request.values:
@@ -184,6 +183,11 @@ def update(beam_id):
 
     if 'comment' in json:
         beam.comment = json['comment']
+
+    if 'tags' in json:
+        db.session.query(Tag).filter_by(beam_id=beam_id).delete()
+        for tag in json['tags']:
+            db.session.add(Tag(beam_id=beam_id, tag=tag))
 
     db.session.commit()
 

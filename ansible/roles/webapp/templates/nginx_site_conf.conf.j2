@@ -18,6 +18,15 @@ server {
     gzip_vary on;
     gzip_disable "MSIE [1-6]\.(?!.*SV1)";
 
+    location /static {
+       alias {{static_root}};
+    }
+
+    location ~ ^/(img|fonts|assets)/ {
+       root /opt/scotty/src/static;
+       gzip_static on;
+    }
+
     location = / {
        rewrite ^/$ /static/index.html;
     }

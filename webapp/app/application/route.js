@@ -7,7 +7,7 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
 
   model: function() {
     var self = this;
-    if (!this.store.recordIsLoaded("info", "1")) {
+    if (!this.store.hasRecordForId("info", "1")) {
       return Ember.$.getJSON("/info").then(function(info) {
         info.id = 1;
         info.type = "info";

@@ -113,7 +113,7 @@ def create_key(s):
     return RSAKey.from_private_key(file_obj=f, password=None)
 
 
-with open(os.path.join(os.path.dirname(__file__), "..", "static", "assets", "combadge.py"), "r") as combadge:
+with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "public", "assets", "combadge.py"), "r") as combadge:
     _COMBADGE = combadge.read()
 
 
@@ -130,6 +130,25 @@ If you still need these beams then please ignore this message. However, if these
 Sincerely yours,<br/>
 Montgomery Scott
 """
+
+def _upload_combadge(ssh_client):
+    _, stdout, stderr = ssh_client.exec_command("mktemp /tmp/combadge.XXX.py")
+    retcode = stdout.channel.recv_exit_status()
+    if retcode != 0:
+        raise Exception(stderr.read().decode("utf-8"))
+
+    combadge_path = stdout.read().decode("utf-8").strip()
+
+    stdin, stdout, stderr = ssh_client.exec_command(
+        "sh -c \"cat > {combadge_path} && chmod +x {combadge_path}\"".format(combadge_path=combadge_path))
+    stdin.write(_COMBADGE)
+    stdin.channel.shutdown_write()
+    retcode = stdout.channel.recv_exit_status()
+    if retcode != 0:
+        raise Exception(stderr.read().decode("utf-8"))
+
+    return combadge_path
+
 
 @queue.task
 @needs_app_context
@@ -157,16 +176,11 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
         ssh_client.connect(host, **kwargs)
         logger.info('{}: Connected to {}. Uploading combadge'.format(beam_id, host))
 
-        stdin, stdout, stderr = ssh_client.exec_command("sh -c \"cat > /tmp/combadge.py && chmod +x /tmp/combadge.py\"")
-        stdin.write(_COMBADGE)
-        stdin.channel.shutdown_write()
-        retcode = stdout.channel.recv_exit_status()
-        if retcode != 0:
-            raise Exception(stderr.read().decode("utf-8"))
+        combadge_path = _upload_combadge(ssh_client)
 
-        logger.info('{}: Running combadge'.format(beam_id))
+        logger.info('{}: Running combadge at {}'.format(beam_id, combadge_path))
         _, stdout, stderr = ssh_client.exec_command(
-            '/tmp/combadge.py {} "{}" "{}"'.format(str(beam_id), directory, transporter))
+            '{} {} "{}" "{}"'.format(combadge_path, str(beam_id), directory, transporter))
         retcode = stdout.channel.recv_exit_status()
         if retcode != 0:
             raise Exception(stderr.read().decode("utf-8"))

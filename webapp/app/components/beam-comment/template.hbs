@@ -1,5 +1,5 @@
 <div class="beam-comment">
-  <a {{action "toggle"}}><i class="fa fa-comment icon"></i></a>
+  {{fa-icon "comment" class="icon" click=(action "toggle")}}
   {{#unless editing}}
     {{#if beam.comment}}
       <p class="comment">{{linkify beam.comment}}</p>

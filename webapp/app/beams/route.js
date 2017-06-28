@@ -15,7 +15,7 @@ export default Ember.Route.extend({
     }
   }).on("activate").cancelOn('deactivate').drop(),
 
-  getBeams: function(params) {
+  model: function(params) {
     if (params.tag) {
       return this.store.query("beam", {tag: params.tag});
     } else if (params.email) {
@@ -25,12 +25,6 @@ export default Ember.Route.extend({
     } else {
       return this.store.findAll('beam', {reload: true});
     }
-  },
-
-  model: function(params) {
-    return this.getBeams(params).then(function(data) {
-      return data.filterBy("deleted", false);
-    });
   },
 
   actions: {
