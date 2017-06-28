@@ -6,7 +6,7 @@ from ..models import db, Key
 
 keys = Blueprint("keys", __name__, template_folder="templates")
 
-@keys.route('/', methods=['POST'])
+@keys.route('', methods=['POST'])
 @validate_schema({
     'type': 'object',
     'properties': {
