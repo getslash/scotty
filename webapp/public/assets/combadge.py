@@ -193,4 +193,7 @@ if __name__ == '__main__':
     try:
         sys.exit(main())
     finally:
-        os.unlink(__file__)
+        try:
+            os.unlink(__file__)
+        except OSError:
+            pass
