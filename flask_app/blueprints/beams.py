@@ -17,7 +17,7 @@ beams = Blueprint("beams", __name__, template_folder="templates")
 
 
 _ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email']
-@beams.route('', methods=['GET'])
+@beams.route('', methods=['GET'], strict_slashes=False)
 def get_all():
     query = (
         db.session.query(Beam)

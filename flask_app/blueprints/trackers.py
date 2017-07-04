@@ -59,7 +59,7 @@ def get(tracker):
     return jsonify({'tracker': tracker.to_dict()})
 
 
-@trackers.route('', methods=['GET'])
+@trackers.route('', methods=['GET'], strict_slashes=False)
 def get_all():
     tracker_models = db.session.query(Tracker)
     return jsonify({'trackers': [tracker.to_dict() for tracker in tracker_models]})
