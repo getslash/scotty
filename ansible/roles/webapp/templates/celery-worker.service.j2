@@ -6,7 +6,7 @@ User={{user_name or app_name}}
 WorkingDirectory={{src_root}}
 StandardOutput=null
 StandardError=null
-ExecStart={{celery_bin}} -A flask_app.tasks worker --loglevel=info
+ExecStart={{celery_bin}} -A flask_app.tasks worker --loglevel=info --autoscale=20,5
 
 [Install]
 WantedBy=multi-user.target
