@@ -40,7 +40,7 @@ export default Ember.Controller.extend({
 
     const beam = this.store.createRecord("beam", {
       host: this.get("host"),
-      ssh_key: this.get("auth.key"),
+      sshKey: this.get("auth.key"),
       password: this.get("auth.password"),
       authMethod: authMethod,
       user: this.get("user"),
