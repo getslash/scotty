@@ -35,14 +35,16 @@ export default Ember.Controller.extend({
     model.beam.reload();
   }),
 
+  tagChange: task(function * (newTags) {
+    this.set("model.beam.tags", newTags);
+    const model = this.get("model.beam");
+    yield model.save()
+    yield model.reload();
+  }),
+
   actions: {
     refresh: function() {
       this.get("model.beam").reload();
-    },
-
-    tagChange: function(newTags) {
-      this.set("model.beam.tags", newTags);
-      this.get("model.beam").save();
     }
   }
 });

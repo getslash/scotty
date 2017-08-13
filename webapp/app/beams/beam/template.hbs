@@ -44,7 +44,7 @@
 <div class="row" style="margin-bottom: 10px">
   <div class="col-xs-6">
     <h4 class="subtitle">Tags</h4>
-    {{tag-list onchange=(action "tagChange") mutable=(not model.beam.deleted) tags=model.beam.tags beamId=model.beam.id}}
+    {{tag-list onchange=(perform tagChange) mutable=(not model.beam.deleted) tags=model.beam.tags beamId=model.beam.id}}
   </div>
   <div class="col-xs-6">
     <h4 class="subtitle">Issues</h4>

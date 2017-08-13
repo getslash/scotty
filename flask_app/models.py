@@ -158,6 +158,10 @@ class BeamType(db.Model):
 class Tag(db.Model):
     __table_args__ = (db.UniqueConstraint('beam_id', 'tag', name='uix_beam_tag'), )
 
+    def __init__(self, *, tag, **kwargs):
+        tag = tag.strip().lower()
+        super().__init__(tag=tag, **kwargs)
+
     id = db.Column(db.Integer, primary_key=True)
     beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'), index=True)
     beam = db.relationship("Beam", backref="tags")
