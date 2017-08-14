@@ -38,7 +38,7 @@ export default Ember.Controller.extend({
   tagChange: task(function * (newTags) {
     this.set("model.beam.tags", newTags);
     const model = this.get("model.beam");
-    yield model.save()
+    yield model.save();
     yield model.reload();
   }),
 
