@@ -28,7 +28,7 @@ module.exports = function() {
   app.import("bower_components/moment/moment.js");
   app.import("bower_components/numeral/numeral.js");
 
-  var mergeTrees = require('broccoli-merge-trees');
-  var pickFiles = require('broccoli-static-compiler');
+  require('broccoli-merge-trees');
+  require('broccoli-static-compiler');
   return app.toTree();
 };

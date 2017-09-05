@@ -1,5 +1,4 @@
-/* jshint node: true */
-
+/* eslint-env node */
 module.exports = function(environment) {
   var ENV = {
     modulePrefix: 'webapp',
@@ -52,10 +51,6 @@ module.exports = function(environment) {
     ENV.APP.LOG_VIEW_LOOKUPS = false;
 
     ENV.APP.rootElement = '#ember-testing';
-  }
-
-  if (environment === 'production') {
-
   }
 
   return ENV;

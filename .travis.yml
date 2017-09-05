@@ -1,10 +1,21 @@
 language: ruby
+
+cache:
+  - yarn
+
 rvm:
   - 2.2
+
 node_js:
   - "6"
-before_script:
-  - "npm install -g jshint"
-  - "gem install scss_lint"
+
+install:
+  - yarn global add eslint bower ember-cli
+  - gem install scss_lint
+
 script:
   - make test
+  - cd webapp
+  - yarn install
+  - bower install
+  - ember build
