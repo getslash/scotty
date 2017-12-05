@@ -156,8 +156,9 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
     try:
         beam = db.session.query(Beam).filter_by(id=beam_id).one()
         delay = flux.current_timeline.datetime.utcnow() - beam.start
-        if delay.total_seconds() > 60:
-            APP.raven.captureMessage("Beam {} took {} to start".format(beam.id, delay))
+        if delay.total_seconds() > 10:
+            APP.raven.captureMessage(
+                "Beam took too long to start", extra={'beam_id': beam.id, 'delay': str(delay)}, level="info")
 
         transporter = APP.config.get('TRANSPORTER_HOST', 'scotty')
         logger.info('Beaming up {}@{}:{} ({}) to transporter {}. Auth method: {}'.format(
