@@ -1,4 +1,4 @@
-import Ember from 'ember';
+import { helper } from '@ember/component/helper';
 
 export function fileName([value]) {
   if (value.startsWith("./")) {
@@ -7,4 +7,4 @@ export function fileName([value]) {
   return value;
 }
 
-export default Ember.Helper.helper(fileName);
+export default helper(fileName);

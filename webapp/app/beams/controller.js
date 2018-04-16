@@ -1,13 +1,14 @@
-import Ember from 'ember';
+import Controller from '@ember/controller';
+import { computed } from '@ember/object';
 
-export default Ember.Controller.extend({
+export default Controller.extend({
   tag: null,
   email: null,
   uid: null,
   queryParams: ['tag', 'email', 'uid'],
 
   sortKeys: ['start:desc'],
-  sortedModel: Ember.computed.sort('model', 'sortKeys'),
+  sortedModel: computed.sort('model', 'sortKeys'),
   selectedId: null,
 
   actions: {

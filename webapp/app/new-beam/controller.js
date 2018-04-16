@@ -1,7 +1,10 @@
-import Ember from 'ember';
+import Object from '@ember/object';
+import Controller from '@ember/controller';
+import { observer } from '@ember/object';
 import { task } from 'ember-concurrency';
+import $ from 'jquery';
 
-const Auth = Ember.Object.extend({
+const Auth = Object.extend({
   method: "storedKey",
   key: "",
   password: "",
@@ -21,14 +24,14 @@ const Auth = Ember.Object.extend({
   }
 });
 
-export default Ember.Controller.extend({
+export default Controller.extend({
   auth: Auth.create(),
   user: "",
   host: "",
   directory: "",
   tags: [],
 
-  modelChange: Ember.observer("model", function() {
+  modelChange: observer("model", function() {
     const model = this.get("model");
     if (model.get("length") > 0) {
       this.set("auth.storedKey", model.objectAt(0));
@@ -76,31 +79,31 @@ export default Ember.Controller.extend({
     submit: function() {
       if (!this.get("user")) {
         this.set("error", "User field cannot be empty");
-        Ember.$("#user").focus();
+        $("#user").focus();
         return;
       }
 
       if (!this.get("host")) {
         this.set("error", "Host field cannot be empty");
-        Ember.$("#host").focus();
+        $("#host").focus();
         return;
       }
 
       if (!this.get("directory")) {
         this.set("error", "Directory field cannot be empty");
-        Ember.$("#directory").focus();
+        $("#directory").focus();
         return;
       }
 
       if (this.get("auth.method") === "key" && (!this.get("auth.key"))) {
         this.set("error", "SSH key field cannot be empty");
-        Ember.$("#key").focus();
+        $("#key").focus();
         return;
       }
 
       if (this.get("auth.method") === "password" && (!this.get("auth.password"))) {
         this.set("error", "Password cannot be empty");
-        Ember.$("#password").focus();
+        $("#password").focus();
         return;
       }
 

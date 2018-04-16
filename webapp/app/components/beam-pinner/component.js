@@ -1,11 +1,13 @@
-import Ember from 'ember';
+import Component from '@ember/component';
+import $ from 'jquery';
+import { observer } from '@ember/object';
 import { task } from 'ember-concurrency';
 
-export default Ember.Component.extend({
+export default Component.extend({
   pinned: false,
 
   pin: task(function * (pinned) {
-    yield Ember.$.ajax({
+    yield $.ajax({
       type: "put",
       url: "/pin",
       contentType: 'application/json',
@@ -17,9 +19,13 @@ export default Ember.Component.extend({
     this.get("onChange")();
   }).restartable(),
 
-  monitorPins: function() {
+  didInsertElement() {
     this.get("updatePinned").perform();
-  }.observes("beam.pins", "session.data.authenticated.id").on("init"),
+  },
+
+  monitorPins: observer("beam.pins", "session.data.authenticated.id", function() {
+    this.get("updatePinned").perform();
+  }),
 
   updatePinned: task(function * () {
     const store = this.get("store");

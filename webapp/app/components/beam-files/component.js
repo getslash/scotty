@@ -1,21 +1,23 @@
-import Ember from 'ember';
+import Component from '@ember/component';
+import { inject } from '@ember/service';
+import { computed, observer } from '@ember/object';
 import { task } from 'ember-concurrency';
 
 const FILES_PER_PAGE = 20;
 
-export default Ember.Component.extend({
-  store: Ember.inject.service(),
+export default Component.extend({
+  store: inject.service(),
   pages: 1,
   total: 0,
 
-  pagesList: function () {
+  pagesList: computed("pages", function () {
     const pages = this.get("pages");
     let arr = new Array(pages);
     for (let i=1; i <= pages; ++i) {
       arr[i - 1] = i;
     }
     return arr;
-  }.property("pages"),
+  }),
 
   getFiles: task(function * () {
     const query = {
@@ -45,13 +47,17 @@ export default Ember.Component.extend({
     this.get("getFiles").perform();
   },
 
-  watchFileProperties: function() {
+  watchFileProperties: observer("fileFilter", "page", "model.beam.files", function() {
     this.get("getFiles").perform();
-  }.observes("fileFilter", "page", "model.beam.files"),
+  }),
 
-  updateSearchbox: function() {
+  didInsertElement() {
     this.set("filterValue", this.get("fileFilter"));
-  }.on("init").observes("fileFilter"),
+  },
+
+  updateSearchbox: observer("fileFilter", function() {
+    this.set("filterValue", this.get("fileFilter"));
+  }),
 
   actions: {
     filterChange: function(newFilter) {

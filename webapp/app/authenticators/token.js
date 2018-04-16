@@ -1,10 +1,11 @@
 import Base from 'ember-simple-auth/authenticators/base';
-import Ember from "ember";
+import { Promise } from 'rsvp';
+import $ from 'jquery';
 
 export default Base.extend({
   restore: function(credentials) {
-    return new Ember.RSVP.Promise(function(resolve, reject) {
-      Ember.$.ajax({
+    return new Promise(function(resolve, reject) {
+      $.ajax({
         type: "POST",
         url: "/restore",
         contentType: 'application/json',
@@ -20,14 +21,14 @@ export default Base.extend({
     });
   },
   invalidate: function() {
-    return Ember.$.ajax({
+    return $.ajax({
       type: "POST",
       url: "/logout",
     });
   },
   authenticate: function(authCode) {
-    return new Ember.RSVP.Promise(function(resolve, reject) {
-      Ember.$.ajax({
+    return new Promise(function(resolve, reject) {
+      $.ajax({
         type: "POST",
         url: "/login",
         contentType: 'application/json',

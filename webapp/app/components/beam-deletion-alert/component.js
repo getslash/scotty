@@ -1,7 +1,8 @@
-import Ember from 'ember';
+import Component from '@ember/component';
+import { computed } from '@ember/object';
 
-export default Ember.Component.extend({
-  purgeString: function() {
+export default Component.extend({
+  purgeString: computed.readOnly("purgeTime", function() {
     var purgeTime = this.get("purgeTime");
 
     if (purgeTime === 0) {
@@ -11,5 +12,5 @@ export default Ember.Component.extend({
     } else {
       return "in " + purgeTime + " days";
     }
-  }.property("purgeTime").readOnly()
+  })
 });

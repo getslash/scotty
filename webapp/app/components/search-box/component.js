@@ -1,9 +1,9 @@
-import Ember from 'ember';
+import Component from '@ember/component';
 import { task, timeout } from 'ember-concurrency';
 
 const DEBOUNCE_MS = 250;
 
-export default Ember.Component.extend({
+export default Component.extend({
   keyUp: task(function * () {
     yield timeout(DEBOUNCE_MS);
     this.get("onChange")(this.get("textbox"));

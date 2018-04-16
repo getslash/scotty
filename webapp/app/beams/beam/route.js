@@ -1,14 +1,14 @@
-import Ember from 'ember';
+import Route from '@ember/routing/route';
+import { hash } from 'rsvp';
 import { task, timeout } from 'ember-concurrency';
 
-export default Ember.Route.extend({
+export default Route.extend({
   model: function(data) {
-    return Ember.RSVP.hash({
+    return hash({
       beam: this.store.find('beam', data.id),
       trackers: this.store.findAll('tracker')
     });
   },
-
 
   afterModel: function(model, transision) {
     transision.send("beamSelected", model.beam.id);
