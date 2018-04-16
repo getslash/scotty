@@ -1,5 +1,4 @@
 import DS from 'ember-data';
-/* global moment */
 
 export default DS.Model.extend({
   start: DS.attr('date'),
@@ -29,9 +28,5 @@ export default DS.Model.extend({
     async: true
   }),
   pinners: "",
-  tick: 1,
 
-  relativeTime: function() {
-    return moment(this.get("start")).fromNow();
-  }.property("start", "tick")
 });

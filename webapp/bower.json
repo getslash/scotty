@@ -1,8 +1,0 @@
-{
-  "name": "webapp",
-  "dependencies": {
-    "bootstrap-sass": "~3.3.4",
-    "moment": "^2.9.0",
-    "numeral": "^1.5.3"
-  }
-}

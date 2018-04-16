@@ -1,17 +1,14 @@
 /* eslint-env node */
+'use strict';
 const EmberApp = require('ember-cli/lib/broccoli/ember-app');
+const mergeTrees = require('broccoli-merge-trees');
 
-module.exports = function() {
-  var app = new EmberApp({
-    'ember-cli-bootstrap-sassy': {
-      'quiet': true
-    },
-    babel: {
-      includePolyfill: true
-    },
-    vendorFiles: {
-      'handlebars.js': null
-    }});
+module.exports = function(defaults) {
+    let app = new EmberApp(defaults, {
+        'ember-font-awesome': {
+            removeUnusedIcons: false
+        }
+    });
 
   // Use `app.import` to add additional libraries to the generated
   // output files.
@@ -25,10 +22,6 @@ module.exports = function() {
   // modules that you would like to import into your application
   // please specify an object with the list of modules as keys
   // along with the exports of each module as its value.
-  app.import("bower_components/moment/moment.js");
-  app.import("bower_components/numeral/numeral.js");
 
-  require('broccoli-merge-trees');
-  require('broccoli-static-compiler');
-  return app.toTree();
+  return mergeTrees([app.toTree()]);
 };

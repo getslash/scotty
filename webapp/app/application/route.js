@@ -1,6 +1,5 @@
 import Ember from 'ember';
 import ApplicationRouteMixin from 'ember-simple-auth/mixins/application-route-mixin';
-import { task, timeout } from 'ember-concurrency';
 
 export default Ember.Route.extend(ApplicationRouteMixin, {
   routeAfterAuthentication: null,
@@ -20,18 +19,6 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
 
     return this.store.find("info", "1");
   },
-
-  updateRelativeTime: task(function * () {
-    for (;;) {
-      let beams = this.store.peekAll("beam").content;
-      for (var i = 0; i < beams.length; i++) {
-        let beam = beams[i].getRecord();
-        beam.set("tick", beam.get("tick") + 1);
-      }
-
-      yield timeout(60000);
-    }
-  }).on("init"),
 
   actions: {
     login: function() {

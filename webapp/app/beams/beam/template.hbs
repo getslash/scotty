@@ -23,7 +23,7 @@
         {{/if}}
       </div>
       <div class="col-md-8">
-        {{#beam-detail icon="fa-clock-o"}}{{model.beam.relativeTime}}{{/beam-detail}}
+        {{#beam-detail icon="fa-clock-o"}}{{moment-from-now model.beam.start interval=60000}}{{/beam-detail}}
         {{#beam-detail icon="fa-database"}}{{capacity-display model.beam.size}}{{/beam-detail}}
         {{#unless model.beam.deleted}}
           {{beam-pinner beam=(mut model.beam) store=store session=session onChange=(action "refresh")}}

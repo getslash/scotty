@@ -10,7 +10,7 @@
           {{/if}}
         </div>
         <div class="col-md-5">
-          {{#beam-detail icon="fa-clock-o"}}{{beam.relativeTime}}{{/beam-detail}}
+          {{#beam-detail icon="fa-clock-o"}}{{moment-from-now beam.start interval=60000}}{{/beam-detail}}
           {{#beam-detail icon="fa-database"}}{{capacity-display beam.size}}{{/beam-detail}}
         </div>
       </div>

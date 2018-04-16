@@ -28,7 +28,7 @@
               {{#if model.beam.deleted}}{{file.fileName}}{{else}}<a class="collection-item file-link" target="_blank" href={{file.url}}>{{file-name file.fileName}}</a>{{/if}}
             </td>
             <td>{{capacity-display file.size}}</td>
-            <td>{{format-date file.mtime}}</td>
+            <td>{{moment-format file.mtime "DD/MM/YY HH:mm:ss"}}</td>
           </tr>
         {{/if}}
       {{/each}}
