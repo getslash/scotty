@@ -36,11 +36,6 @@ def create_app(config=None):
         app.config['SQLALCHEMY_DATABASE_URI'] = os.path.expandvars(
             os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://localhost/{0}'.format(app.config['app_name'])))
 
-
-    if os.path.exists("/dev/log"):
-        syslog_handler = logbook.SyslogHandler(app.config['app_name'], "/dev/log")
-        syslog_handler.push_application()
-
     del app.logger.handlers[:]
     redirect_logging()
 
