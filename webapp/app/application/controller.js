@@ -6,7 +6,7 @@ import $ from 'jquery';
 
 export default Controller.extend({
   modalContent: "",
-  session: inject.service('session'),
+  session: inject('session'),
 
   iframe: computed("view", function() {
     return this.get("view") === "iframe";

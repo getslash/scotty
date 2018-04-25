@@ -2,7 +2,7 @@ import Component from '@ember/component';
 import { computed } from '@ember/object';
 
 export default Component.extend({
-  purgeString: computed.readOnly("purgeTime", function() {
+  purgeString: computed("purgeTime", function() {
     var purgeTime = this.get("purgeTime");
 
     if (purgeTime === 0) {

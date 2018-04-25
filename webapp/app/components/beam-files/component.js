@@ -6,7 +6,7 @@ import { task } from 'ember-concurrency';
 const FILES_PER_PAGE = 20;
 
 export default Component.extend({
-  store: inject.service(),
+  store: inject(),
   pages: 1,
   total: 0,
 

@@ -4,7 +4,7 @@ import $ from 'jquery';
 import { task } from 'ember-concurrency';
 
 export default Controller.extend({
-  session: inject.service('session'),
+  session: inject('session'),
   queryParams: ['filePage', 'fileFilter'],
   filePage: 1,
   fileFilter: null,
