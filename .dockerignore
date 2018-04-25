@@ -1,0 +1,7 @@
+.env/
+*.pyc
+*/__pycache__
+*/node_modules/*
+*/bower_components/*
+webapp/tmp/*
+transporter/target

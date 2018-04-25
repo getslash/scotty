@@ -1,0 +1,129 @@
+version: '3'
+services:
+
+  webapp:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+    image: getslash/scotty
+    command: [
+        "dockerize",
+        "-timeout", "60s",
+        "-wait", "tcp://db:5432",
+        "-wait", "tcp://redis:6379",
+        ".env/bin/python", "manage.py", "docker-start"
+        ]
+    volumes:
+      - "conf:/conf"
+      - "/var/scotty:/var/scotty"
+    environment:
+      - SCOTTY_REDIS_SERVER=redis
+      - SQLALCHEMY_DATABASE_URI=postgresql://scotty@db/scotty
+      - CONFIG_DIRECTORY=/conf
+      - SCOTTY_CELERY_BROKER_URL=amqp://guest:guest@rabbitmq
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    logging:
+      driver: journald
+
+  db:
+    image: "postgres:9.6"
+    environment:
+      - POSTGRES_USER=scotty
+      - POSTGRES_DB=scotty
+    volumes:
+      - "db:/var/lib/postgresql/data"
+  redis:
+    image: "redis"
+
+  nginx:
+    image: getslash/scotty
+    volumes:
+      - "/var/log/nginx:/var/log/nginx"
+    environment:
+      - SCOTTY_HOSTNAME=
+    command: ["dockerize",
+              "-timeout", "300s",
+              "-wait", "http://webapp:8000/beams",
+              "-stdout", "/var/log/nginx/access.log", "-stderr", "/var/log/nginx/error.log",
+              ".env/bin/python3.4", "manage.py", "docker-nginx-start"]
+    ports:
+      - "80:80"
+
+  celery:
+      image: getslash/scotty
+      command: ["dockerize",
+                "-timeout", "300s",
+                "-wait", "tcp://redis:6379",
+                "-wait", "tcp://db:5432",
+                ".env/bin/celery", "-A" ,"flask_app.tasks", "worker", "--loglevel=info", "-B",
+                "-Q", "celery", "--concurrency", "20", "-Ofair"]
+      volumes:
+        - "conf:/conf"
+        - "/var/scotty:/var/scotty"
+      environment:
+        - SCOTTY_REDIS_SERVER=redis
+        - SQLALCHEMY_DATABASE_URI=postgresql://scotty@db/scotty
+        - CONFIG_DIRECTORY=/conf
+        - SCOTTY_CELERY_BROKER_URL=amqp://guest:guest@rabbitmq
+      depends_on:
+        - db
+        - redis
+        - rabbitmq
+      logging:
+        driver: journald
+
+  transporter:
+    image: getslash/scotty
+    command: ["dockerize",
+              "-timeout", "300s",
+              "-wait", "tcp://webapp:8000",
+              "transporter", "--scotty-url", "http://webapp:8000",
+              "--storage", "/var/scotty"]
+    volumes:
+      - "/var/scotty:/var/scotty"
+      - "./transporter.conf:/etc/transporter.conf:ro"
+    ports:
+      - "9000:9000"
+    depends_on:
+      - webapp
+    logging:
+      driver: journald
+
+  celery_beat:
+    image: getslash/scotty
+    command: ["dockerize",
+              "-timeout", "300s",
+              "-wait", "tcp://redis:6379",
+              "-wait", "tcp://db:5432",
+              ".env/bin/celery", "-A" ,"flask_app.tasks", "beat", "--loglevel=info"]
+    environment:
+      - SCOTTY_REDIS_SERVER=redis
+      - SQLALCHEMY_DATABASE_URI=postgresql://scotty@db/scotty
+      - CONFIG_DIRECTORY=/conf
+      - SCOTTY_CELERY_BROKER_URL=amqp://guest:guest@rabbitmq
+    volumes:
+      - "conf:/conf"
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    logging:
+      driver: journald
+
+
+  rabbitmq:
+    image: rabbitmq:management
+
+volumes:
+  conf:
+  db:
+
+networks:
+  default:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16

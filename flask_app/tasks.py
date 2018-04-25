@@ -41,7 +41,7 @@ from .models import Beam, db, Pin, File, Tracker, Issue
 logger = logbook.Logger(__name__)
 
 
-queue = Celery('tasks', backend='redis://localhost', broker='redis://localhost')
+queue = Celery('tasks', broker=os.environ.get('SCOTTY_CELERY_BROKER_URL', 'amqp://guest:guest@localhost'))
 queue.conf.update(
     CELERY_TASK_SERIALIZER='json',
     CELERY_ACCEPT_CONTENT=['json'],  # Ignore other content
@@ -68,6 +68,15 @@ queue.conf.update(
     CELERY_TIMEZONE='UTC'
 )
 def setup_log(**args):
+    address = '/dev/log' if os.path.exists("/dev/log") else None
+    handler = logbook.SyslogHandler(address=address)
+    handler.setLevel(args['loglevel'])
+    handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+    args['logger'].addHandler(handler)
+    logbook.StreamHandler(sys.stderr, bubble=True).push_application()
+    redirect_stdouts_to_logger(args['logger']) # logs to local syslog
+
+
     logbook.SyslogHandler().push_application()
     logbook.StreamHandler(sys.stderr, bubble=True).push_application()
     redirect_stdouts_to_logger(args['logger']) # logs to local syslog
@@ -113,7 +122,7 @@ def create_key(s):
     return RSAKey.from_private_key(file_obj=f, password=None)
 
 
-with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "public", "assets", "combadge.py"), "r") as combadge:
+with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge.py"), "r") as combadge:
     _COMBADGE = combadge.read()
 
 

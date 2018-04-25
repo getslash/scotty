@@ -18,13 +18,12 @@ def create_app(config=None):
 
     app.config['COMBADGE_CONTACT_TIMEOUT'] = 60 * 60
     app.config['SHA512SUM'] = '/usr/bin/sha512sum'
-    _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "..", "conf.d"))
+    _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "conf.d"))
 
     configs = [os.path.join(ROOT_DIR, "app.yml")]
 
     if os.path.isdir(_CONF_D_PATH):
         configs.extend(sorted(os.path.join(_CONF_D_PATH, x) for x in os.listdir(_CONF_D_PATH) if x.endswith(".yml")))
-
     for yaml_path in configs:
         if os.path.isfile(yaml_path):
             with open(yaml_path) as yaml_file:
@@ -35,11 +34,6 @@ def create_app(config=None):
     if 'SQLALCHEMY_DATABASE_URI' not in app.config:
         app.config['SQLALCHEMY_DATABASE_URI'] = os.path.expandvars(
             os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://localhost/{0}'.format(app.config['app_name'])))
-
-
-    if os.path.exists("/dev/log"):
-        syslog_handler = logbook.SyslogHandler(app.config['app_name'], "/dev/log")
-        syslog_handler.push_application()
 
     del app.logger.handlers[:]
     redirect_logging()

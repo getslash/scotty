@@ -27,3 +27,8 @@ matrix:
         - yarn install
         - yarn lint:js
         - ./node_modules/ember-cli/bin/ember build
+
+    - language: rust
+      script:
+        - cd transporter
+        - cargo build
