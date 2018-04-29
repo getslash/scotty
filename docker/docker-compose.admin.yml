@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  pgcli:
+    image: mribeiro/pgcli
+    command: postgresql://scotty@db/scotty
+    links:
+      - db
+
+  flower:
+    image: iserko/docker-celery-flower
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq
+    depends_on:
+      - rabbitmq
+    command: flower --broker_api=http://guest:guest@rabbitmq:15672/api/
