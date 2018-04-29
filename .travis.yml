@@ -1,7 +1,7 @@
 matrix:
   include:
     - language: python
-      python: 3.4
+      python: 3.6
       cache:
         - pip
       install:
@@ -27,3 +27,8 @@ matrix:
         - yarn install
         - yarn lint:js
         - ./node_modules/ember-cli/bin/ember build
+
+    - language: rust
+      script:
+        - cd transporter
+        - cargo build
