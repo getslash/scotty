@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 
-PYTHON_INTERPRETER = "python3"
+PYTHON_INTERPRETER = "python3.4"
 _PREVENT_FORK_MARKER = 'WEBER_PREVENT_FORK'
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -34,19 +34,12 @@ def which(bin):
 
 
 def bootstrap_env(deps=("base",)):
-    out_of_date = [dep for dep in deps if _is_dep_out_of_date(dep)]
-
     interpreter = which(PYTHON_INTERPRETER)
-
-    if out_of_date:
-        if not os.path.exists(from_env_bin("python")):
-            subprocess.check_call("{} -m virtualenv {}".format(interpreter, _ENV_DIR), shell=True)
-        cmd = "{}/bin/pip install".format(_ENV_DIR)
-        for dep in out_of_date:
-            cmd += " -r {}".format(_get_depfile_path(dep))
-        subprocess.check_call(cmd, shell=True)
-        for dep in deps:
-            _mark_up_to_date(dep)
+    if not os.path.exists(from_env_bin("python")):
+        subprocess.check_call("{} -m virtualenv {}".format(interpreter, _ENV_DIR), shell=True)
+    cmd = "{env}/bin/pip install -r {requirements_path}".format(env=_ENV_DIR,
+                                                                requirements_path=os.path.join(_PROJECT_ROOT, 'deps', 'requirements.txt'))
+    subprocess.check_call(cmd, shell=True)
 
     python = os.path.abspath(os.path.join(_ENV_DIR, "bin", "python"))
     if os.path.abspath(sys.executable) != python and _PREVENT_FORK_MARKER not in os.environ:
