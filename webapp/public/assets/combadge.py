@@ -59,7 +59,7 @@ def _beam_file(transporter, base_path, path):
 
     should_compress = os.path.splitext(path)[1] not in ['.gz', '.bz2', '.xz', '.zst', '.tgz', '.tbz2', '.txz',
                                                         '.ioym', '.br', '.png', '.jpg', '.mp3', '.mkv', '.mp4',
-                                                        '.jpeg']
+                                                        '.jpeg', '.zip', '.pcap']
 
     store_path = path.replace(base_path, ".", 1) if base_path else path
     if should_compress:
