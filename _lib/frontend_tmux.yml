@@ -6,7 +6,7 @@ windows:
   - window_name: frontend compilation
     layout: even-horizontal
     panes:
-      - cd webapp && ember serve --port 8000 --proxy http://127.0.0.1:8800
+      - cd webapp; and yarn; and ./node_modules/.bin/ember serve --port 8000 --proxy http://127.0.0.1:8800
       - python manage.py testserver --no-tmux --port 8800
   - window_name: celery worker
     panes:
@@ -17,7 +17,7 @@ windows:
       - pgcli scotty
   - window_name: transporter
     panes:
-      - z transporter && RUST_LOG=transporter=debug cargo run example/transporter.conf
+      - z transporter; and RUST_LOG=transporter=debug cargo run example/transporter.conf
   - window_name: redis
     panes:
       - bash -c "cd /tmp/ && rm -rf dump.rdb && exec redis-server"
