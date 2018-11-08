@@ -69,15 +69,15 @@ queue.conf.update(
 )
 def setup_log(**args):
     address = '/dev/log' if os.path.exists("/dev/log") else None
-    handler = logbook.SyslogHandler(address=address)
-    handler.setLevel(args['loglevel'])
-    handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-    args['logger'].addHandler(handler)
+    # handler = logbook.SyslogHandler(address=address)
+    # handler.setLevel(args['loglevel'])
+    # handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+    # args['logger'].addHandler(handler)
     logbook.StreamHandler(sys.stderr, bubble=True).push_application()
     redirect_stdouts_to_logger(args['logger']) # logs to local syslog
 
 
-    logbook.SyslogHandler().push_application()
+    # logbook.SyslogHandler().push_application()
     logbook.StreamHandler(sys.stderr, bubble=True).push_application()
     redirect_stdouts_to_logger(args['logger']) # logs to local syslog
     if os.path.exists('/dev/log'):
