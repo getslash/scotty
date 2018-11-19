@@ -24,10 +24,7 @@ def _strip_gz(storage_name):
     if storage_name is None:
         return None
 
-    if storage_name[-6:] == "log.gz":
-        return storage_name[:-3]
-    else:
-        return storage_name
+    return storage_name[:-3] if storage_name[-3:] == ".gz" else storage_name
 
 
 def _dictify_file(f):
