@@ -8,10 +8,12 @@ import sys
 import socket
 import struct
 import traceback
+import shutil
 from time import sleep
 
+# pylint: disable=logging-format-interpolation
+
 logger = logging.getLogger("combadge")
-_CHUNK_SIZE = 10 * 1024 * 1024
 _SLEEP_TIME = 10
 _NUM_OF_RETRIES = (60 // _SLEEP_TIME) * 15
 
@@ -28,15 +30,6 @@ class ServerMessages:
     SkipFile = 0
     BeamFile = 1
     FileBeamed = 2
-
-
-def chunk_iterator(f, chunk_size):
-    while True:
-        data = f.read(chunk_size)
-        if not data:
-            return
-
-        yield data
 
 
 class FileWriter(object):
@@ -83,8 +76,7 @@ def _beam_file(transporter, base_path, path):
         if should_compress:
             file_writer = gzip.GzipFile(mode="wb", fileobj=file_writer)
         with closing(file_writer):
-            for chunk in chunk_iterator(f, _CHUNK_SIZE):
-                file_writer.write(chunk)
+            shutil.copyfileobj(f, file_writer)
 
     transporter.sendall(struct.pack('!B', ClientMessages.FileDone))
     answer = struct.unpack('!B', transporter.recv(1))[0]
@@ -144,7 +136,7 @@ def beam_up(beam_id, path, transporter_addr):
 
 def main():
     try:
-        _, beam_id, path, transporter_addr = sys.argv
+        _, beam_id, path, transporter_addr = sys.argv # pylint: disable=unbalanced-tuple-unpacking
     except ValueError:
         print("Usage: combadge [beam id] [path] [transporter hostname]")
         return 1
