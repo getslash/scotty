@@ -68,26 +68,7 @@ queue.conf.update(
     CELERY_TIMEZONE='UTC'
 )
 def setup_log(**args):
-    address = '/dev/log' if os.path.exists("/dev/log") else None
-    # handler = logbook.SyslogHandler(address=address)
-    # handler.setLevel(args['loglevel'])
-    # handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-    # args['logger'].addHandler(handler)
-    logbook.StreamHandler(sys.stderr, bubble=True).push_application()
-    redirect_stdouts_to_logger(args['logger']) # logs to local syslog
-
-
-    # logbook.SyslogHandler().push_application()
-    logbook.StreamHandler(sys.stderr, bubble=True).push_application()
-    redirect_stdouts_to_logger(args['logger']) # logs to local syslog
-    if os.path.exists('/dev/log'):
-        h = logging.handlers.SysLogHandler('/dev/log')
-    else:
-        h = logging.handlers.SysLogHandler()
-    h.setLevel(args['loglevel'])
-    formatter = logging.Formatter(logging.BASIC_FORMAT)
-    h.setFormatter(formatter)
-    args['logger'].addHandler(h)
+    logbook.StreamHandler(sys.stdout, bubble=True).push_application()
 
 APP = None
 
