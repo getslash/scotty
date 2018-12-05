@@ -48,7 +48,7 @@ services:
               "-timeout", "300s",
               "-wait", "http://webapp:8000/beams",
               "-stdout", "/var/log/nginx/access.log", "-stderr", "/var/log/nginx/error.log",
-              ".env/bin/python3.4", "manage.py", "docker-nginx-start"]
+              ".env/bin/python", "manage.py", "docker-nginx-start"]
     ports:
       - "80:80"
 

@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 
-PYTHON_INTERPRETER = "python3.4"
+PYTHON_INTERPRETER = "python3.6"
 _PREVENT_FORK_MARKER = 'WEBER_PREVENT_FORK'
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

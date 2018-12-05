@@ -16,7 +16,7 @@ RUN cd ./frontend/ && node_modules/.bin/ember build --environment production
 
 FROM ubuntu:16.04
 
-ENV PYTHON_VERSION 3.4
+ENV PYTHON_VERSION 3.6
 ENV PYTHON_EXECUTABLE python$PYTHON_VERSION
 
 ENV LC_ALL C.UTF-8
