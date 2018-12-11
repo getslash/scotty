@@ -57,15 +57,11 @@ def info():
 
 @views.route("/summary")
 def summary():
-    beams = db.session.query(Beam).filter_by(pending_deletion=False, deleted=False)
     disk_usage = psutil.disk_usage(current_app.config['STORAGE_PATH'])
-    oldest = beams.order_by(Beam.start).first()
     return jsonify({
         "total_space": disk_usage.total,
         "used_space": disk_usage.used,
         "free_space": disk_usage.free,
-        "oldest_beam": oldest.id if oldest else None,
-        "number_of_beams": beams.count()
     })
 
 
