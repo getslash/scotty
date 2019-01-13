@@ -1,0 +1,22 @@
+[package]
+
+name = "transporter"
+version = "0.8.0"
+authors = ["Roey Darwish Dror <roey.ghost@gmail.com>"]
+
+[dependencies]
+byteorder = "*"
+clap = "*"
+fern = "*"
+log = "*"
+serde = "*"
+serde_json ="*"
+serde_derive = "*"
+url = "*"
+reqwest = "*"
+time = "*"
+rust-crypto = "*"
+quick-error = "*"
+regex = "*"
+sentry = "*"
+openssl-probe = "*"

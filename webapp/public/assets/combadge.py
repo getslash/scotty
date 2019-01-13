@@ -180,11 +180,13 @@ def main():
         os.dup2(f.fileno(), sys.stderr.fileno())
 
     from logging.handlers import SysLogHandler
-    handler = SysLogHandler('/dev/log')
-    logger.setLevel("DEBUG")
+    address = '/dev/log' if os.path.exists("/dev/log") else None
+    handler = SysLogHandler(address=address)
     handler.setLevel("DEBUG")
     handler.setFormatter(logging.Formatter('combadge [beam {0}]: %(message)s'.format(beam_id)))
     logger.addHandler(handler)
+
+    logger.setLevel("DEBUG")
     logger.info("Combadge forked")
 
     beam_up(beam_id, path, transporter_addr)

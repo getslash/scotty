@@ -18,13 +18,13 @@ def create_app(config=None):
 
     app.config['COMBADGE_CONTACT_TIMEOUT'] = 60 * 60
     app.config['SHA512SUM'] = '/usr/bin/sha512sum'
-    _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "..", "conf.d"))
+    app.config['STORAGE_PATH'] = os.environ.get('STORAGE_PATH')
+    _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "conf.d"))
 
     configs = [os.path.join(ROOT_DIR, "app.yml")]
 
     if os.path.isdir(_CONF_D_PATH):
         configs.extend(sorted(os.path.join(_CONF_D_PATH, x) for x in os.listdir(_CONF_D_PATH) if x.endswith(".yml")))
-
     for yaml_path in configs:
         if os.path.isfile(yaml_path):
             with open(yaml_path) as yaml_file:
