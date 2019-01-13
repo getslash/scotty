@@ -11,6 +11,9 @@ from ..models import db, File, Beam
 files = Blueprint("files", __name__, template_folder="templates")
 
 
+_STRIPPED_EXTENSIONS = ["log", "json", "html", "xml", "sh", "txt", "ini", "conf",
+                        "xslt", "mhtml", "pcap", "alerts_summary"]
+
 def _assure_beam_dir(beam_id):
     dir_name = str(beam_id % 1000)
     full_path = os.path.join(current_app.config['STORAGE_PATH'], dir_name)
@@ -24,7 +27,11 @@ def _strip_gz(storage_name):
     if storage_name is None:
         return None
 
-    return storage_name[:-3] if storage_name[-3:] == ".gz" else storage_name
+    for ext in _STRIPPED_EXTENSIONS:
+        if storage_name.endswith(ext + ".gz"):
+            return storage_name[:-3]
+
+    return storage_name
 
 
 def _dictify_file(f):

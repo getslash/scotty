@@ -34,7 +34,9 @@ server {
     location /file_contents {
         alias /var/scotty;
         types {
-          text/plain    log txt;
+          text/plain    log txt html xml sh txt ini conf json alerts_summary;
+          image/jpeg    jpg jpeg;
+          image/png     png;
         }
     }
 

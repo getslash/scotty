@@ -1,5 +1,5 @@
 - name: set up apt packages
-  action: apt pkg={{item}} state=latest update_cache=yes
+  action: apt pkg={{item}} state=present update_cache=yes
   with_items:
     - sudo
     - postgresql-client-9.4
