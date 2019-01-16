@@ -41,6 +41,7 @@ services:
   nginx:
     image: getslash/scotty
     volumes:
+      - "/var/scotty:/var/scotty"
       - "/var/log/nginx:/var/log/nginx"
     environment:
       - SCOTTY_HOSTNAME=
