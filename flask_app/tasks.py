@@ -143,8 +143,8 @@ def _upload_combadge(ssh_client):
 @queue.task
 @needs_app_context
 def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
+    beam = db.session.query(Beam).filter_by(id=beam_id).one()
     try:
-        beam = db.session.query(Beam).filter_by(id=beam_id).one()
         delay = flux.current_timeline.datetime.utcnow() - beam.start
         if delay.total_seconds() > 10:
             APP.raven.captureMessage(
