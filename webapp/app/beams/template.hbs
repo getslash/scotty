@@ -1,7 +1,4 @@
 <div class="container-fluid">
-  <div class="form-inline form-group">
-    {{input value=name id='beam-filter' class="form-control" placeholder="Filter"}}
-  </div>
   <div class="beam-list">
     {{#if this.sortedModel}}
       {{beam-list beams=this.sortedModel selectedId=selectedId onSelection=(action "beamSelection")}}
