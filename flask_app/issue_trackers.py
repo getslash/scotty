@@ -7,6 +7,7 @@ import logbook
 from jira import JIRA as JIRAAPI
 from jira.exceptions import JIRAError
 
+from .app import APP, needs_app_context
 from .models import Tracker as TrackerModel, db
 
 logger = logbook.Logger(__name__)
@@ -38,17 +39,25 @@ class JIRA(Tracker):
         self._jira = JIRAAPI(url, basic_auth=(config['username'], config['password']))
         self._resolution_grace = timedelta(days=config.get('resolution_grace', 0))
 
+    def _refresh_issue(self, issue_obj):
+        issue = self._jira.issue(issue_obj.id_in_tracker)
+        if issue.fields.resolutiondate is None:
+            issue_obj.open = True
+        else:
+            resolution_date = flux.current_timeline.datetime.strptime(
+                issue.fields.resolutiondate, '%Y-%m-%dT%H:%M:%S.%f%z')
+            now = flux.current_timeline.datetime.now().replace(tzinfo=timezone.utc)
+            issue_obj.open = (now - resolution_date) < self._resolution_grace
+
+    @needs_app_context
     def refresh(self, issues):
         for issue_obj in issues:
-            issue = self._jira.issue(issue_obj.id_in_tracker)
-
-            if issue.fields.resolutiondate is None:
-                issue_obj.open = True
-            else:
-                resolution_date = flux.current_timeline.datetime.strptime(
-                    issue.fields.resolutiondate, '%Y-%m-%dT%H:%M:%S.%f%z')
-                now = flux.current_timeline.datetime.now().replace(tzinfo=timezone.utc)
-                issue_obj.open = (now - resolution_date) < self._resolution_grace
+            try:
+                self._refresh_issue(issue_obj)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                APP.raven.captureException()
 
         db.session.commit()
 
@@ -61,7 +70,7 @@ class JIRA(Tracker):
             return True
 
 
-  # pylint: disable=abstract-method
+# pylint: disable=abstract-method
 class File(Tracker):
     def __init__(self, name):
         self._name = name

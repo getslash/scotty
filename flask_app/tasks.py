@@ -32,7 +32,7 @@ from sqlalchemy.orm import joinedload
 
 import flux
 
-from .app import create_app
+from .app import create_app, APP, needs_app_context
 from . import issue_trackers
 from .models import Beam, db, Pin, File, Tracker, Issue
 
@@ -69,21 +69,6 @@ queue.conf.update(
 )
 def setup_log(**args):
     logbook.StreamHandler(sys.stdout, bubble=True).push_application()
-
-APP = None
-
-def needs_app_context(f):
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        global APP
-
-        if APP is None:
-            APP = create_app()
-
-        with APP.app_context():
-            return f(*args, **kwargs)
-
-    return wrapper
 
 
 def testing_method(f):
