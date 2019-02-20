@@ -64,7 +64,7 @@ def create_app(config=None):
     app.logger.info("Started")
 
     Mail(app)
-    
+
     if os.environ.get("SQLALCHEMY_LOG_QUERIES"):
         logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
