@@ -15,6 +15,7 @@ windows:
   - window_name: database
     panes:
       - pgcli scotty
+      - ./manage.py shell
   - window_name: transporter
     panes:
       - z transporter && RUST_LOG=transporter=debug cargo run example/transporter.conf
