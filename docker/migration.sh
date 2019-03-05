@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-TARGET=scottystaging.lab.il.infinidat.com
+TARGET=scotty-staging.lab.il.infinidat.com
 
 as_root() {
     ssh $TARGET -l root $*;
