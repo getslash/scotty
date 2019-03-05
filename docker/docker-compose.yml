@@ -14,7 +14,7 @@ services:
         ".env/bin/python", "manage.py", "docker-start"
         ]
     volumes:
-      - "conf:/conf"
+      - "/opt/scotty/conf.d:/conf"
       - "/var/scotty:/var/scotty"
     environment:
       - SCOTTY_REDIS_SERVER=redis
@@ -62,7 +62,7 @@ services:
                 ".env/bin/celery", "-A" ,"flask_app.tasks", "worker", "--loglevel=info", "-B",
                 "-Q", "celery", "--concurrency", "20", "-Ofair"]
       volumes:
-        - "conf:/conf"
+        - "/opt/scotty/conf.d:/conf"
         - "/var/scotty:/var/scotty"
       environment:
         - SCOTTY_REDIS_SERVER=redis
@@ -106,7 +106,7 @@ services:
       - CONFIG_DIRECTORY=/conf
       - SCOTTY_CELERY_BROKER_URL=amqp://guest:guest@rabbitmq
     volumes:
-      - "conf:/conf"
+      - "/opt/scotty/conf.d:/conf"
     depends_on:
       - db
       - redis
