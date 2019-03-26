@@ -32,8 +32,9 @@ def get_all():
 
     param = query_params[0] if query_params else None
     if param == "tag":
-        tag = request.values['tag']
-        query = query.filter(Beam.tags.any(Tag.tag == tag))
+        tags = request.values['tag']
+        for tag in tags.split(';'):
+            query = query.filter(Beam.tags.any(Tag.tag == tag))
     elif param == "pinned":
         pinned = db.session.query(distinct(Pin.beam_id))
         query = query.filter(Beam.id.in_(pinned))
