@@ -6,10 +6,6 @@ from logbook.compat import redirect_logging
 import flask
 from flask.ext.security import Security  # pylint: disable=import-error
 from flask.ext.mail import Mail  # pylint: disable=import-error
-from paramiko.packet import ConnectionResetError
-from paramiko.ssh_exception import SSHException
-from sqlalchemy.engine.default import OperationalError, UnicodeEncodeError, IntegrityError
-from sqlalchemy.engine.base import StatementError
 import raven
 
 
@@ -53,12 +49,6 @@ def create_app(config=None):
         client=raven.Client(
             dsn=app.config.get("SENTRY_DSN"),
             ignore_exceptions=[
-                ConnectionResetError,
-                OperationalError,
-                UnicodeEncodeError,
-                IntegrityError,
-                StatementError,
-                SSHException
             ],
         ),
     )
