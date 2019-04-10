@@ -1,3 +1,5 @@
+
+{{page-numbers content=beams}}
 {{#each beams as |beam|}}
   <div class="{{if (not-eq beam beams.lastObject) "spaced-item"}} item beam {{if (eq selectedId beam.id) "selected-beam" "unselected-beam"}}" onclick="" {{action "beamClick" beam.id}}>
     <div class="container">

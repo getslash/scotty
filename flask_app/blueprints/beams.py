@@ -16,7 +16,8 @@ from ..tasks import create_key, beam_up
 beams = Blueprint("beams", __name__, template_folder="templates")
 
 
-_ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email']
+_BEAMS_PER_PAGE = 50
+_ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email', 'page']
 @beams.route('', methods=['GET'], strict_slashes=False)
 def get_all():
     query = (
@@ -27,9 +28,7 @@ def get_all():
     for param in request.values:
         if query_params or param not in _ALLOWED_PARAMS:
             abort(http.client.BAD_REQUEST)
-
         query_params.append(param)
-
     param = query_params[0] if query_params else None
     if param == "tag":
         tags = request.values['tag']
@@ -51,8 +50,12 @@ def get_all():
             query = query.filter(false())
         else:
             query = query.filter_by(initiator=user.id)
+    
+    page = request.args.get('page', 1, type=int)
+    
+    beams_obj = [b.to_dict(current_app.config['VACUUM_THRESHOLD']) for b in \
+        Beam.query.order_by(Beam.id).paginate(page=page, per_page=_BEAMS_PER_PAGE).items]
 
-    beams_obj = [b.to_dict(current_app.config['VACUUM_THRESHOLD']) for b in query.limit(50)]
     return jsonify({'beams': beams_obj})
 
 

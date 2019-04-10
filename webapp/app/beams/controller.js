@@ -1,12 +1,18 @@
 import Controller from '@ember/controller';
 import { observer, computed } from '@ember/object';
 import { BeamFilter } from '../utils/beam_filter';
+import pagedArray from 'ember-cli-pagination/computed/paged-array';
+import { alias } from '@ember/object/computed';
 
 export default Controller.extend({
-  tagList: BeamFilter.create(),
-  queryParams: ['tag'],
-
   tag: "",
+  email: null,
+  uid: null,
+  tagList: BeamFilter.create(),
+  queryParams: ['tag', 'email', 'uid', 'page'],
+  page: 1,
+  perPage: 50,
+
   sortKeys: ['start:desc'],
   sortedModel: computed.sort('model', 'sortKeys'),
   selectedId: null,
@@ -22,6 +28,13 @@ export default Controller.extend({
   tagsCount: computed('tagList.tags.length', function() {
     return this.get('tagList.tags.length');
   }),
+
+  pagedContent: pagedArray('sortedModel', {
+    page: alias("parent.page"),
+    perPage: alias("parent.perPage")
+  }),
+
+  totalPages: computed.oneWay("pagedContent.totalPages"),
 
   actions: {
     beamSelection: function(beamId) {
