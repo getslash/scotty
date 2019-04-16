@@ -11,17 +11,17 @@
     </div>
   </div>
 </div>
-{{#if files}}
+{{#if sortedModel}}
   <table class="table table-hover table-condensed">
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Size</th>
-        <th>Modification Time</th>
+        {{sortable-header title='Name' sortProperty='fileName' sortBy=(action 'sortBy')}}
+        {{sortable-header title='Size' sortProperty='size' sortBy=(action 'sortBy')}}
+        {{sortable-header title='Modification Time' sortProperty='mtime' sortBy=(action 'sortBy')}}
       </tr>
     </thead>
     <tbody>
-      {{#each files as |file|}}
+      {{#each sortedModel as |file|}}
         {{#if file.fileName}}
           <tr>
             <td>

@@ -66,6 +66,10 @@ $border-color: #eee;
   color: $gray-light;
 }
 
+i.fas {
+  font-family: fontawesome !important
+}
+
 @import 'fonts';
 
 @import 'ember-power-select/themes/bootstrap';
