@@ -29,6 +29,7 @@ from celery.log import redirect_stdouts_to_logger
 from raven.contrib.celery import register_signal
 
 from sqlalchemy.orm import joinedload
+from sqlalchemy.sql import exists
 
 import flux
 
@@ -307,11 +308,10 @@ def vacuum():
 @needs_app_context
 def refresh_issue_trackers():
     trackers = db.session.query(Tracker)
-    issues_of_active_beams = {beam.issue.id for beam in _get_active_beams()}
+    issues_of_active_beams = {issue.id for beam in _get_active_beams() for issue in beam.issues}
+    active_beams_issues_query = db.session.query(Issue).filter(Issue.id.in_(issues_of_active_beams))
     for tracker in trackers:
-        issues = db.session.query(Issue).\
-            filter(Issue.id.in_(issues_of_active_beams)).\
-            filter_by(tracker_id=tracker.id)
+        issues = db.session.query(Issue.id).filter(active_beams_issues_query.exists()).filter_by(tracker_id=tracker.id)
         logger.info("Refreshing tracker {} - {} of type {}", tracker.id, tracker.url, tracker.type)
         try:
             issue_trackers.refresh(tracker, issues)
