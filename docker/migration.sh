@@ -1,6 +1,8 @@
-#!/bin/bash -ex
+#!/bin/bash
 
-TARGET=scottystaging.lab.il.infinidat.com
+set -ex
+
+TARGET=scotty-telad-01.telad.il.infinidat.com
 
 as_root() {
     ssh $TARGET -l root $*;
@@ -10,35 +12,30 @@ as_scotty() {
     ssh $TARGET -l scotty $*;
 }
 
-echo Checking connectivity
+echo -------- Checking connectivity --------
 as_root uptime
+as_root 'mkdir ~scotty/.ssh && cp ~/.ssh/authorized_keys ~scotty/.ssh/authorized_keys && chown -R scotty: ~scotty/.ssh'
 as_scotty uptime
 
-echo Installing docker...
-as_root sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common python-pip
-as_root "curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -"
-as_root 'add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"'
+echo -------- Installing docker --------
 as_root 'apt-get update'
-as_root 'apt-get install -y docker-ce'
+as_root 'apt-get install -y apt-transport-https ca-certificates curl gnupg2 software-properties-common python-pip'
+as_root 'curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -'
+as_root 'add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"'
+as_root 'apt-get update'
+as_root 'apt-get install -y docker-ce docker-ce-cli containerd.io'
 
-echo Install docker-compose
+echo -------- Install docker-compose --------
 as_root 'which docker-compose || pip install -U docker-compose'
 
-echo Archiving old source...
+echo  -------- Archiving old source --------
 as_scotty "(test -d /opt/scotty/src && (mv /opt/scotty/src /opt/scotty/_old_src)) || true"
 
-echo Copying docker-compose file
+echo -------- Copying docker-compose file --------
 as_root "test -d /opt/scotty/docker || mkdir /opt/scotty/docker"
-scp * root@$TARGET:/opt/scotty/docker/
+scp docker/* root@$TARGET:/opt/scotty/docker/
 
-echo Migrating Infinilab Token and SSH keys
-as_root mkdir -p /root/.infinidat
-as_root cp /home/scotty/.infinidat/infinilab.tkn /root/.infinidat/infinilab.tkn
-as_root cp /home/scotty/.ssh/infradev-id_rsa /root/.ssh/infradev-id_rsa
-as_root chown -R root: /root/.infinidat /root/.ssh/infradev-id_rsa
-as_root chmod 400 /root/.ssh/infradev-id_rsa
-
-echo Creating systemd unit
+echo -------- Creating systemd unit --------
 as_root "cat > /lib/systemd/system/scotty-docker.service" << EOF
 [Unit]
 Description=Scotty
@@ -57,7 +54,7 @@ WantedBy=multi-user.target
 
 EOF
 
-echo Updating systemd
+echo -------- Updating systemd --------
 as_root systemctl daemon-reload
 
 echo Logging in to docker...
@@ -72,20 +69,20 @@ as_root "cat > ~/.docker/config.json" <<EOF
 }
 EOF
 
-echo Pulling images...
+echo -------- Pulling images --------
 as_root "cd /opt/scotty/docker && docker-compose -f docker-compose.yml pull"
 
-echo Shutting down nginx...
-as_root systemctl stop nginx scotty-celery-beat scotty-celery-worker scotty-wsgi
-as_root systemctl disable nginx scotty-celery-beat scotty-celery-worker scotty-wsgi
+echo -------- Shutting down nginx... --------
+as_root systemctl stop nginx scotty-celery-beat scotty-celery-worker scotty-wsgi transporter
+as_root systemctl disable nginx scotty-celery-beat scotty-celery-worker scotty-wsgi transporter
 
-echo Migrating DB
+echo -------- Migrating DB --------
+as_root "sed -i 's/SQLALCHEMY_DATABASE_URI/#SQLALCHEMY_DATABASE_URI/g' /opt/scotty/conf.d/001-deployment_conf.yml"
 as_root "cd /opt/scotty/docker && docker-compose -p scotty up -d db"
 sleep 10
-as_root docker exec -u postgres scotty_db_1 dropdb scotty
-as_root docker exec -u postgres scotty_db_1 createdb -E utf8 scotty
-as_root "time ((sudo -u postgres pg_dump -w -Fc scotty) | docker exec -u postgres -i scotty_db_1 pg_restore -Fc -d scotty -w -v)"
-
+as_root docker exec scotty_db_1 dropdb -U scotty scotty
+as_root docker exec scotty_db_1 createdb -E utf8 -U scotty scotty
+as_root "cd / && time ((sudo -u postgres pg_dump -w -Fc scotty) | docker exec -i scotty_db_1 pg_restore -Fc -U scotty -w -d scotty --no-acl --no-owner)"
 
 as_root "cd /opt/scotty/docker && docker-compose -p scotty down"
 as_root "systemctl start scotty-docker"
