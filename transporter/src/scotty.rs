@@ -1,12 +1,12 @@
-use reqwest::{Client, Method, Response, StatusCode};
-use reqwest::Error as HttpError;
-use std::error::Error;
-use std::thread::sleep;
-use std::time::Duration;
 use super::{BeamId, Mtime};
-use std::io::Error as IoError;
+use reqwest::Error as HttpError;
+use reqwest::{Client, Method, Response, StatusCode};
 use serde::ser::Serialize;
 use serde_json;
+use std::error::Error;
+use std::io::Error as IoError;
+use std::thread::sleep;
+use std::time::Duration;
 
 const TIME_TO_SLEEP: u64 = 5;
 const MAX_ATTEMPTS: u64 = 60000 / TIME_TO_SLEEP * 1;
@@ -99,17 +99,18 @@ impl Scotty {
         json: REQUEST,
     ) -> ScottyResult<Response> {
         for attempt in 0..MAX_ATTEMPTS {
-            let mut response = self.client
+            let mut response = self
+                .client
                 .request(method.clone(), &url)
                 .json(&json)
                 .send()?;
 
             let status_code = response.status();
             match status_code {
-                StatusCode::Ok => {
+                StatusCode::OK => {
                     return Ok(response);
                 }
-                StatusCode::BadGateway | StatusCode::GatewayTimeout => {
+                StatusCode::BAD_GATEWAY | StatusCode::GATEWAY_TIMEOUT => {
                     error!(
                         "Scotty returned {}. Attempt {} out of {}",
                         status_code,
@@ -132,7 +133,7 @@ impl Scotty {
         file_name: &str,
     ) -> ScottyResult<(String, String, bool)> {
         let mut response = self.send_request(
-            Method::Post,
+            Method::POST,
             format!("{}/files", self.url),
             FilePostRequest {
                 file_name: file_name.to_string(),
@@ -160,7 +161,7 @@ impl Scotty {
             _ => "",
         };
         self.send_request(
-            Method::Put,
+            Method::PUT,
             format!("{}/files/{}", self.url, file_id),
             FileUpdateRequest {
                 success: err.is_none(),
@@ -175,7 +176,7 @@ impl Scotty {
 
     pub fn complete_beam(&mut self, beam_id: BeamId, error: Option<&str>) -> ScottyResult<()> {
         self.send_request(
-            Method::Put,
+            Method::PUT,
             format!("{}/beams/{}", self.url, beam_id),
             BeamUpdateRequest::new(true, error),
         )?;
