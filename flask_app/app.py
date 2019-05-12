@@ -6,6 +6,9 @@ from logbook.compat import redirect_logging
 import flask
 from flask.ext.security import Security  # pylint: disable=import-error
 from flask.ext.mail import Mail  # pylint: disable=import-error
+from paramiko.ssh_exception import SSHException
+from jira import JIRAError
+import raven
 
 
 def create_app(config=None):
@@ -43,7 +46,16 @@ def create_app(config=None):
 
     Mail(app)
 
-    app.raven = Sentry(app, dsn=app.config.get('SENTRY_DSN'))
+    app.raven = Sentry(
+        app,
+        client=raven.Client(
+            dsn=app.config.get("SENTRY_DSN"),
+            ignore_exceptions=[
+                SSHException,
+                JIRAError
+            ],
+        ),
+    )
 
     from . import models
 
