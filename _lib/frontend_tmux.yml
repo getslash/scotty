@@ -18,7 +18,7 @@ windows:
       - ./manage.py shell
   - window_name: transporter
     panes:
-      - z transporter ;and env RUST_LOG=transporter=debug cargo run example/transporter.conf
+      - z transporter ;and env RUST_LOG=transporter=debug cargo run -- --storage /var/scotty --scotty-url http://127.0.0.1:8800
   - window_name: redis
     panes:
       - bash -c "cd /tmp/ && rm -rf dump.rdb && exec redis-server"
