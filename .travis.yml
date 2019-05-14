@@ -1,34 +1,45 @@
 matrix:
   include:
-    - language: python
-      python: 3.6
-      cache:
-        - pip
-      install:
-        - pip install virtualenv
-      script:
-        - python3 manage.py bootstrap --app --develop
-
-    - language: node_js
-      node_js:
-        - "8"
-      cache:
-        - yarn
-
-      before_install:
-        - curl -o- -L https://yarnpkg.com/install.sh | bash
-        - export PATH=$HOME/.yarn/bin:$PATH
-
-      install:
-        - gem install scss_lint
-
-      script:
-        - cd webapp
-        - yarn install
-        - yarn lint:js
-        - ./node_modules/ember-cli/bin/ember build
-
-    - language: rust
-      script:
-        - cd transporter
-        - cargo build
+  - language: python
+    python: 3.6
+    cache:
+    - pip
+    install:
+    - pip install virtualenv
+    script:
+    - python3 manage.py bootstrap --app --develop
+  - language: node_js
+    node_js:
+    - '8'
+    cache:
+    - yarn
+    before_install:
+    - curl -o- -L https://yarnpkg.com/install.sh | bash
+    - export PATH=$HOME/.yarn/bin:$PATH
+    install:
+    - gem install scss_lint
+    script:
+    - cd webapp
+    - yarn install
+    - yarn lint:js
+    - "./node_modules/ember-cli/bin/ember build"
+  - language: rust
+    script:
+    - cd transporter
+    - cargo build
+  - language: python
+    sudo: required
+    python:
+    - 3.6
+    services:
+    - docker
+    env:
+      - secure: U0a15lHF2ND2NFa++n4rv0cYxHXmm1nTXA73DTKapu7hNnU3ppj9CaZvfL+C7V5F4oG24BVXGTfBvJpVlTUaf+OEMYu1i6rSHXwUdeAzZ/DgwdP2/k2p+ZqOfIBdJMwDtLQ2mUCLcyCXvXt51LZCkKSntLL7FrwFswqkFxjNjsP6glaJi9WXb2ssQjQ51ceiWoO0J7WUi6k896D6y9efgBSP4uh5VzGsBxDPVtca/yg/a5GDBgAoZvFvUf6qAstoBXaUCoNCOuOaxJ106TXxCHx7jnGrUFDR3MBfELTOCr5ijF/dlHd0pFBmtTs99u9lrehSKzBf9HosR3JrV0PsvwktQ/uAbTnvSY0ZnC6qxSZIv6c8qJzw36SGm/8LJSvw0iGeyW1oXUa3GChpa8BflFzc6N+i6lQNhGlGM4L1ZxtbKy8ZJD7DcBZsynD2wmkTTR2serEMTMohqdbBmN1HL0BQmYu0TIwVf06Q4fMaP6siD9psYs7IwqSjk9fNWx6fOkivLv8+2paBRAa4Cn/2ycAzdLVc3rdIBgNcUGii9iqWp1ieqI7vNgEedrdI1NJvn1y4DuPGTc6lH80nVcz+q0fF6B1fHoZNB413Ptc0UYtUpS+FPp2Cs+3NzF6CUh1QgFE/PWDcm2JN3c/ZD0mGap6gT4o8SCa8lF5/dxhnNIc=
+      - secure: jZbYqM1Il7aOleDi32Dm0eeXiMHRFZCh+jQ1q8FqHv5LWDldDwkbAIiW6dk8x4iaxByqnO5IfTiHVpuJpAnYWCnEMv2ncLxmAzNRz/g2psrZqEIhtQVisPYWYt9QDtG5qB6JXfx0FKWRGoFckivapmOKDoS0xJsI2uFb4n8Xpt8e6zw46f4FWFkxuifWNRWS0rcBuFjPi2H44TKr0AWpkwgKmibmonjCX9YIUOAg14LOY9gGQ/A5JrfVHjiIteAIOHGiHCm0LHTaQ3/OQ6MXUKwApa8NRsVQnbSr8RqP6JW5jgjBM+vK530YO3D8tARz8hKqQ01Ryfd6fiuOao87mM8qNw6SLu7GpAP1wy/OnkcM34KA/jUrvqI9/wA2svVEXvrSVDtSHq/0elbgAJB0NMT8OPyf3HE8ugVOEktAF2r6Gqt65SF42VFHtyO2SzltIGK3a8ASYiHANRA4TXKH7z+h1qXBRObtAG2vQq5s9iuRP6IZtpgktcUuUbTbqcdENavIuXPItiSKV7bdYlhTJuWinQPORo8uelNd5olGNyx239IEYeGhizU+jPPd3rqKVoQZLfaYUgV1BUfvnwmK/WF5COcQicfeVEjeQn2df2z3wRxYf0IT0pE7fAqTpkmNMEuii/ygyooVkvxsQjeV+ctlDO+/6Nx9bwD3InDUnz0=
+    script:
+    - make image
+    deploy:
+      provider: script
+      script: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD && make push-image
+      on:
+        branch: master
