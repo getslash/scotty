@@ -1,6 +1,7 @@
 import os
 from raven.contrib.flask import Sentry
 import yaml
+import functools
 import logbook
 from logbook.compat import redirect_logging
 import flask
@@ -9,6 +10,23 @@ from flask.ext.mail import Mail  # pylint: disable=import-error
 from paramiko.ssh_exception import SSHException
 from jira import JIRAError
 import raven
+
+
+APP = None
+
+
+def needs_app_context(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        global APP
+
+        if APP is None:
+            APP = create_app()
+
+        with APP.app_context():
+            return f(*args, **kwargs)
+
+    return wrapper
 
 
 def create_app(config=None):
