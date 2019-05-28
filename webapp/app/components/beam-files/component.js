@@ -10,6 +10,9 @@ export default Component.extend({
   pages: 1,
   total: 0,
 
+  sortKeys: ['name:desc'],
+  sortedModel: computed.sort('files', 'sortKeys'),
+
   pagesList: computed("pages", function () {
     const pages = this.get("pages");
     let arr = new Array(pages);
@@ -30,7 +33,7 @@ export default Component.extend({
     const response = yield this.get("store").query('file', query);
     this.set("files", response);
 
-      this.set("total", response.meta.total);
+    this.set("total", response.meta.total);
     if (response.meta.total > 0) {
       const pages = Math.ceil(response.meta.total / FILES_PER_PAGE);
       this.set("pages", pages);
@@ -62,6 +65,11 @@ export default Component.extend({
   actions: {
     filterChange: function(newFilter) {
       this.set("fileFilter", newFilter);
+    },
+    sortBy: function(property, acsending) {
+      let method = (acsending) ? 'asc': 'desc';
+      this.sortKeys.pop()
+      this.sortKeys.pushObject(`${property}:${method}`);
     }
   }
 });
