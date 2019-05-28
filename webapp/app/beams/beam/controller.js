@@ -1,4 +1,5 @@
 import Controller from '@ember/controller';
+import { inject as controller_inject } from '@ember/controller';
 import { inject } from '@ember/service';
 import $ from 'jquery';
 import { task } from 'ember-concurrency';
@@ -8,6 +9,8 @@ export default Controller.extend({
   queryParams: ['filePage', 'fileFilter'],
   filePage: 1,
   fileFilter: null,
+
+  parent: controller_inject('beams'),
 
   removeIssue: task(function * (issue) {
     const model = this.get("model");
