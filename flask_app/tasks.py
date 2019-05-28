@@ -29,6 +29,7 @@ from celery.log import redirect_stdouts_to_logger
 from raven.contrib.celery import register_signal
 
 from sqlalchemy.orm import joinedload
+from sqlalchemy.sql import exists
 
 import flux
 
@@ -123,6 +124,14 @@ def _upload_combadge(ssh_client):
         raise Exception(stderr.read().decode("utf-8"))
 
     return combadge_path
+
+
+def _get_active_beams():
+    active_beams = (db.session.query(Beam)
+                    .filter(~Beam.pending_deletion,
+                            ~Beam.deleted)
+                    .options(joinedload(Beam.files)))
+    return active_beams
 
 
 @queue.task
@@ -284,8 +293,10 @@ def vacuum():
 @needs_app_context
 def refresh_issue_trackers():
     trackers = db.session.query(Tracker)
+    issues_of_active_beams = {issue.id for beam in _get_active_beams() for issue in beam.issues}
+    active_beams_issues_query = db.session.query(Issue).filter(Issue.id.in_(issues_of_active_beams))
     for tracker in trackers:
-        issues = db.session.query(Issue).filter_by(tracker_id=tracker.id)
+        issues = db.session.query(Issue.id).filter(active_beams_issues_query.exists()).filter_by(tracker_id=tracker.id)
         logger.info("Refreshing tracker {} - {} of type {}", tracker.id, tracker.url, tracker.type)
         try:
             issue_trackers.refresh(tracker, issues)
@@ -355,10 +366,8 @@ def scrub():
 
     storage_path = APP.config['STORAGE_PATH']
 
-    active_beams = (db.session.query(Beam)
-                    .filter(Beam.pending_deletion == False, Beam.deleted == False)
-                    .options(joinedload(Beam.files)))
     expected_files = set()
+    active_beams = _get_active_beams()
     for beam in active_beams:
         for beam_file in beam.files:
             if not beam_file.storage_name and not beam_file.size:
