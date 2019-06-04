@@ -1,0 +1,10 @@
+[package]
+name = "combadge"
+version = "0.1.0"
+authors = ["InfraDev <infradev@infinidat.com>"]
+
+[dependencies]
+# TODO: Why did you turn off default features?
+structopt = { version = "0.2" }
+byteorder = "*"
+zstd = "*"

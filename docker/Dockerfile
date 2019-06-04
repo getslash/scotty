@@ -1,10 +1,9 @@
-FROM ubuntu:16.04 as rust-builder
-RUN apt-get update && apt-get install -y curl build-essential pkg-config libssl-dev clang-3.9
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-ENV PATH=$PATH:/root/.cargo/bin
-ADD ./transporter/ ./src
-WORKDIR /src
-RUN cargo build --release
+FROM ekidd/rust-musl-builder as rust-builder
+ADD ./transporter/ ./transporter
+ADD ./combadge/ ./combadge
+RUN sudo chown -R rust:rust .
+RUN cd transporter && cargo build --release
+RUN cd combadge && cargo build --release
 
 FROM node:6 as frontend-builder
 # build frontend
@@ -60,7 +59,8 @@ RUN cd ./src && DISABLE_PIP_CACHE=1 $PYTHON_EXECUTABLE manage.py bootstrap --app
 
 
 COPY --from=frontend-builder /frontend/dist /src/webapp/dist
-COPY --from=rust-builder /src/target/release/transporter /usr/bin/transporter
+COPY --from=rust-builder /home/rust/src/transporter/target/x86_64-unknown-linux-musl/release/transporter /usr/bin/transporter
+COPY --from=rust-builder /home/rust/src/combadge/target/x86_64-unknown-linux-musl/release/combadge /src/webapp/dist
 
 RUN rm -rf ../etc/nginx/conf.d/*
 RUN rm -f ../etc/nginx/sites-enabled/*
