@@ -60,7 +60,7 @@ RUN cd ./src && DISABLE_PIP_CACHE=1 $PYTHON_EXECUTABLE manage.py bootstrap --app
 
 COPY --from=frontend-builder /frontend/dist /src/webapp/dist
 COPY --from=rust-builder /home/rust/src/transporter/target/x86_64-unknown-linux-musl/release/transporter /usr/bin/transporter
-COPY --from=rust-builder /home/rust/src/combadge/target/x86_64-unknown-linux-musl/release/combadge /src/webapp/dist
+COPY --from=rust-builder /home/rust/src/combadge/target/x86_64-unknown-linux-musl/release/combadge /src/webapp/dist/assets
 
 RUN rm -rf ../etc/nginx/conf.d/*
 RUN rm -f ../etc/nginx/sites-enabled/*
