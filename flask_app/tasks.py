@@ -89,7 +89,7 @@ def create_key(s):
     f.seek(0)
     return RSAKey.from_private_key(file_obj=f, password=None)
 
-with open(os.path.join(os.path.dirname(__file__), "..", "combadge", "target", "debug", "combadge"), "rb") as combadge:
+with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge"), "rb") as combadge:
     _COMBADGE = combadge.read()
 
 
