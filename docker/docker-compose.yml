@@ -59,7 +59,7 @@ services:
                 "-timeout", "300s",
                 "-wait", "tcp://redis:6379",
                 "-wait", "tcp://db:5432",
-                ".env/bin/celery", "-A" ,"flask_app.tasks", "worker", "--loglevel=info", "-B",
+                ".env/bin/celery", "-A" ,"flask_app.tasks", "worker", "--loglevel=info",
                 "-Q", "celery", "--concurrency", "20", "-Ofair"]
       volumes:
         - "/opt/scotty/conf.d:/conf"
