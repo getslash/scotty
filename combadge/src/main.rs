@@ -46,7 +46,9 @@ fn beam_up(config: Config) -> std::io::Result<()> {
 }
 
 fn beam_path(transporter: &mut TcpStream, path: &Path, beam_id: u64) -> std::io::Result<()> {
-    if path.is_file() {
+    if !path.exists() {
+        return Ok(())
+    } else if path.is_file() {
         beam_file(transporter, &path)?;
     } else if path.is_dir() {
         for entry in fs::read_dir(path)? {
