@@ -36,7 +36,7 @@ class JIRA(Tracker):
     def __init__(self, *, url, config):
         self._url = url
         config = json.loads(config)
-        self._jira = JIRAAPI(url, basic_auth=(config['username'], config['password']))
+        self._jira = JIRAAPI(url, basic_auth=(config['username'], config['password']), timeout=5)
         self._resolution_grace = timedelta(days=config.get('resolution_grace', 0))
 
     def _refresh_issue(self, issue_obj):
