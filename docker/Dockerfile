@@ -1,19 +1,12 @@
-FROM ekidd/rust-musl-builder as rust-builder
-ADD ./transporter/ ./transporter
-ADD ./combadge/ ./combadge
-RUN sudo chown -R rust:rust .
-RUN cd transporter && cargo build --release
-RUN cd combadge && cargo build --release
-
-FROM node:6 as frontend-builder
-# build frontend
-RUN npm install -g ember-cli
-
-ADD ./webapp/ ./frontend/
-RUN cd ./frontend/ && yarn install
-RUN cd ./frontend/ && node_modules/.bin/ember build --environment production
-
 FROM ubuntu:16.04
+
+
+ADD ./frontend /src/webapp/dist
+ADD ./transporter/transporter /usr/bin/transporter
+ADD ./combadge_linux/combadge /src/webapp/dist/assets/combadge_linux
+ADD ./combadge_mac/combadge /src/webapp/dist/assets/combadge_mac
+ADD ./combadge_windows/combadge.exe /src/webapp/dist/assets/combadge_windows.exe
+
 
 ENV PYTHON_VERSION 3.6
 ENV PYTHON_EXECUTABLE python$PYTHON_VERSION
@@ -58,9 +51,11 @@ RUN echo $PYTHON_EXECUTABLE
 RUN cd ./src && DISABLE_PIP_CACHE=1 $PYTHON_EXECUTABLE manage.py bootstrap --app
 
 
-COPY --from=frontend-builder /frontend/dist /src/webapp/dist
-COPY --from=rust-builder /home/rust/src/transporter/target/x86_64-unknown-linux-musl/release/transporter /usr/bin/transporter
-COPY --from=rust-builder /home/rust/src/combadge/target/x86_64-unknown-linux-musl/release/combadge /src/webapp/dist/assets
+ADD ./frontend /src/webapp/dist
+ADD ./transporter/transporter /usr/bin/transporter
+ADD ./combadge_linux/combadge /src/webapp/dist/assets/combadge_linux
+ADD ./combadge_mac/combadge /src/webapp/dist/assets/combadge_mac
+ADD ./combadge_windows/combadge.exe /src/webapp/dist/assets/combadge_windows.exe
 
 RUN rm -rf ../etc/nginx/conf.d/*
 RUN rm -f ../etc/nginx/sites-enabled/*

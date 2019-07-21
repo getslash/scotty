@@ -1,7 +1,7 @@
+use super::beam::ClientMessages;
+use super::scotty::ScottyError;
 use std::convert::From;
 use std::io::Error as IoError;
-use super::scotty::ScottyError;
-use super::beam::ClientMessages;
 
 quick_error! {
     #[derive(Debug)]

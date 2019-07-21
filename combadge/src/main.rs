@@ -47,7 +47,7 @@ fn beam_up(config: Config) -> std::io::Result<()> {
 
 fn beam_path(transporter: &mut TcpStream, path: &Path, beam_id: u64) -> std::io::Result<()> {
     if !path.exists() {
-        return Ok(())
+        return Ok(());
     } else if path.is_file() {
         beam_file(transporter, &path)?;
     } else if path.is_dir() {
@@ -124,7 +124,6 @@ fn beam_file(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
         transporter.write_u32::<byteorder::BigEndian>(to_send.len() as u32)?;
         transporter.write_all(to_send)?;
     }
-    drop(buffer);
 
     if let Some(mut encoder) = encoder {
         encoder.get_mut().clear();

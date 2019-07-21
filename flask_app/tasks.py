@@ -92,6 +92,18 @@ def create_key(s):
 with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge.py"), "rb") as combadge:
     _COMBADGE = combadge.read()
 
+with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge_linux"), "rb") as combadge:
+    _COMBADGE_LINUX = combadge.read()
+
+with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge_mac"), "rb") as combadge:
+    _COMBADGE_MAC = combadge.read()
+
+with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge_windows.exe"), "rb") as combadge:
+    _COMBADGE_WINDOWS = combadge.read()
+
+# need to download the files locally from azure and handle them as if it was download from azure
+
+
 
 _REMINDER = """Hello Captain,<br/><br/>
 This is a reminder that the following beams are pinned by you:
@@ -117,7 +129,20 @@ def _upload_combadge(ssh_client):
 
     stdin, stdout, stderr = ssh_client.exec_command(
         "sh -c \"cat > {combadge_path} && chmod +x {combadge_path}\"".format(combadge_path=combadge_path))
-    stdin.write(_COMBADGE)
+
+    _, os_query_out, os_query_err = ssh.exec_command('uname')
+    out = os_query_out.read().strip().decode('utf-8')
+    err = os_query_err.read().strip().decode('utf-8')
+    if 'Unknown command' in err:
+        combadge_file = _COMBADGE_WINDOWS
+    elif out == 'Linux':
+        combadge_file = _COMBADGE_LINUX
+    elif out == 'Darwin'
+        combadge_file = _COMBADGE_MAC
+    else:
+        raise Exception(err)
+
+    stdin.write(combadge_file)
     stdin.channel.shutdown_write()
     retcode = stdout.channel.recv_exit_status()
     if retcode != 0:

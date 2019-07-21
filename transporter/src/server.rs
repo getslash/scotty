@@ -1,12 +1,12 @@
 extern crate sentry;
 
+use super::beam::beam_up;
+use super::scotty::Scotty;
+use super::storage::FileStorage;
+use sentry::protocol::{Event, Map};
+use std::io::Result;
 use std::net::TcpListener;
 use std::thread;
-use std::io::Result;
-use sentry::protocol::{Event, Map};
-use super::beam::beam_up;
-use super::storage::FileStorage;
-use super::scotty::Scotty;
 
 pub fn listen(storage: FileStorage, bind_address: &str, scotty_url: &str) -> Result<()> {
     let listener = match TcpListener::bind(&bind_address) {

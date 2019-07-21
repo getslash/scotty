@@ -1,7 +1,7 @@
+use super::error::{TransporterError, TransporterResult};
 use std::fs::{metadata, File};
 use std::io::Result;
 use std::path::{Path, PathBuf};
-use super::error::{TransporterError, TransporterResult};
 
 #[derive(Clone)]
 pub struct FileStorage {

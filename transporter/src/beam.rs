@@ -1,15 +1,15 @@
-use std::net::TcpStream;
-use std::io::{Read, Write};
-use std::cmp::min;
-use super::Mtime;
-use super::storage::FileStorage;
 use super::error::{TransporterError, TransporterResult};
 use super::scotty::Scotty;
+use super::storage::FileStorage;
+use super::Mtime;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use crypto::sha2::Sha512;
 use crypto::digest::Digest;
+use crypto::sha2::Sha512;
+use std::cmp::min;
+use std::io::{Read, Write};
+use std::net::TcpStream;
 
-const CHUNK_SIZE: usize = 1048576usize;
+const CHUNK_SIZE: usize = 1_048_576usize;
 
 #[derive(Debug)]
 pub enum ClientMessages {
@@ -89,9 +89,11 @@ fn download(
     let mut read_chunk = [0u8; CHUNK_SIZE];
 
     let mtime = if protocol_version.supports_mtime() {
-        Some(stream
-            .read_u64::<BigEndian>()
-            .map_err(|io| TransporterError::ClientIoError(io))?)
+        Some(
+            stream
+                .read_u64::<BigEndian>()
+                .map_err(|io| TransporterError::ClientIoError(io))?,
+        )
     } else {
         None
     };
@@ -195,9 +197,11 @@ fn beam_loop(
 ) -> TransporterResult<()> {
     let mut protocol_version = ProtocolVersion::V1;
     loop {
-        let message_code = ClientMessages::from_u8(stream
-            .read_u8()
-            .map_err(|io| TransporterError::ClientIoError(io))?)?;
+        let message_code = ClientMessages::from_u8(
+            stream
+                .read_u8()
+                .map_err(|io| TransporterError::ClientIoError(io))?,
+        )?;
         match message_code {
             ClientMessages::StartBeamingFile => {
                 beam_file(beam_id, stream, storage, scotty, &protocol_version)?

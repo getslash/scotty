@@ -1,8 +1,8 @@
 mod beam;
-mod storage;
-mod server;
 mod error;
 mod scotty;
+mod server;
+mod storage;
 
 extern crate byteorder;
 extern crate clap;
@@ -22,8 +22,8 @@ extern crate serde_json;
 extern crate time;
 extern crate url;
 
-use storage::FileStorage;
 use clap::{App, Arg};
+use storage::FileStorage;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
