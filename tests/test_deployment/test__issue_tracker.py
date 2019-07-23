@@ -3,7 +3,7 @@ import requests
 import slash
 import uuid
 from itertools import chain, combinations
-
+import pytest
 
 def powerset(iterable):
     s = list(iterable)
@@ -11,13 +11,13 @@ def powerset(iterable):
 
 
 def test_empty_issue(tracker):
-    with slash.assert_raises(requests.exceptions.HTTPError) as e:
+    with pytest.raises(requests.exceptions.HTTPError) as e:
         tracker.create_issue(' ')
+    assert e._excinfo[1].response.status_code == http.client.CONFLICT
 
-    assert e.exception.response.status_code == http.client.CONFLICT
 
-
-def test_issue_creation(beam, issue):
+def test_issue_creation(beam, issue_factory):
+    issue = issue_factory.get()
     beam, _ = beam
     assert len(beam.associated_issues) == 0
     beam.set_issue_association(issue.id_in_scotty, True)
@@ -28,7 +28,8 @@ def test_issue_creation(beam, issue):
     assert len(beam.associated_issues) == 0
 
 
-def test_issue_deletion(beam, issue):
+def test_issue_deletion(beam, issue_factory):
+    issue = issue_factory.get()
     beam, _ = beam
     assert len(beam.associated_issues) == 0
     beam.set_issue_association(issue.id_in_scotty, True)
@@ -39,7 +40,8 @@ def test_issue_deletion(beam, issue):
     assert len(beam.associated_issues) == 0
 
 
-def test_tracker_deletion(beam, tracker, issue):
+def test_tracker_deletion(beam, tracker, issue_factory):
+    issue = issue_factory.get()
     beam, _ = beam
     assert len(beam.associated_issues) == 0
     beam.set_issue_association(issue.id_in_scotty, True)
@@ -54,8 +56,9 @@ def test_tracker_get_by_name(tracker, scotty):
     assert scotty.get_tracker_id('tests_tracker') == tracker.id
 
 
-@slash.parameters.toggle('add_spaces')
-def test_create_issue_twice(issue, tracker, scotty, add_spaces):
+@pytest.mark.parametrize('add_spaces', [True, False])
+def test_create_issue_twice(issue_factory, tracker, scotty, add_spaces):
+    issue = issue_factory.get()
     new_name = issue.id_in_tracker
     if add_spaces:
         new_name = '  ' + new_name + '  '
@@ -63,7 +66,7 @@ def test_create_issue_twice(issue, tracker, scotty, add_spaces):
 
 
 _TRACKER_PARAMS = frozenset(['url', 'name', 'config'])
-@slash.parametrize('params', powerset(_TRACKER_PARAMS))
+@pytest.mark.parametrize('params', powerset(_TRACKER_PARAMS))
 def test_tracker_modification(scotty, tracker, params):
     def _get_tracker_data():
         response = scotty._session.get('{}/trackers/{}'.format(scotty._url, tracker.id))

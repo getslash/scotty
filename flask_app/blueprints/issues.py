@@ -30,9 +30,7 @@ def create():
         return 'Invalid issue id', http.client.CONFLICT
 
     issue = Issue(tracker_id=data['tracker_id'], id_in_tracker=id_in_tracker, open=True)
-    if not is_valid_issue(issue):
-        return "Invalid Issue", http.client.BAD_REQUEST
-
+    
     db.session.add(issue)
     try:
         db.session.commit()
@@ -59,6 +57,22 @@ def delete(issue):
 @issues.route('/<int:issue>', methods=['GET'])
 def get(issue):
     issue = db.session.query(Issue).filter_by(id=issue).first()
+    if not issue:
+        return 'Issue not found', http.client.NOT_FOUND
+
+    return jsonify({'issue': issue.to_dict()})
+
+
+@issues.route('/get_id/', methods=['GET'])
+def get_id():
+    id_in_tracker = request.args.get('id_in_tracker')
+    tracker_id = request.args.get('tracker_id')
+    if id_in_tracker is None:
+        return "Invalid id in tracker", http.client.BAD_REQUEST
+    if tracker_id is None:
+        return "Invalid tracker id", http.client.BAD_REQUEST
+
+    issue = db.session.query(Issue).filter_by(tracker_id=tracker_id, id_in_tracker=id_in_tracker).first()
     if not issue:
         return 'Issue not found', http.client.NOT_FOUND
 

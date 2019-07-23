@@ -90,7 +90,7 @@ def testing_method(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         assert APP is not None
-        assert APP.config.get('TESTING', False)
+        assert APP.config.get('DEBUG', False)
         return f(*args, **kwargs)
 
     return wrapper

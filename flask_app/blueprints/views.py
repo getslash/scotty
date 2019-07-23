@@ -3,7 +3,7 @@ import http.client
 import logbook
 import psutil
 from sqlalchemy.sql import func
-from flask import Blueprint, current_app, send_from_directory, jsonify, request, redirect, abort
+from flask import Blueprint, current_app, send_from_directory, jsonify, request, redirect, abort, send_file
 from ..models import Beam, db, Pin, Tag
 from .auth import require_user
 from .utils import validate_schema
@@ -67,4 +67,4 @@ def summary():
 
 @views.route("/combadge")
 def get_combadge():
-    return redirect("/static/assets/combadge.py")
+    return send_file("../webapp/dist/assets/combadge.py")

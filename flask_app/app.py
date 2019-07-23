@@ -75,7 +75,7 @@ def create_app(config=None):
     app.register_blueprint(keys, url_prefix="/keys")
     app.register_blueprint(views)
 
-    if app.config.get('TESTING'):
+    if app.config.get('DEBUG'):
         from .blueprints import test_methods
         app.register_blueprint(test_methods)
 
