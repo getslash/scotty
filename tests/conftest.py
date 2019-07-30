@@ -1,14 +1,17 @@
-from scottypy import Scotty
-from flask_app import app, models
-from urlobject import URLObject as URL
+# pylint: disable=redefined-outer-name
 import json
-import tempfile
 import os
+import tempfile
 import uuid
 from collections import namedtuple
 
-
 import pytest
+from scottypy import Scotty
+from urlobject import URLObject as URL
+
+from flask_app import app, models
+
+from time import sleep
 
 BeamType = namedtuple('BeamType', ('name', 'threshold'))
 BeamInfo = namedtuple('BeamInfo', ('beam', 'type'))
@@ -30,8 +33,8 @@ class FileTracker:
         def id_in_tracker(self):
             return self._id_in_tracker
 
-        def set_open(self, open_):
-            self._tracker.set_open(self._id_in_tracker, open_)
+        def set_open(self, is_open):
+            self._tracker.set_open(self._id_in_tracker, is_open)
 
         def delete(self):
             self._tracker._scotty.delete_issue(self._id_in_scotty)
@@ -60,23 +63,25 @@ class FileTracker:
     def delete(self):
         os.unlink(self._path)
 
-    def create_issue(self, id_in_tracker=None):
-        id_in_scotty = None
+    def create_issue(self, id_in_tracker):
+        issue_in_scotty = None
         if id_in_tracker is None:
             id_in_tracker = str(uuid.uuid4())
         else:
-            id_in_scotty = self._scotty.get_issue_id(self._id, id_in_tracker)
-        
-        if id_in_scotty is None:
+            issue_in_scotty = self._scotty.get_issue_by_tracker(self._id, id_in_tracker)
+
+        if issue_in_scotty is not None:
+            id_in_scotty = issue_in_scotty.id
+        else:
             id_in_scotty = self._scotty.create_issue(self._id, id_in_tracker)
-        
+
         issue = self.Issue(self, id_in_scotty, id_in_tracker)
         self._issues[id_in_tracker] = True
         self.dump()
         return issue
 
-    def set_open(self, issue_id, open_):
-        self._issues[issue_id] = open_
+    def set_open(self, issue_id, is_open):
+        self._issues[issue_id] = is_open
         self.dump()
 
     @property
@@ -117,8 +122,6 @@ class TestingScotty(Scotty):
 
 @pytest.fixture
 def webapp():
-    from flask.ext import login
-
     return app.create_app()
 
 
@@ -160,8 +163,8 @@ def local_beam_dir(tempdir):
     with open(os.path.join(source_dir, 'a.txt'), 'w') as f:
         f.write('Hello')
 
-    # with open(os.path.join(source_dir, 'b.bin'), 'wb') as f:
-    #     f.write(b'\x10\x12\x04')
+    with open(os.path.join(source_dir, 'b.bin'), 'wb') as f:
+        f.write(b'\x10\x12\x04')
 
     subdir = os.path.join(source_dir, 'subdir')
     os.mkdir(subdir)
@@ -173,29 +176,21 @@ def local_beam_dir(tempdir):
 
 
 @pytest.fixture
-def beam(scotty, local_beam_dir):
-    beam_data = scotty.beam_up(local_beam_dir)
-    beam = scotty.get_beam(beam_data)
-    # assert beam.completed
-    return BeamInfo(beam, None)
-
-
-@pytest.fixture
 def tracker(scotty):
     return FileTracker.create(scotty)
 
 
 @pytest.fixture
 def issue(tracker):
-    return tracker.create_issue()   
+    return tracker.create_issue(id_in_tracker=None)
 
 
 @pytest.fixture
 def issue_factory(tracker):
     class IssueFactory:
         def get(self):
-            return tracker.create_issue()
-    return IssueFactory()      
+            return tracker.create_issue(id_in_tracker=None)
+    return IssueFactory()
 
 
 @pytest.fixture
@@ -205,7 +200,7 @@ def beam_factory(scotty, local_beam_dir):
             beam_data = scotty.beam_up(local_beam_dir)
             beam = scotty.get_beam(beam_data)
             return beam
-    return BeamFactory()      
+    return BeamFactory()
 
 
 @pytest.fixture
@@ -231,22 +226,33 @@ def beam_types(server_config, db, webapp):
             'long': _beam_type('long', server_config['VACUUM_THRESHOLD'] + 2)}
 
 
+def _wait_for_beam(beam_id, *, scotty):
+    for _ in range(3):
+        beam = scotty.get_beam(beam_id)
+        if beam.completed:
+            return beam
+
+        sleep(1)
+
+    raise RuntimeError("Beam is incomplete")
+
+
 @pytest.fixture
-def none_beam(scotty, local_beam_dir, beam_types):
-    beam = scotty.get_beam(scotty.beam_up(local_beam_dir, beam_type=None))
+def beam(scotty, local_beam_dir):
+    beam = _wait_for_beam(scotty.beam_up(local_beam_dir), scotty=scotty)
     return BeamInfo(beam, None)
 
 
 @pytest.fixture
 def short_beam(scotty, local_beam_dir, beam_types):
-    beam = scotty.get_beam(scotty.beam_up(local_beam_dir, beam_type='short'))
+    beam = _wait_for_beam(scotty.beam_up(local_beam_dir, beam_type='short'), scotty=scotty)
     beam_type = beam_types['short']
     return BeamInfo(beam, beam_type)
 
 
 @pytest.fixture
 def long_beam(scotty, local_beam_dir, beam_types):
-    beam = scotty.get_beam(scotty.beam_up(local_beam_dir, beam_type='long'))
+    beam = _wait_for_beam(scotty.beam_up(local_beam_dir, beam_type='long'), scotty=scotty)
     beam_type = beam_types['long']
     return BeamInfo(beam, beam_type)
 

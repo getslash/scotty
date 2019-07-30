@@ -63,8 +63,8 @@ def get(issue):
     return jsonify({'issue': issue.to_dict()})
 
 
-@issues.route('/get_id/', methods=['GET'])
-def get_id():
+@issues.route('/get_by_tracker/', methods=['GET'])
+def get_by_tracker():
     id_in_tracker = request.args.get('id_in_tracker')
     tracker_id = request.args.get('tracker_id')
     if id_in_tracker is None:

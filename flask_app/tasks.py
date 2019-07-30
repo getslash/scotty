@@ -89,7 +89,7 @@ def create_key(s):
     f.seek(0)
     return RSAKey.from_private_key(file_obj=f, password=None)
 
-with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge"), "rb") as combadge:
+with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge.py"), "rb") as combadge:
     _COMBADGE = combadge.read()
 
 
@@ -296,7 +296,7 @@ def refresh_issue_trackers():
     issues_of_active_beams = {issue.id for beam in _get_active_beams() for issue in beam.issues}
     active_beams_issues_query = db.session.query(Issue).filter(Issue.id.in_(issues_of_active_beams))
     for tracker in trackers:
-        issues = db.session.query(Issue.id).filter(active_beams_issues_query.exists()).filter_by(tracker_id=tracker.id)
+        issues = Issue.query.filter(active_beams_issues_query.exists()).filter_by(tracker_id=tracker.id).all()
         logger.info("Refreshing tracker {} - {} of type {}", tracker.id, tracker.url, tracker.type)
         try:
             issue_trackers.refresh(tracker, issues)
