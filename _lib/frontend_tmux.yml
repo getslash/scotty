@@ -1,4 +1,5 @@
 session_name: scotty
+suppress_history: false
 windows:
   - window_name: cmd
     panes:

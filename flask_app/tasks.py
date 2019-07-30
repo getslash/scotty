@@ -29,12 +29,14 @@ from celery.log import redirect_stdouts_to_logger
 from raven.contrib.celery import register_signal
 
 from sqlalchemy.orm import joinedload
+from sqlalchemy.sql import exists
 
 import flux
 
-from .app import create_app
+from .app import create_app, needs_app_context
 from . import issue_trackers
 from .models import Beam, db, Pin, File, Tracker, Issue
+from flask import current_app
 
 
 
@@ -70,27 +72,12 @@ queue.conf.update(
 def setup_log(**args):
     logbook.StreamHandler(sys.stdout, bubble=True).push_application()
 
-APP = None
-
-def needs_app_context(f):
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        global APP
-
-        if APP is None:
-            APP = create_app()
-
-        with APP.app_context():
-            return f(*args, **kwargs)
-
-    return wrapper
-
 
 def testing_method(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        assert APP is not None
-        assert APP.config.get('DEBUG', False)
+        assert current_app is not None
+        assert current_app.config.get('DEBUG', False)
         return f(*args, **kwargs)
 
     return wrapper
@@ -102,8 +89,7 @@ def create_key(s):
     f.seek(0)
     return RSAKey.from_private_key(file_obj=f, password=None)
 
-
-with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge.py"), "r") as combadge:
+with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge"), "rb") as combadge:
     _COMBADGE = combadge.read()
 
 
@@ -122,7 +108,7 @@ Montgomery Scott
 """
 
 def _upload_combadge(ssh_client):
-    _, stdout, stderr = ssh_client.exec_command("mktemp /tmp/combadge.XXX.py")
+    _, stdout, stderr = ssh_client.exec_command("mktemp /tmp/combadge.XXX")
     retcode = stdout.channel.recv_exit_status()
     if retcode != 0:
         raise Exception(stderr.read().decode("utf-8"))
@@ -140,6 +126,14 @@ def _upload_combadge(ssh_client):
     return combadge_path
 
 
+def _get_active_beams():
+    active_beams = (db.session.query(Beam)
+                    .filter(~Beam.pending_deletion,
+                            ~Beam.deleted)
+                    .options(joinedload(Beam.files)))
+    return active_beams
+
+
 @queue.task
 @needs_app_context
 def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
@@ -147,10 +141,10 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
     try:
         delay = flux.current_timeline.datetime.utcnow() - beam.start
         if delay.total_seconds() > 10:
-            APP.raven.captureMessage(
+            current_app.raven.captureMessage(
                 "Beam took too long to start", extra={'beam_id': beam.id, 'delay': str(delay)}, level="info")
 
-        transporter = APP.config.get('TRANSPORTER_HOST', 'scotty')
+        transporter = current_app.config.get('TRANSPORTER_HOST', 'scotty')
         logger.info('Beaming up {}@{}:{} ({}) to transporter {}. Auth method: {}'.format(
             username, host, directory, beam_id, transporter, auth_method))
         ssh_client = SSHClient()
@@ -171,7 +165,7 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
 
         logger.info('{}: Running combadge at {}'.format(beam_id, combadge_path))
         _, stdout, stderr = ssh_client.exec_command(
-            '{} {} "{}" "{}"'.format(combadge_path, str(beam_id), directory, transporter))
+                        f'{combadge_path} --beam_id {beam_id} --path "{directory}" --transporter_addr "{transporter}"')
         retcode = stdout.channel.recv_exit_status()
         if retcode != 0:
             raise Exception(stderr.read().decode("utf-8"))
@@ -205,7 +199,7 @@ def vacuum_beam(beam, storage_path):
 @queue.task
 @needs_app_context
 def mark_timeout():
-    timeout = timedelta(seconds=APP.config['COMBADGE_CONTACT_TIMEOUT'])
+    timeout = timedelta(seconds=current_app.config['COMBADGE_CONTACT_TIMEOUT'])
     timed_out = flux.current_timeline.datetime.utcnow() - timeout
     dead_beams = (
         db.session.query(Beam).filter_by(completed=False)
@@ -222,17 +216,17 @@ _THRESHOLD_VALUES = ['SMTP', 'SMTP_FROM', 'BASE_URL']
 @queue.task
 @needs_app_context
 def remind_pinned():
-    if APP.config.get('PIN_REMIND_THRESHOLD') is None:
+    if current_app.config.get('PIN_REMIND_THRESHOLD') is None:
         logger.info("Sending email reminders is disabled for this instance")
         return
 
     for value in _THRESHOLD_VALUES:
-        if value not in APP.config:
+        if value not in current_app.config:
             logger.error("{} must be specified in the configuration together with PIN_REMIND_THRESHOLD".format(
                 value))
             return
 
-    remind_time = flux.current_timeline.datetime.utcnow() - timedelta(days=APP.config['PIN_REMIND_THRESHOLD'])
+    remind_time = flux.current_timeline.datetime.utcnow() - timedelta(days=current_app.config['PIN_REMIND_THRESHOLD'])
     emails = defaultdict(list)
     pins = (db.session.query(Pin)
             .join(Pin.beam)
@@ -242,12 +236,12 @@ def remind_pinned():
         emails[pin.user.email].append(pin.beam_id)
 
     template = Template(_REMINDER)
-    s = smtplib.SMTP(APP.config['SMTP'])
+    s = smtplib.SMTP(current_app.config['SMTP'])
     for email, beams in emails.items():
-        body = template.render(beams=beams, base_url=APP.config['BASE_URL'])
+        body = template.render(beams=beams, base_url=current_app.config['BASE_URL'])
         msg = MIMEText(body, 'html')
         msg['Subject'] = 'Pinned beams reminder'
-        msg['From'] = APP.config['SMTP_FROM']
+        msg['From'] = current_app.config['SMTP_FROM']
         msg['To'] = email
 
         s.send_message(msg)
@@ -263,7 +257,7 @@ def vacuum():
 
     # Make sure that the storage folder is accessable. Whenever deploying scotty to somewhere, one
     # must create this empty file in the storage directory
-    os.stat(os.path.join(APP.config['STORAGE_PATH'], ".test"))
+    os.stat(os.path.join(current_app.config['STORAGE_PATH'], ".test"))
 
     db.engine.execute(
         """UPDATE beam SET pending_deletion=true WHERE beam.id IN (
@@ -285,13 +279,13 @@ def vacuum():
             file.beam_id IS NULL
             OR ((beam.type_id IS NULL) AND (beam.start < %s - '%s days'::interval))
             OR ((beam.type_id IS NOT NULL) AND (beam.start < %s - (beam_type.vacuum_threshold * INTERVAL '1 DAY')))
-        ))""", now, APP.config['VACUUM_THRESHOLD'], now)
+        ))""", now, current_app.config['VACUUM_THRESHOLD'], now)
     db.session.commit()
     logger.info("Finished marking vacuum candidates")
 
     to_delete = db.session.query(Beam).filter(Beam.pending_deletion == True, Beam.deleted == False)
     for beam in to_delete:
-        vacuum_beam(beam, APP.config['STORAGE_PATH'])
+        vacuum_beam(beam, current_app.config['STORAGE_PATH'])
     logger.info("Vacuum done")
 
 
@@ -299,13 +293,15 @@ def vacuum():
 @needs_app_context
 def refresh_issue_trackers():
     trackers = db.session.query(Tracker)
+    issues_of_active_beams = {issue.id for beam in _get_active_beams() for issue in beam.issues}
+    active_beams_issues_query = db.session.query(Issue).filter(Issue.id.in_(issues_of_active_beams))
     for tracker in trackers:
-        issues = db.session.query(Issue).filter_by(tracker_id=tracker.id)
+        issues = db.session.query(Issue.id).filter(active_beams_issues_query.exists()).filter_by(tracker_id=tracker.id)
         logger.info("Refreshing tracker {} - {} of type {}", tracker.id, tracker.url, tracker.type)
         try:
             issue_trackers.refresh(tracker, issues)
         except Exception:
-            APP.raven.captureException()
+            current_app.raven.captureException()
 
         db.session.commit()
 
@@ -316,7 +312,7 @@ def nightly():
     try:
         refresh_issue_trackers()
     except Exception:
-        APP.raven.captureException()
+        current_app.raven.captureException()
     vacuum()
     validate_checksum()
 
@@ -324,7 +320,7 @@ def nightly():
 @queue.task
 @needs_app_context
 def vacuum_check():
-    storage_path = APP.config['STORAGE_PATH']
+    storage_path = current_app.config['STORAGE_PATH']
     deleted_beams = db.session.query(Beam).filter(Beam.deleted == True)
     for beam in deleted_beams:
         for file_ in beam.files:
@@ -337,13 +333,13 @@ def vacuum_check():
 
 
 def _checksum(path):
-    return subprocess.check_output([APP.config['SHA512SUM'], path]).decode("utf-8").split(" ")[0]
+    return subprocess.check_output([current_app.config['SHA512SUM'], path]).decode("utf-8").split(" ")[0]
 
 
 @queue.task
 @needs_app_context
 def validate_checksum():
-    storage_path = APP.config['STORAGE_PATH']
+    storage_path = current_app.config['STORAGE_PATH']
 
     files = File.query.join(Beam).filter(
         Beam.pending_deletion == False, Beam.deleted == False,
@@ -368,12 +364,10 @@ def scrub():
     logger.info("Scrubbing intiated")
     errors = []
 
-    storage_path = APP.config['STORAGE_PATH']
+    storage_path = current_app.config['STORAGE_PATH']
 
-    active_beams = (db.session.query(Beam)
-                    .filter(Beam.pending_deletion == False, Beam.deleted == False)
-                    .options(joinedload(Beam.files)))
     expected_files = set()
+    active_beams = _get_active_beams()
     for beam in active_beams:
         for beam_file in beam.files:
             if not beam_file.storage_name and not beam_file.size:
@@ -420,13 +414,13 @@ def scrub():
 @queue.task
 @needs_app_context
 def check_free_space():
-    if 'FREE_SPACE_THRESHOLD' not in APP.config:
+    if 'FREE_SPACE_THRESHOLD' not in current_app.config:
         logger.info("Free space checking is disabled as FREE_SPACE_THRESHOLD is not defined")
         return
 
-    percent = psutil.disk_usage(APP.config['STORAGE_PATH']).percent
-    if percent >= APP.config['FREE_SPACE_THRESHOLD']:
-        APP.raven.captureMessage("Used space is {}%".format(percent))
+    percent = psutil.disk_usage(current_app.config['STORAGE_PATH']).percent
+    if percent >= current_app.config['FREE_SPACE_THRESHOLD']:
+        current_app.raven.captureMessage("Used space is {}%".format(percent))
 
 
 @queue.task

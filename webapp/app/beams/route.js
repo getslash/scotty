@@ -5,7 +5,8 @@ export default Route.extend({
   queryParams: {
     tag: {refreshModel: true},
     email: {refreshModel: true},
-    uid: {refreshModel: true}
+    uid: {refreshModel: true},
+    page: {refreshModel: true}
   },
 
   periodicRefresh: task(function * () {
@@ -15,16 +16,18 @@ export default Route.extend({
     }
   }).on("activate").cancelOn('deactivate').drop(),
 
-  model: function(params) {
+  model: function model(params) {
+    let query_params = { page: params.page };
+
     if (params.tag) {
-      return this.store.query("beam", {tag: params.tag});
+      query_params.tag = params.tag;
     } else if (params.email) {
-      return this.store.query("beam", {email: params.email});
+      query_params.email = params.email;
     } else if (params.uid) {
-      return this.store.query("beam", {uid: params.uid});
-    } else {
-      return this.store.findAll('beam', {reload: true});
+      query_params.uid = params.uid;
     }
+    
+    return this.store.query("beam", query_params);
   },
 
   actions: {

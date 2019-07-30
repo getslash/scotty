@@ -16,42 +16,41 @@ from ..tasks import create_key, beam_up
 beams = Blueprint("beams", __name__, template_folder="templates")
 
 
-_ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email']
+_BEAMS_PER_PAGE = 50
+_ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email', 'page']
 @beams.route('', methods=['GET'], strict_slashes=False)
 def get_all():
-    query = (
+    if any({param not in _ALLOWED_PARAMS for param in request.values}):    
+        abort(http.client.BAD_REQUEST)
+
+    beam_query = (
         db.session.query(Beam)
         .options(joinedload(Beam.pins), joinedload(Beam.type), joinedload(Beam.issues))
         .order_by(Beam.start.desc()))
-    query_params = []
     for param in request.values:
-        if query_params or param not in _ALLOWED_PARAMS:
-            abort(http.client.BAD_REQUEST)
+        if param == "tag":
+            tags = request.values['tag']
+            for tag in tags.split(';'):
+                beam_query = beam_query.filter(Beam.tags.any(Tag.tag == tag))
+        elif param == "pinned":
+            pinned = db.session.query(distinct(Pin.beam_id))
+            beam_query = beam_query.filter(Beam.id.in_(pinned))
+        elif param == "uid":
+            try:
+                uid = int(request.values['uid'])
+            except ValueError:
+                abort(http.client.BAD_REQUEST)
+            beam_query = beam_query.filter_by(initiator=uid)
+        elif param == "email":
+            email = request.values['email']
+            user = db.session.query(User).filter_by(email=email).first()
+            beam_query = beam_query.filter_by(initiator=user.id) if user else beam_query.filter(false())
+            
+    page = request.args.get('page', 1, type=int)
+    
+    beams_obj = [b.to_dict(current_app.config['VACUUM_THRESHOLD']) for b in \
+         beam_query.order_by(Beam.id).limit(_BEAMS_PER_PAGE).offset((page - 1) * _BEAMS_PER_PAGE)]
 
-        query_params.append(param)
-
-    param = query_params[0] if query_params else None
-    if param == "tag":
-        tag = request.values['tag']
-        query = query.filter(Beam.tags.any(Tag.tag == tag))
-    elif param == "pinned":
-        pinned = db.session.query(distinct(Pin.beam_id))
-        query = query.filter(Beam.id.in_(pinned))
-    elif param == "uid":
-        try:
-            uid = int(request.values['uid'])
-        except ValueError:
-            abort(http.client.BAD_REQUEST)
-        query = query.filter_by(initiator=uid)
-    elif param == "email":
-        email = request.values['email']
-        user = db.session.query(User).filter_by(email=email).first()
-        if not user:
-            query = query.filter(false())
-        else:
-            query = query.filter_by(initiator=user.id)
-
-    beams_obj = [b.to_dict(current_app.config['VACUUM_THRESHOLD']) for b in query.limit(50)]
     return jsonify({'beams': beams_obj})
 
 
