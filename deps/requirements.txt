@@ -38,7 +38,7 @@ ipython==5.0.0
 ipython-genutils==0.1.0
 itsdangerous==0.24
 Jinja2==2.8
-jira==1.0.3
+jira==2.0.0
 jsonschema==2.5.1
 kaptan==0.5.8
 kombu==3.0.33
