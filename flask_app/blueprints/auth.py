@@ -122,7 +122,7 @@ def require_user(allow_anonymous):
                 user = current_user
 
             test_email = request.headers.get("X-Scotty-Email")
-            if current_app.config.get("TESTING", False) and test_email:
+            if current_app.config.get("DEBUG", False) and test_email:
                 user = get_or_create_user(test_email, "Test user")
 
             if not user:

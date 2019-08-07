@@ -101,8 +101,8 @@ def docker_start():
         'workers': workers_count,
     }
     logbook.StreamHandler(sys.stdout, level=logbook.DEBUG).push_application()
-    if app.config['TESTING']:
-        logbook.warning('Testing mode is active!')
+    if app.config['DEBUG']:
+        logbook.warning('Debug mode is active!')
     StandaloneApplication(app, options).run()
 
 
