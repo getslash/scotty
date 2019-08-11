@@ -49,7 +49,6 @@ class JIRA(Tracker):
             now = flux.current_timeline.datetime.now().replace(tzinfo=timezone.utc)
             issue_obj.open = (now - resolution_date) < self._resolution_grace
 
-    @needs_app_context
     def refresh(self, issues):
         for issue_obj in issues:
             try:
