@@ -100,7 +100,6 @@ requests==2.22.0
 requests-oauthlib==0.6.1
 requests-toolbelt==0.6.0
 rsa==3.3
-scottypy
 sentinels==0.0.6
 simplegeneric==0.8.1
 simplejson==3.8.2

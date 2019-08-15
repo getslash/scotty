@@ -2,3 +2,5 @@ Flask-Loopback
 slash
 tmuxp
 livereload
+-e git+git@github.com:getslash/scottypy.git@47872022221f96623c44a34ee587a0350e0a8456#egg=scottypy
+pytest
