@@ -37,6 +37,7 @@ def bootstrap_env(deps=("base",)):
     interpreter = which(PYTHON_INTERPRETER)
     if not os.path.exists(from_env_bin("python")):
         subprocess.check_call("{} -m virtualenv {}".format(interpreter, _ENV_DIR), shell=True)
+    
     cmd = "{env}/bin/pip install -r {requirements_path}".format(env=_ENV_DIR,
                                                                 requirements_path=os.path.join(_PROJECT_ROOT, 'deps', 'requirements.txt'))
     subprocess.check_call(cmd, shell=True)

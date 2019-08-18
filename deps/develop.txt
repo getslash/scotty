@@ -2,3 +2,5 @@ Flask-Loopback
 slash
 tmuxp
 livereload
+scottypy
+pytest
