@@ -164,8 +164,7 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
         combadge_path = _upload_combadge(ssh_client)
 
         logger.info('{}: Running combadge at {}'.format(beam_id, combadge_path))
-        _, stdout, stderr = ssh_client.exec_command(
-                        f'{combadge_path} --beam_id {beam_id} --path "{directory}" --transporter_addr "{transporter}"')
+        _, stdout, stderr = ssh_client.exec_command(f'{combadge_path} {str(beam_id)} "{directory}" "{transporter}"')
         retcode = stdout.channel.recv_exit_status()
         if retcode != 0:
             raise Exception(stderr.read().decode("utf-8"))
