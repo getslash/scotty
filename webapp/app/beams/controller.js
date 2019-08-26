@@ -11,7 +11,8 @@ export default Controller.extend({
   tagList: BeamFilter.create(),
   queryParams: ['tag', 'email', 'uid', 'page'],
   page: 1,
-  perPage: 50,
+  perPage: 15,
+  
 
   sortKeys: ['start:desc'],
   sortedModel: computed.sort('model', 'sortKeys'),

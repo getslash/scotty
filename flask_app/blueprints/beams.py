@@ -17,16 +17,17 @@ beams = Blueprint("beams", __name__, template_folder="templates")
 
 
 _BEAMS_PER_PAGE = 50
-_ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email', 'page']
+_MIN_PAGE_IDX = 1
+_ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email', 'page', 'per_page']
 @beams.route('', methods=['GET'], strict_slashes=False)
 def get_all():
     if any({param not in _ALLOWED_PARAMS for param in request.values}):    
         abort(http.client.BAD_REQUEST)
 
-    beam_query = (
-        db.session.query(Beam)
-        .options(joinedload(Beam.pins), joinedload(Beam.type), joinedload(Beam.issues))
-        .order_by(Beam.start.desc()))
+    beam_query = Beam.query.options(joinedload(Beam.pins),
+                                    joinedload(Beam.type),
+                                    joinedload(Beam.issues))\
+                                        .order_by(Beam.start.desc())
     for param in request.values:
         if param == "tag":
             tags = request.values['tag']
@@ -45,13 +46,17 @@ def get_all():
             email = request.values['email']
             user = db.session.query(User).filter_by(email=email).first()
             beam_query = beam_query.filter_by(initiator=user.id) if user else beam_query.filter(false())
-            
-    page = request.args.get('page', 1, type=int)
-    
-    beams_obj = [b.to_dict(current_app.config['VACUUM_THRESHOLD']) for b in \
-         beam_query.order_by(Beam.id).limit(_BEAMS_PER_PAGE).offset((page - 1) * _BEAMS_PER_PAGE)]
+     
+    page = max(request.args.get('page', _MIN_PAGE_IDX, type=int), _MIN_PAGE_IDX)
+    per_page = request.args.get('per_page', 10, type=int)
+    paginated_query = beam_query.paginate(page=page, per_page=per_page, error_out=True)
+    threshold = current_app.config['VACUUM_THRESHOLD']
 
-    return jsonify({'beams': beams_obj})
+    res = jsonify({'beams': [b.to_dict(threshold) for b in paginated_query.items], 
+                   'meta': {"total_pages": paginated_query.pages,
+                            "page": paginated_query.page}})
+
+    return res
 
 
 @beams.route('', methods=['POST'])

@@ -1,5 +1,5 @@
 
-{{page-numbers content=beams}}
+{{page-numbers content=beams currentPage=page totalPages=totalPages showFL=true}}
 {{#each beams as |beam|}}
   <div class="{{if (not-eq beam beams.lastObject) "spaced-item"}} item beam {{if (eq selectedId beam.id) "selected-beam" "unselected-beam"}}" onclick="" {{action "beamClick" beam.id}}>
     <div class="container">

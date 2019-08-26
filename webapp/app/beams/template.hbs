@@ -12,8 +12,8 @@
     {{/each}}
   </div>
   <div class="beam-list">
-    {{#if this.pagedContent}}
-      {{beam-list beams=this.pagedContent selectedId=selectedId onSelection=(action "beamSelection")}}
+    {{#if this.beamsRes}}
+      {{beam-list beams=this.beamsRes page=this.meta.page totalPages=this.meta.total_pages selectedId=selectedId onSelection=(action "beamSelection")}}
     {{else}}
       <div class="item"><h3 class="no-beams">No beams to show.</h3></div>
     {{/if}}

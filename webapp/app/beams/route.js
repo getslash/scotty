@@ -1,7 +1,7 @@
 import Route from '@ember/routing/route';
 import { task, timeout } from 'ember-concurrency';
 
-export default Route.extend({
+export default Route.extend({ 
   queryParams: {
     tag: {refreshModel: true},
     email: {refreshModel: true},

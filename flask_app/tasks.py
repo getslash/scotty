@@ -299,6 +299,7 @@ def refresh_issue_trackers():
         try:
             issues = db.session.query(Issue).filter(active_beams_issues_query.exists()).filter_by(tracker_id=tracker.id).all()
             issue_trackers.refresh(tracker, issues)
+            logger.info("Finished refreshing tracker {} - {} of type {}", tracker.id, tracker.url, tracker.type)
         except Exception:
             current_app.raven.captureException()
 
