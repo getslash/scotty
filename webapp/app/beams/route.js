@@ -1,13 +1,15 @@
 import Route from '@ember/routing/route';
 import { task, timeout } from 'ember-concurrency';
+import RouteMixin from 'ember-cli-pagination/remote/route-mixin';
 
-export default Route.extend({ 
+export default Route.extend(RouteMixin, { 
   queryParams: {
     tag: {refreshModel: true},
     email: {refreshModel: true},
     uid: {refreshModel: true},
-    page: {refreshModel: true}
+    page: {refreshModel: false}
   },
+  perPage: 5,
 
   periodicRefresh: task(function * () {
     for (;;) {
@@ -16,7 +18,7 @@ export default Route.extend({
     }
   }).on("activate").cancelOn('deactivate').drop(),
 
-  model: function model(params) {
+  model: function(params) {
     let query_params = { page: params.page };
 
     if (params.tag) {
@@ -26,8 +28,20 @@ export default Route.extend({
     } else if (params.uid) {
       query_params.uid = params.uid;
     }
-    
-    return this.store.query("beam", query_params);
+    // query_params.paramMapping = {page: "page"};
+
+    // let beams = this.store.query("beam", query_params);
+    let beams =  this.findPaged('beam', query_params);
+    console.log(beams);
+    return beams;
+
+    // return Ember.RSVP.hash({
+    //   beams: this.findPaged('beam', queryParams)
+    // });
+  },
+
+  afterModel(model) {
+    return model.get('meta');
   },
 
   actions: {

@@ -9,13 +9,15 @@ export default Controller.extend({
   email: null,
   uid: null,
   tagList: BeamFilter.create(),
-  queryParams: ['tag', 'email', 'uid', 'page'],
-  page: 1,
-  perPage: 15,
+  queryParams: ['tag', 'email', 'uid', 'page', 'perPage'],
   
+  page: computed.alias('beamsRes.page'),
+  perPage: computed.alias("beamsRes.perPage"),
+  totalPages: computed.alias("beamsRes.totalPages"),
+  meta: computed.alias('model.meta'),
 
   sortKeys: ['start:desc'],
-  sortedModel: computed.sort('model', 'sortKeys'),
+  beamsRes: computed.sort('model', 'sortKeys'),
   selectedId: null,
 
   tagFilterChanged: observer('tagList.tags', 'tagList.tags.[]', function() {
@@ -30,13 +32,14 @@ export default Controller.extend({
     return this.get('tagList.tags.length');
   }),
 
-  pagedContent: pagedArray('sortedModel', {
-    page: alias("parent.page"),
-    perPage: alias("parent.perPage")
-  }),
+  // pagedContent: pagedArray('sortedModel', {
+    // page: alias("parent.page"),
+    // perPage: alias("parent.perPage")
+    // infinite: true,
+  // }),
 
-  totalPages: computed.oneWay("pagedContent.totalPages"),
-
+  // totalPages: computed.oneWay("pagedContent.totalPages"),
+  
   actions: {
     beamSelection: function(beamId) {
       this.transitionToRoute("beams.beam", beamId);
@@ -54,5 +57,8 @@ export default Controller.extend({
     emptyTagList: function(){
       this.tagList.emptyTagList();
     },
+    // loadNext: function() {
+    //   this.get('beamsRes').loadNextPage();
+    // }
   }
 });
