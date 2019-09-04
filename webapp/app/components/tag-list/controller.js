@@ -1,5 +1,5 @@
 import Controller from '@ember/controller';
-import {BeamFilter} from '../../utils/beam_filter'
+import {BeamFilter} from '../../utils/beam_filter';
 
 export default Controller.extend({
     init(){

@@ -1,8 +1,6 @@
 import Controller from '@ember/controller';
 import { observer, computed } from '@ember/object';
 import { BeamFilter } from '../utils/beam_filter';
-import pagedArray from 'ember-cli-pagination/computed/paged-array';
-import { alias } from '@ember/object/computed';
 
 export default Controller.extend({
   tag: "",
@@ -32,14 +30,6 @@ export default Controller.extend({
     return this.get('tagList.tags.length');
   }),
 
-  // pagedContent: pagedArray('sortedModel', {
-    // page: alias("parent.page"),
-    // perPage: alias("parent.perPage")
-    // infinite: true,
-  // }),
-
-  // totalPages: computed.oneWay("pagedContent.totalPages"),
-  
   actions: {
     beamSelection: function(beamId) {
       this.transitionToRoute("beams.beam", beamId);
@@ -57,8 +47,8 @@ export default Controller.extend({
     emptyTagList: function(){
       this.tagList.emptyTagList();
     },
-    // loadNext: function() {
-    //   this.get('beamsRes').loadNextPage();
-    // }
+    loadNext: function() {
+      this.get('beamsRes').loadNextPage();
+    }
   }
 });

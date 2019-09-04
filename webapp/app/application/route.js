@@ -41,7 +41,7 @@ export default Route.extend(ApplicationRouteMixin, {
     },
 
     scottyClicked: function() {
-      this.transitionTo("beams", {queryParams: {tag: null, uid: null, email: null}});
+      this.transitionTo("beams", {queryParams: {tag: null, uid: null, email: null, page: null}});
     }
   }
 });

@@ -55,13 +55,17 @@ def get(file_id):
 
 @files.route('', methods=['GET'])
 def get_all():
-    if "beam_id" not in request.args:
+    beam_id = request.args.get('beam_id', type=int)
+    if beam_id is None:
         abort(http.client.BAD_REQUEST)
+        
+    # if "beam_id" not in request.args:
+    #     abort(http.client.BAD_REQUEST)
 
-    try:
-        beam_id = request.args['beam_id']
-    except ValueError:
-        abort(http.client.BAD_REQUEST)
+    # try:
+    #     beam_id = request.args['beam_id']
+    # except ValueError:
+    #     abort(http.client.BAD_REQUEST)
 
     query = db.session.query(File).filter_by(beam_id=beam_id)
 

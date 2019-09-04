@@ -7,9 +7,9 @@ export default Route.extend(RouteMixin, {
     tag: {refreshModel: true},
     email: {refreshModel: true},
     uid: {refreshModel: true},
-    page: {refreshModel: false}
+    page: {refreshModel: false},
   },
-  perPage: 5,
+  perPage: 9,
 
   periodicRefresh: task(function * () {
     for (;;) {
@@ -18,7 +18,7 @@ export default Route.extend(RouteMixin, {
     }
   }).on("activate").cancelOn('deactivate').drop(),
 
-  model: function(params) {
+  model(params) {
     let query_params = { page: params.page };
 
     if (params.tag) {
@@ -28,16 +28,16 @@ export default Route.extend(RouteMixin, {
     } else if (params.uid) {
       query_params.uid = params.uid;
     }
-    // query_params.paramMapping = {page: "page"};
-
-    // let beams = this.store.query("beam", query_params);
-    let beams =  this.findPaged('beam', query_params);
-    console.log(beams);
-    return beams;
-
-    // return Ember.RSVP.hash({
-    //   beams: this.findPaged('beam', queryParams)
-    // });
+    return this.findPaged('beam', query_params).then(
+      (beams) => {
+        return beams;
+      },
+      (e) => {
+        if (e.errors.any(e => e.detail === 'Not Found')) {
+          return this.replaceWith('index');
+        }
+      }
+    )
   },
 
   afterModel(model) {

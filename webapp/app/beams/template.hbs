@@ -13,7 +13,7 @@
   </div>
   <div class="beam-list">
     {{#if this.beamsRes}}
-      {{beam-list beams=this.beamsRes page=this.meta.page totalPages=this.meta.total_pages selectedId=selectedId onSelection=(action "beamSelection")}}
+      {{beam-list beams=this.beamsRes blah=this page=this.meta.page totalPages=this.meta.total_pages selectedId=selectedId onSelection=(action "beamSelection")}}
     {{else}}
       <div class="item"><h3 class="no-beams">No beams to show.</h3></div>
     {{/if}}

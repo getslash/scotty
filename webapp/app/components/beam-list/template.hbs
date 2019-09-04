@@ -1,10 +1,11 @@
 
-{{page-numbers content=beams currentPage=page totalPages=totalPages showFL=true}}
+{{page-numbers content=beams blah=blah currentPage=page totalPages=totalPages click=(action 'paramsChange' blah)}}
 {{#each beams as |beam|}}
   <div class="{{if (not-eq beam beams.lastObject) "spaced-item"}} item beam {{if (eq selectedId beam.id) "selected-beam" "unselected-beam"}}" onclick="" {{action "beamClick" beam.id}}>
     <div class="container">
       <div class="row">
         <div class="col-md-7">
+          {{#beam-detail }}{{beam.id}}{{/beam-detail}}
           {{#beam-detail icon="fa-user"}}{{beam.initiator.displayName}}{{/beam-detail}}
           {{#beam-detail icon="fa-desktop"}}{{partial-host beam.host}}{{/beam-detail}}
           {{#if model.type}}
