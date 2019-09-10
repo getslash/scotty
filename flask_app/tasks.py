@@ -35,7 +35,7 @@ import flux
 
 from .app import create_app, needs_app_context
 from . import issue_trackers
-from .models import Beam, db, Pin, File, Tracker, Issue
+from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues
 from flask import current_app
 
 
@@ -292,13 +292,12 @@ def vacuum():
 @needs_app_context
 def refresh_issue_trackers():
     trackers = db.session.query(Tracker)
-    active_beams_ids = db.session.query(Beam.id).filter(~Beam.pending_deletion, ~Beam.deleted).distinct()
-    issues_of_active_beams = db.session.query(beam_issues.c.issue_id).filter(beam_issues.c.beam_id.in_(active_beams_ids)).distinct()    
-    active_beams_issues_query = db.session.query(Issue).filter(Issue.id.in_(issues_of_active_beams))
+    active_beams_ids = db.session.query(Beam.id).filter(~Beam.pending_deletion, ~Beam.deleted)
+    issues_of_active_beams = db.session.query(beam_issues.c.issue_id).filter(beam_issues.c.beam_id.in_(active_beams_ids)).distinct()
     for tracker in trackers:
         logger.info("Refreshing tracker {} - {} of type {}", tracker.id, tracker.url, tracker.type)
         try:
-            issues = db.session.query(Issue).filter(active_beams_issues_query.exists()).filter_by(tracker_id=tracker.id).all()
+            issues = db.session.query(Issue).filter(Issue.id.in_(issues_of_active_beams)).filter_by(tracker_id=tracker.id)
             issue_trackers.refresh(tracker, issues)
         except Exception:
             current_app.raven.captureException()
