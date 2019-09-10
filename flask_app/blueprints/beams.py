@@ -25,8 +25,8 @@ def get_all():
 
     beam_query = (
         db.session.query(Beam)
-        .options(joinedload(Beam.pins), joinedload(Beam.type), joinedload(Beam.issues))
-        .order_by(Beam.start.desc()))
+        .options(joinedload(Beam.pins), joinedload(Beam.type), joinedload(Beam.issues)))
+
     for param in request.values:
         if param == "tag":
             tags = request.values['tag']
@@ -49,7 +49,7 @@ def get_all():
     page = request.args.get('page', 1, type=int)
     
     beams_obj = [b.to_dict(current_app.config['VACUUM_THRESHOLD']) for b in \
-         beam_query.order_by(Beam.id).limit(_BEAMS_PER_PAGE).offset((page - 1) * _BEAMS_PER_PAGE)]
+         beam_query.order_by(Beam.id.desc()).limit(_BEAMS_PER_PAGE).offset((page - 1) * _BEAMS_PER_PAGE)]
 
     return jsonify({'beams': beams_obj})
 
