@@ -292,7 +292,8 @@ def vacuum():
 @needs_app_context
 def refresh_issue_trackers():
     trackers = db.session.query(Tracker)
-    issues_of_active_beams = {issue.id for beam in _get_active_beams() for issue in beam.issues}
+    active_beams_ids = db.session.query(Beam.id).filter(~Beam.pending_deletion, ~Beam.deleted).distinct()
+    issues_of_active_beams = db.session.query(beam_issues.c.issue_id).filter(beam_issues.c.beam_id.in_(active_beams_ids)).distinct()    
     active_beams_issues_query = db.session.query(Issue).filter(Issue.id.in_(issues_of_active_beams))
     for tracker in trackers:
         logger.info("Refreshing tracker {} - {} of type {}", tracker.id, tracker.url, tracker.type)
