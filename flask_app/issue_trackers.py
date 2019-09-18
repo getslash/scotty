@@ -4,10 +4,11 @@ from datetime import timedelta, timezone
 import flux
 import logbook
 
+from flask import current_app
 from jira import JIRA as JIRAAPI
 from jira.exceptions import JIRAError
 
-from .app import APP, needs_app_context
+from .app import needs_app_context
 from .models import Tracker as TrackerModel, db
 
 logger = logbook.Logger(__name__)
@@ -56,7 +57,7 @@ class JIRA(Tracker):
                 db.session.commit()
             except Exception:
                 db.session.rollback()
-                APP.raven.captureException()
+                current_app.raven.captureException()
 
         db.session.commit()
 
