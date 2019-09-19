@@ -1,6 +1,6 @@
 aiohttp==1.1.5
 alembic==0.8.4
-amqp==1.4.9
+amqp==2.5.1
 anyjson==0.3.3
 argh==0.26.1
 arrow==0.8.0
@@ -8,9 +8,9 @@ async-timeout==1.1.0
 atomicwrites==1.3.0
 attrs==19.1.0
 backports-abc==0.5
-billiard==3.3.0.22
+billiard==3.6.0
 blinker==1.4
-celery==3.1.20
+celery==4.3.0
 certifi==2019.6.16
 chardet==3.0.4
 click==6.6
@@ -46,7 +46,7 @@ Jinja2==2.8
 jira==2.0.0
 jsonschema==2.5.1
 kaptan==0.5.8
-kombu==3.0.33
+kombu==4.4.0
 libtmux==0.6.0
 livereload==2.5.0
 Logbook==0.12.5
