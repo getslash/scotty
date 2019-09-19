@@ -11,9 +11,7 @@ from pathlib import Path
 import subprocess
 
 from _lib.bootstrapping import bootstrap_env, from_project_root, requires_env, from_env_bin
-from _lib.ansible import ensure_ansible
-bootstrap_env(["base"])
-
+bootstrap_env()
 
 from _lib.params import APP_NAME
 from _lib.frontend import frontend, ember

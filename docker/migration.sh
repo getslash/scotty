@@ -26,7 +26,8 @@ as_root 'apt-get update'
 as_root 'apt-get install -y docker-ce docker-ce-cli containerd.io'
 
 echo -------- Install docker-compose --------
-as_root 'which docker-compose || pip install -U docker-compose'
+as_root 'which docker-compose || poetry add docker-compose'
+as_root 'poetry install'
 
 echo  -------- Archiving old source --------
 as_scotty "(test -d /opt/scotty/src && (mv /opt/scotty/src /opt/scotty/_old_src)) || true"

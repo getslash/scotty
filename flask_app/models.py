@@ -1,7 +1,8 @@
 import json
 from datetime import datetime, time
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.security import UserMixin, RoleMixin
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
+from flask_security import RoleMixin
 from sqlalchemy.orm import backref
 import flux
 

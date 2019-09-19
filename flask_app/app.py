@@ -6,8 +6,8 @@ import logging
 import logbook
 from logbook.compat import redirect_logging
 import flask
-from flask.ext.security import Security  # pylint: disable=import-error
-from flask.ext.mail import Mail  # pylint: disable=import-error
+from flask_security import Security  # pylint: disable=import-error
+from flask_mail import Mail  # pylint: disable=import-error
 from paramiko.ssh_exception import SSHException
 from jira import JIRAError
 import raven

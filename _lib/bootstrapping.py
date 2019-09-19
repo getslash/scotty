@@ -3,11 +3,11 @@ import os
 import subprocess
 import sys
 
-PYTHON_INTERPRETER = "python3.6"
+PYTHON_INTERPRETER = "python3.7"
 _PREVENT_FORK_MARKER = 'WEBER_PREVENT_FORK'
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-_ENV_DIR = os.environ.get("VIRTUALENV_PATH", os.path.join(_PROJECT_ROOT, ".env"))
+_ENV_DIR = os.environ.get("VIRTUALENV_PATH", os.path.join(_PROJECT_ROOT, ".venv"))
 
 from_project_root = functools.partial(os.path.join, _PROJECT_ROOT)
 from_env = functools.partial(os.path.join, _ENV_DIR)
@@ -34,12 +34,10 @@ def which(bin):
 
 
 def bootstrap_env(deps=("base",)):
-    interpreter = which(PYTHON_INTERPRETER)
-    if not os.path.exists(from_env_bin("python")):
-        subprocess.check_call("{} -m virtualenv {}".format(interpreter, _ENV_DIR), shell=True)
+    cmd = "poetry install"
+    if "develop" not in deps:
+        cmd += ' --no-dev'
     
-    cmd = "{env}/bin/pip install -r {requirements_path}".format(env=_ENV_DIR,
-                                                                requirements_path=os.path.join(_PROJECT_ROOT, 'deps', 'requirements.txt'))
     subprocess.check_call(cmd, shell=True)
 
     python = os.path.abspath(os.path.join(_ENV_DIR, "bin", "python"))

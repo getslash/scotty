@@ -11,7 +11,7 @@ services:
         "-timeout", "60s",
         "-wait", "tcp://db:5432",
         "-wait", "tcp://redis:6379",
-        ".env/bin/python", "manage.py", "docker-start"
+        ".venv/bin/python", "manage.py", "docker-start"
         ]
     volumes:
       - "/opt/scotty/conf.d:/conf"
@@ -49,7 +49,7 @@ services:
               "-timeout", "300s",
               "-wait", "http://webapp:8000/beams",
               "-stdout", "/var/log/nginx/access.log", "-stderr", "/var/log/nginx/error.log",
-              ".env/bin/python", "manage.py", "docker-nginx-start"]
+              ".venv/bin/python", "manage.py", "docker-nginx-start"]
     ports:
       - "80:80"
 
@@ -59,7 +59,7 @@ services:
                 "-timeout", "300s",
                 "-wait", "tcp://redis:6379",
                 "-wait", "tcp://db:5432",
-                ".env/bin/celery", "-A" ,"flask_app.tasks", "worker", "--loglevel=info",
+                ".venv/bin/celery", "-A" ,"flask_app.tasks", "worker", "--loglevel=info",
                 "-Q", "celery", "--concurrency", "20", "-Ofair"]
       volumes:
         - "/opt/scotty/conf.d:/conf"
@@ -99,7 +99,7 @@ services:
               "-timeout", "300s",
               "-wait", "tcp://redis:6379",
               "-wait", "tcp://db:5432",
-              ".env/bin/celery", "-A" ,"flask_app.tasks", "beat", "--loglevel=info"]
+              ".venv/bin/celery", "-A" ,"flask_app.tasks", "beat", "--loglevel=info"]
     environment:
       - SCOTTY_REDIS_SERVER=redis
       - SQLALCHEMY_DATABASE_URI=postgresql://scotty@db/scotty
