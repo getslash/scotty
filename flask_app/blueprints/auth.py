@@ -6,8 +6,8 @@ from oauth2client.client import flow_from_clientsecrets
 from apiclient.discovery import build
 from itsdangerous import TimedSerializer, BadSignature
 from flask import request, jsonify, Blueprint, current_app, abort
-from flask.ext.security import SQLAlchemyUserDatastore
-from flask.ext.login import login_user, logout_user, current_user
+from flask_security import SQLAlchemyUserDatastore
+from flask_login import login_user, logout_user, current_user
 from ..models import Role, User, db
 
 
