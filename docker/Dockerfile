@@ -14,14 +14,10 @@ RUN cd ./frontend/ && node_modules/.bin/ember build --environment production
 
 FROM python:3.7
 
+# nginx
 RUN apt-get update && apt-get -y install build-essential rsync software-properties-common libpq-dev nginx curl redis-server gcc sudo uuid-runtime squashfs-tools libxslt-dev libxml2-dev sshpass libsasl2-dev libldap2-dev git
 
-# nginx
-RUN add-apt-repository ppa:chris-lea/nginx-devel -y
-
-RUN cd ../
-ADD ./manage.py ./src/
-ADD ./pyproject.toml ./src/pyproject.toml
+ADD ./pyproject.toml ./src/
 RUN pip install poetry
 RUN poetry config settings.virtualenvs.in-project true
 RUN cd ./src && poetry install
@@ -33,9 +29,9 @@ RUN curl -L https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VE
 VOLUME /conf
 VOLUME /uploads
 
+ADD ./manage.py ./src/
 ADD ./etc ./src/etc
 ADD ./_lib ./src/_lib
-ADD ./deps/ ./src/deps
 ADD ./flask_app ./src/flask_app
 ADD ./migrations ./src/migrations
 
