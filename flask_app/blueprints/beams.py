@@ -5,7 +5,8 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from paramiko.ssh_exception import SSHException
 from flux import current_timeline
-from flask import Blueprint, abort, request, current_app, jsonify
+from flask import Blueprint, abort, request, current_app, jsonify, Response
+from typing import Union, Tuple
 from .auth import require_user, get_or_create_user, InvalidEmail
 from ..models import Beam, db, User, Pin, Tag, BeamType, Issue, Key
 from .utils import validate_schema, is_valid_hostname
@@ -19,7 +20,7 @@ beams = Blueprint("beams", __name__, template_folder="templates")
 _BEAMS_PER_PAGE = 50
 _ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email', 'page']
 @beams.route('', methods=['GET'], strict_slashes=False)
-def get_all():
+def get_all() -> Response:
     if any({param not in _ALLOWED_PARAMS for param in request.values}):    
         abort(http.client.BAD_REQUEST)
 
@@ -76,7 +77,7 @@ def get_all():
     },
     'required': ['beam']
 })
-def create(user):
+def create(user: User) -> Union[Response, Tuple[str, int]]:
     ssh_key = None
     if request.json['beam']['auth_method'] == 'rsa':
         try:
@@ -143,7 +144,7 @@ def create(user):
 
 
 @beams.route('/<int:beam_id>', methods=['GET'])
-def get(beam_id):
+def get(beam_id: int) -> Union[Response, Tuple[str, int]]:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
         return "No such beam", http.client.NOT_FOUND
@@ -161,7 +162,7 @@ def get(beam_id):
         'comment': {'type': ['string', 'null']}
     },
 })
-def update(beam_id):
+def update(beam_id: int) -> str:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if beam.pending_deletion or beam.deleted:
         abort(http.client.FORBIDDEN)
@@ -197,7 +198,7 @@ def update(beam_id):
 
 
 @beams.route('/<int:beam_id>/tags/<path:tag>', methods=['POST'])
-def put_tag(beam_id, tag):
+def put_tag(beam_id: int, tag: str) -> str:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
         abort(http.client.NOT_FOUND)
@@ -212,7 +213,7 @@ def put_tag(beam_id, tag):
 
 
 @beams.route('/<int:beam_id>/tags/<path:tag>', methods=['DELETE'])
-def remove_tag(beam_id, tag):
+def remove_tag(beam_id: int, tag: str) -> str:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
         abort(http.client.NOT_FOUND)
@@ -225,7 +226,7 @@ def remove_tag(beam_id, tag):
 
 
 @beams.route('/<int:beam_id>/issues/<int:issue_id>', methods=['POST', 'DELETE'])
-def set_issue_association(beam_id, issue_id):
+def set_issue_association(beam_id: int, issue_id: int) -> str:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
         abort(http.client.NOT_FOUND)

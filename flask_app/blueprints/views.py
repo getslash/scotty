@@ -3,15 +3,15 @@ import http.client
 import logbook
 import psutil
 from sqlalchemy.sql import func
-from flask import Blueprint, current_app, send_from_directory, jsonify, request, redirect, abort, send_file
-from ..models import Beam, db, Pin, Tag
+from flask import Blueprint, current_app, send_from_directory, jsonify, request, redirect, abort, send_file, Response
+from ..models import Beam, db, Pin, Tag, User
 from .auth import require_user
 from .utils import validate_schema
 
 views = Blueprint("views", __name__, template_folder="templates")
 
 @views.route('/tags')
-def get_tags():
+def get_tags() -> Response:
     tags = (
         db.session.query(Tag.tag, func.count(Tag.beam_id))
         .filter(Tag.beam.has(None, deleted=False))
@@ -30,7 +30,7 @@ def get_tags():
     },
     'required': ['beam_id', 'should_pin']
 })
-def update_pin(user):
+def update_pin(user: User) -> str:
     beam = db.session.query(Beam).filter_by(id=int(request.json['beam_id'])).first()
     if not beam:
         abort(http.client.NOT_FOUND)
@@ -48,7 +48,7 @@ def update_pin(user):
 
 
 @views.route("/info")
-def info():
+def info() -> Response:
     return jsonify({
         'version': current_app.config['APP_VERSION'],
         'transporter': current_app.config['TRANSPORTER_HOST']
@@ -56,7 +56,7 @@ def info():
 
 
 @views.route("/summary")
-def summary():
+def summary() -> Response:
     disk_usage = psutil.disk_usage(current_app.config['STORAGE_PATH'])
     return jsonify({
         "total_space": disk_usage.total,
@@ -66,5 +66,5 @@ def summary():
 
 
 @views.route("/combadge")
-def get_combadge():
+def get_combadge() -> Response:
     return send_file("../webapp/dist/assets/combadge.py")

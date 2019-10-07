@@ -30,6 +30,7 @@ from raven.contrib.celery import register_signal
 
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import exists
+from typing import Any
 
 import flux
 
@@ -69,7 +70,7 @@ queue.conf.update(
     },
     CELERY_TIMEZONE='UTC'
 )
-def setup_log(**args):
+def setup_log(**args: Any) -> None:
     logbook.StreamHandler(sys.stdout, bubble=True).push_application()
 
 
@@ -83,7 +84,7 @@ def testing_method(f):
     return wrapper
 
 
-def create_key(s):
+def create_key(s: str) -> str:
     f = StringIO()
     f.write(s)
     f.seek(0)
@@ -107,7 +108,7 @@ Sincerely yours,<br/>
 Montgomery Scott
 """
 
-def _upload_combadge(ssh_client):
+def _upload_combadge(ssh_client: SSHClient) -> str:
     _, stdout, stderr = ssh_client.exec_command("mktemp /tmp/combadge.XXX")
     retcode = stdout.channel.recv_exit_status()
     if retcode != 0:
@@ -136,7 +137,7 @@ def _get_active_beams():
 
 @queue.task
 @needs_app_context
-def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
+def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method: str, pkey: str, password: str) -> None:
     beam = db.session.query(Beam).filter_by(id=beam_id).one()
     try:
         delay = flux.current_timeline.datetime.utcnow() - beam.start
@@ -179,7 +180,7 @@ def beam_up(beam_id, host, directory, username, auth_method, pkey, password):
             raise
 
 
-def vacuum_beam(beam, storage_path):
+def vacuum_beam(beam: Beam, storage_path: str) -> None:
     logger.info("Vacuuming {}".format(beam.id))
     for f in beam.files:
         if not f.storage_name:
@@ -197,7 +198,7 @@ def vacuum_beam(beam, storage_path):
 
 @queue.task
 @needs_app_context
-def mark_timeout():
+def mark_timeout() -> None:
     timeout = timedelta(seconds=current_app.config['COMBADGE_CONTACT_TIMEOUT'])
     timed_out = flux.current_timeline.datetime.utcnow() - timeout
     dead_beams = (
@@ -214,7 +215,7 @@ def mark_timeout():
 _THRESHOLD_VALUES = ['SMTP', 'SMTP_FROM', 'BASE_URL']
 @queue.task
 @needs_app_context
-def remind_pinned():
+def remind_pinned() -> None:
     if current_app.config.get('PIN_REMIND_THRESHOLD') is None:
         logger.info("Sending email reminders is disabled for this instance")
         return
@@ -226,10 +227,10 @@ def remind_pinned():
             return
 
     remind_time = flux.current_timeline.datetime.utcnow() - timedelta(days=current_app.config['PIN_REMIND_THRESHOLD'])
-    emails = defaultdict(list)
+    emails: defaultdict = defaultdict(list)
     pins = (db.session.query(Pin)
-            .join(Pin.beam)
-            .options(joinedload(Pin.user), joinedload(Pin.beam))
+            .join(Pin.beam_id)
+            .options(joinedload(Pin.user_id), joinedload(Pin.beam_id))
             .filter(Beam.start <= remind_time))
     for pin in pins:
         emails[pin.user.email].append(pin.beam_id)
@@ -250,7 +251,7 @@ def remind_pinned():
 
 @queue.task
 @needs_app_context
-def vacuum():
+def vacuum() -> None:
     now = flux.current_timeline.datetime.utcnow()
     logger.info("Vacuum intiated")
 
@@ -290,7 +291,7 @@ def vacuum():
 
 @queue.task
 @needs_app_context
-def refresh_issue_trackers():
+def refresh_issue_trackers() -> None:
     trackers = db.session.query(Tracker)
     active_beams_ids = db.session.query(Beam.id).filter(~Beam.pending_deletion, ~Beam.deleted)
     issues_of_active_beams = db.session.query(beam_issues.c.issue_id).filter(beam_issues.c.beam_id.in_(active_beams_ids)).distinct()
@@ -307,7 +308,7 @@ def refresh_issue_trackers():
 
 @queue.task
 @needs_app_context
-def nightly():
+def nightly() -> None:
     try:
         refresh_issue_trackers()
     except Exception:
@@ -318,7 +319,7 @@ def nightly():
 
 @queue.task
 @needs_app_context
-def vacuum_check():
+def vacuum_check() -> None:
     storage_path = current_app.config['STORAGE_PATH']
     deleted_beams = db.session.query(Beam).filter(Beam.deleted == True)
     for beam in deleted_beams:
@@ -331,13 +332,13 @@ def vacuum_check():
             os.unlink(full_path)
 
 
-def _checksum(path):
+def _checksum(path: str) -> str:
     return subprocess.check_output([current_app.config['SHA512SUM'], path]).decode("utf-8").split(" ")[0]
 
 
 @queue.task
 @needs_app_context
-def validate_checksum():
+def validate_checksum() -> None:
     storage_path = current_app.config['STORAGE_PATH']
 
     files = File.query.join(Beam).filter(
@@ -359,7 +360,7 @@ def validate_checksum():
 
 @queue.task
 @needs_app_context
-def scrub():
+def scrub() -> None:
     logger.info("Scrubbing intiated")
     errors = []
 
@@ -412,7 +413,7 @@ def scrub():
 
 @queue.task
 @needs_app_context
-def check_free_space():
+def check_free_space() -> None:
     if 'FREE_SPACE_THRESHOLD' not in current_app.config:
         logger.info("Free space checking is disabled as FREE_SPACE_THRESHOLD is not defined")
         return
@@ -425,14 +426,14 @@ def check_free_space():
 @queue.task
 @needs_app_context
 @testing_method
-def sleep(t):
+def sleep(t: int) -> None:
     flux.current_timeline.set_time_factor(0)
     flux.current_timeline.sleep(t)
     nightly()
 
 
 @worker_init.connect
-def on_init(**_):
+def on_init(**_: Any) -> None:
     app = create_app()
     register_signal(app.raven.client)
 

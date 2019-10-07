@@ -1,9 +1,10 @@
 import os
 import http
-import urllib
+import urllib.parse
 import logbook
 from flux import current_timeline
-from flask import Blueprint, request, jsonify, abort, current_app
+from flask import Blueprint, request, jsonify, abort, current_app, Response
+from typing import Mapping, Union, Tuple, Optional, Any
 from .utils import validate_schema
 from ..models import db, File, Beam
 
@@ -14,7 +15,7 @@ files = Blueprint("files", __name__, template_folder="templates")
 _STRIPPED_EXTENSIONS = ["log", "json", "html", "xml", "sh", "txt", "ini", "conf",
                         "xslt", "mhtml", "pcap", "alerts_summary"]
 
-def _assure_beam_dir(beam_id):
+def _assure_beam_dir(beam_id: int) -> str:
     dir_name = str(beam_id % 1000)
     full_path = os.path.join(current_app.config['STORAGE_PATH'], dir_name)
     if not os.path.isdir(full_path):
@@ -23,7 +24,7 @@ def _assure_beam_dir(beam_id):
     return dir_name
 
 
-def _strip_gz(storage_name):
+def _strip_gz(storage_name: str) -> str:
     if storage_name is None:
         return None
 
@@ -34,19 +35,21 @@ def _strip_gz(storage_name):
     return storage_name
 
 
-def _dictify_file(f):
-    url = (
-        "{}/file_contents/{}".format(request.host_url, urllib.parse.quote(_strip_gz(f.storage_name)))
-        if f.storage_name else None)
-
+def _dictify_file(f: File) -> Mapping[str, Optional[Any]]:   
+    url = f"{request.host_url}/file_contents/{urllib.parse.quote(_strip_gz(f.storage_name))}" if f.storage_name else None
     mtime = None if f.mtime is None else f.mtime.isoformat() + 'Z'
-    return {"id": f.id, "file_name": f.file_name, "status": f.status, "size":
-            f.size, "beam": f.beam_id,
-            "storage_name": f.storage_name, "url": url, "mtime": mtime}
+    return {"id": f.id, 
+            "file_name": f.file_name, 
+            "status": f.status, 
+            "size": f.size, 
+            "beam": f.beam_id,
+            "storage_name": f.storage_name, 
+            "url": url, 
+            "mtime": mtime}
 
 
 @files.route('/<int:file_id>', methods=['GET'])
-def get(file_id):
+def get(file_id: int) -> Union[Response, Tuple[str, int]]:
     file_rec = db.session.query(File).filter_by(id=file_id).first()
     if not file_rec:
         return "No such file", http.client.NOT_FOUND
@@ -54,7 +57,7 @@ def get(file_id):
 
 
 @files.route('', methods=['GET'])
-def get_all():
+def get_all() -> Response:
     if "beam_id" not in request.args:
         abort(http.client.BAD_REQUEST)
 
@@ -99,7 +102,7 @@ def get_all():
     },
     'required': ['beam_id', 'file_name']
 })
-def register_file():
+def register_file() -> Response:
     beam_id = request.json['beam_id']
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
@@ -142,7 +145,7 @@ def register_file():
     },
     'required': ['success']
 })
-def update_file(file_id):
+def update_file(file_id: int) -> str:
     success = request.json['success']
     size = request.json.get('size', None)
     f = db.session.query(File).filter_by(id=file_id).first()

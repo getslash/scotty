@@ -3,10 +3,24 @@ from datetime import datetime, time
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from flask_security import RoleMixin
-from sqlalchemy.orm import backref
+from sqlalchemy.orm import backref, relationship as sqlalchemy_relationship
+from typing import TYPE_CHECKING, Any
 import flux
 
 db = SQLAlchemy()
+
+if TYPE_CHECKING:
+
+    class BaseModel:
+        query: Any
+
+        def __init__(self, *args: Any, **kwargs: Any):
+            pass
+
+
+else:
+    BaseModel = db.Model
+
 
 ### Add models here
 
@@ -15,7 +29,7 @@ roles_users = db.Table('roles_users',
                        db.Column('role_id', db.Integer(), db.ForeignKey('role.id', ondelete='CASCADE')))
 
 
-class Pin(db.Model):
+class Pin(BaseModel):
     __table_args__ = (db.UniqueConstraint('beam_id', 'user_id', name='uix_pin'), )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -23,13 +37,13 @@ class Pin(db.Model):
     beam_id = db.Column(db.Integer, db.ForeignKey('beam.id'), index=True)
 
 
-class Role(db.Model, RoleMixin):
+class Role(BaseModel, RoleMixin):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
 
-class User(db.Model, UserMixin):
+class User(BaseModel, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, index=True)
     name = db.Column(db.String(255))
@@ -43,7 +57,7 @@ class User(db.Model, UserMixin):
         return self.email == "anonymous@getslash.github.io"
 
 
-class Tracker(db.Model):
+class Tracker(BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, index=True, unique=True)
     type = db.Column(db.String, nullable=False)
@@ -66,7 +80,7 @@ class Tracker(db.Model):
             return ''
 
 
-class Issue(db.Model):
+class Issue(BaseModel):
     __table_args__ = (db.UniqueConstraint('tracker_id', 'id_in_tracker', name='uix_unique_issue'), )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -91,7 +105,7 @@ beam_issues = db.Table('beam_issues',
                        db.Column('issue_id', db.Integer(), db.ForeignKey('issue.id', ondelete='CASCADE')))
 
 
-class Beam(db.Model):
+class Beam(BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     start = db.Column(db.DateTime, index=True)
     size = db.Column(db.BigInteger)
@@ -109,6 +123,7 @@ class Beam(db.Model):
     files = db.relationship("File", backref=backref("beam", lazy="joined"))
     pins = db.relationship("Pin", backref="beam")
     issues = db.relationship('Issue', secondary=beam_issues)
+    tags: sqlalchemy_relationship
 
     def get_purge_time(self, default_threshold):
         if not self.completed:
@@ -150,13 +165,13 @@ class Beam(db.Model):
         return "<Beam(id='%s')>" % (self.id, )
 
 
-class BeamType(db.Model):
+class BeamType(BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, index=True, unique=True, nullable=False)
     vacuum_threshold = db.Column(db.Integer, nullable=False)
 
 
-class Tag(db.Model):
+class Tag(BaseModel):
     __table_args__ = (db.UniqueConstraint('beam_id', 'tag', name='uix_beam_tag'), )
 
     def __init__(self, *, tag, **kwargs):
@@ -169,7 +184,7 @@ class Tag(db.Model):
     tag = db.Column(db.String, index=True)
 
 
-class File(db.Model):
+class File(BaseModel):
     __table_args__ = (db.UniqueConstraint('beam_id', 'file_name', name='uix_1'), )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -186,7 +201,7 @@ class File(db.Model):
         return "<File(id='%s', name='%s', beam='%s')>" % (self.id, self.file_name, self.beam_id)
 
 
-class Key(db.Model):
+class Key(BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String, nullable=False, unique=True)
     key = db.Column(db.String, nullable=False)

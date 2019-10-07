@@ -1,6 +1,8 @@
 matrix:
   include:
     - language: python
+      env:
+        - MYPYPATH=stubs
       python: 3.7
       cache:
         - poetry
@@ -8,6 +10,7 @@ matrix:
         - pip install poetry
       script:
         - poetry install
+        - mypy flask_app/
 
     - language: node_js
       node_js:

@@ -1,5 +1,6 @@
 import http.client
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
+from typing import Union
 from .utils import validate_schema
 from ..models import db, Key
 
@@ -21,7 +22,7 @@ keys = Blueprint("keys", __name__, template_folder="templates")
     },
     'required': ['key']
 })
-def post():
+def post() -> Union[str, int]:
     obj = request.json['key']
     if not obj["description"]:
         return http.client.BAD_REQUEST
@@ -34,5 +35,5 @@ def post():
 
 
 @keys.route('', methods=['GET'], strict_slashes=False)
-def get_all():
+def get_all() -> Response:
     return jsonify({'keys': [k.to_dict() for k in db.session.query(Key)]})
