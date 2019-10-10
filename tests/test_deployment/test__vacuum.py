@@ -186,10 +186,11 @@ def test_faulty_tracker(scotty, issue, server_config, faulty_tracker, beam_facto
     scotty.check_if_beam_deleted(beam_with_issue, True)
 
 
-def test_multiple_issues_and_multiple_beams(local_beam_dir, scotty, server_config, long_term_beam, issue_factory):
+@pytest.mark.parametrize("combadge_version", ['v1', 'v2'])
+def test_multiple_issues_and_multiple_beams(local_beam_dir, scotty, server_config, long_term_beam, issue_factory, combadge_version):
     vacuum_threshold = server_config['VACUUM_THRESHOLD']
-    beam1 = scotty.get_beam(scotty.beam_up(local_beam_dir))
-    beam2 = scotty.get_beam(scotty.beam_up(local_beam_dir))
+    beam1 = scotty.get_beam(scotty.beam_up(local_beam_dir, combadge_version=combadge_version))
+    beam2 = scotty.get_beam(scotty.beam_up(local_beam_dir, combadge_version=combadge_version))
     states = {beam1: False, beam2: False}
     issue1 = issue_factory.get()
     issue2 = issue_factory.get()

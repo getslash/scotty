@@ -12,10 +12,10 @@ from requests.exceptions import HTTPError
 def test_sanity(scotty):
     scotty.sanity_check()
 
-
-def test_forbid_root_beam(scotty):
+@pytest.mark.parametrize("combadge_version", ['v1', 'v2'])
+def test_forbid_root_beam(scotty, combadge_version):
     with pytest.raises(HTTPError) as e:
-        scotty.beam_up("/")
+        scotty.beam_up("/", combadge_version=combadge_version)
 
     assert e._excinfo[1].response.status_code == http.client.CONFLICT
 

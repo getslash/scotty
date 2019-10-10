@@ -197,7 +197,7 @@ def issue_factory(tracker):
 def beam_factory(scotty, local_beam_dir):
     class BeamFactory:
         def get(self):
-            beam_data = scotty.beam_up(local_beam_dir)
+            beam_data = scotty.beam_up(local_beam_dir, combadge_version='v1')
             beam = scotty.get_beam(beam_data)
             return beam
     return BeamFactory()

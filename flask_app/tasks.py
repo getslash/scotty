@@ -90,8 +90,12 @@ def create_key(s: str) -> str:
     f.seek(0)
     return RSAKey.from_private_key(file_obj=f, password=None)
 
-with open(os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge.py"), "rb") as combadge:
-    _COMBADGE = combadge.read()
+COMBADGE_PATH_V1 = os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge.py")
+COMBADGE_PATH_V2 = os.path.join(os.path.dirname(__file__), "..", "combadge", "target", "x86_64-unknown-linux-musl", "release", "combadge")
+with open(COMBADGE_PATH_V1, "rb") as combadge_v1:
+    _COMBADGE_V1 = combadge_v1.read()
+with open(COMBADGE_PATH_V2, "rb") as combadge_v2:
+    _COMBADGE_V2 = combadge_v2.read()
 
 
 _REMINDER = """Hello Captain,<br/><br/>
@@ -108,7 +112,14 @@ Sincerely yours,<br/>
 Montgomery Scott
 """
 
-def _upload_combadge(ssh_client: SSHClient) -> str:
+def _get_combadge_by_version(combadge_version: str) -> bytes:
+    return {
+        "v1": _COMBADGE_V1,
+        "v2": _COMBADGE_V2,
+    }[combadge_version]
+
+
+def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
     _, stdout, stderr = ssh_client.exec_command("mktemp /tmp/combadge.XXX")
     retcode = stdout.channel.recv_exit_status()
     if retcode != 0:
@@ -116,9 +127,9 @@ def _upload_combadge(ssh_client: SSHClient) -> str:
 
     combadge_path = stdout.read().decode("utf-8").strip()
 
-    stdin, stdout, stderr = ssh_client.exec_command(
-        "sh -c \"cat > {combadge_path} && chmod +x {combadge_path}\"".format(combadge_path=combadge_path))
-    stdin.write(_COMBADGE)
+    stdin, stdout, stderr = ssh_client.exec_command(f"sh -c \"cat > {combadge_path} && chmod +x {combadge_path}\"")
+    combadge = _get_combadge_by_version(combadge_version)
+    stdin.write(combadge)
     stdin.channel.shutdown_write()
     retcode = stdout.channel.recv_exit_status()
     if retcode != 0:
@@ -137,7 +148,7 @@ def _get_active_beams():
 
 @queue.task
 @needs_app_context
-def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method: str, pkey: str, password: str) -> None:
+def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method: str, pkey: str, password: str, combadge_version: str) -> None:
     beam = db.session.query(Beam).filter_by(id=beam_id).one()
     try:
         delay = flux.current_timeline.datetime.utcnow() - beam.start
@@ -146,8 +157,7 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
                 "Beam took too long to start", extra={'beam_id': beam.id, 'delay': str(delay)}, level="info")
 
         transporter = current_app.config.get('TRANSPORTER_HOST', 'scotty')
-        logger.info('Beaming up {}@{}:{} ({}) to transporter {}. Auth method: {}'.format(
-            username, host, directory, beam_id, transporter, auth_method))
+        logger.info(f'Beaming up {username}@{host}:{directory} ({beam_id}) to transporter {transporter}. Auth method: {auth_method}')
         ssh_client = SSHClient()
         ssh_client.set_missing_host_key_policy(AutoAddPolicy())
 
@@ -160,17 +170,21 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
             raise Exception('Invalid auth method')
 
         ssh_client.connect(host, **kwargs)
-        logger.info('{}: Connected to {}. Uploading combadge'.format(beam_id, host))
+        logger.info(f'{beam_id}: Connected to {host}. Uploading combadge version: {combadge_version}')
 
-        combadge_path = _upload_combadge(ssh_client)
+        combadge_path = _upload_combadge(ssh_client, combadge_version)
 
-        logger.info('{}: Running combadge at {}'.format(beam_id, combadge_path))
-        _, stdout, stderr = ssh_client.exec_command(f'{combadge_path} {str(beam_id)} "{directory}" "{transporter}"')
+        logger.info(f'{beam_id}: Running combadge at {combadge_path}')
+        combadge_command = {
+            'v1': f'{combadge_path} {str(beam_id)} "{directory}" "{transporter}"',
+            'v2': f'{combadge_path} -b {str(beam_id)} -p {directory} -t {transporter}'
+        }[combadge_version]
+        _, stdout, stderr = ssh_client.exec_command(combadge_command)
         retcode = stdout.channel.recv_exit_status()
         if retcode != 0:
             raise Exception(stderr.read().decode("utf-8"))
 
-        logger.info('{}: Detached from combadge'.format(beam_id))
+        logger.info(f'{beam_id}: Detached from combadge')
     except Exception as e:
         beam.error = str(e)
         beam.completed = True
