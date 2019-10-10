@@ -14,9 +14,10 @@ import logging.handlers
 import logbook
 
 import paramiko
-from paramiko import SSHClient
+from paramiko import SSHClient, SFTPClient
 from paramiko.client import AutoAddPolicy
 from paramiko.rsakey import RSAKey
+from pathlib import PureWindowsPath
 
 from jinja2 import Template
 import psutil
@@ -33,11 +34,16 @@ from sqlalchemy.sql import exists
 from typing import Any
 
 import flux
+import random
+import requests
+import subprocess
+import stat
+import string
 
 from .app import create_app, needs_app_context
 from . import issue_trackers
 from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues
-from .paths import get_combadge_path
+from .paths import get_combadge_path, COMBADGE_ASSETS_DIR
 from flask import current_app
 
 
@@ -91,10 +97,6 @@ def create_key(s: str) -> str:
     f.seek(0)
     return RSAKey.from_private_key(file_obj=f, password=None)
 
-with open(get_combadge_path('v1'), "rb") as combadge_v1:
-    _COMBADGE_V1 = combadge_v1.read()
-with open(get_combadge_path('v2'), "rb") as combadge_v2:
-    _COMBADGE_V2 = combadge_v2.read()
 
 
 _REMINDER = """Hello Captain,<br/><br/>
@@ -111,30 +113,35 @@ Sincerely yours,<br/>
 Montgomery Scott
 """
 
-def _get_combadge_by_version(combadge_version: str) -> bytes:
-    return {
-        "v1": _COMBADGE_V1,
-        "v2": _COMBADGE_V2,
-    }[combadge_version]
+def _get_os_type(ssh_client: SSHClient) -> str:
+    _, stdout, stderr = ssh_client.exec_command("uname")
+    retcode = stdout.channel.recv_exit_status()
+    if retcode != 0:
+        return 'windows'
+    return stdout.read().decode("utf-8").strip().lower()
+
+
+def _generate_random_combadge_name(stringLength: int) -> str:
+    random_string = ''.join(random.choice(string.ascii_lowercase) for i in range(stringLength))
+    return f"combadge_{random_string}"
 
 
 def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
-    _, stdout, stderr = ssh_client.exec_command("mktemp /tmp/combadge.XXX")
-    retcode = stdout.channel.recv_exit_status()
-    if retcode != 0:
-        raise Exception(stderr.read().decode("utf-8"))
+    os_type = _get_os_type(ssh_client)
+    combadge_name = _generate_random_combadge_name(stringLength=10)
+    combadge_type_identifier = combadge_version if combadge_version == 'v1' else os_type
+    is_nt = combadge_type_identifier == 'windows'
+    local_combadge_path = get_combadge_path(combadge_type_identifier)
+    remote_combadge_path = str(PureWindowsPath(os.path.join('C:', 'tmp', f'{combadge_name}.exe'))) if is_nt else os.path.join('/tmp', combadge_name)
+    logger.debug(f"combadge path: {remote_combadge_path}")
 
-    combadge_path = stdout.read().decode("utf-8").strip()
+    with SFTPClient.from_transport(ssh_client.get_transport()) as sftp:
+        sftp.put(local_combadge_path, remote_combadge_path)
+        if not is_nt:
+            combadge_st = os.stat(local_combadge_path)
+            sftp.chmod(remote_combadge_path, combadge_st.st_mode | stat.S_IEXEC)
 
-    stdin, stdout, stderr = ssh_client.exec_command(f"sh -c \"cat > {combadge_path} && chmod +x {combadge_path}\"")
-    combadge = _get_combadge_by_version(combadge_version)
-    stdin.write(combadge)
-    stdin.channel.shutdown_write()
-    retcode = stdout.channel.recv_exit_status()
-    if retcode != 0:
-        raise Exception(stderr.read().decode("utf-8"))
-
-    return combadge_path
+    return remote_combadge_path
 
 
 def _get_active_beams():
@@ -149,6 +156,7 @@ def _get_active_beams():
 @needs_app_context
 def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method: str, pkey: str, password: str, combadge_version: str) -> None:
     beam = db.session.query(Beam).filter_by(id=beam_id).one()
+    combadge_version = combadge_version or 'v1'
     try:
         delay = flux.current_timeline.datetime.utcnow() - beam.start
         if delay.total_seconds() > 10:

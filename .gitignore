@@ -13,6 +13,9 @@ sdist
 develop-eggs
 .installed.cfg
 
+# Assets
+combadge_assets/*
+
 # Installer logs
 pip-log.txt
 
