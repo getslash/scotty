@@ -68,6 +68,10 @@ queue.conf.update(
             'task': 'flask_app.tasks.mark_timeout',
             'schedule': timedelta(minutes=15),
         },
+        'scrub': {
+            'task': 'flask_app.tasks.scrub',
+            'schedule': crontab(hour=0, minute=0, day_of_week='sunday'),
+        },
     },
     CELERY_TIMEZONE='UTC'
 )
@@ -375,53 +379,69 @@ def validate_checksum() -> None:
 @needs_app_context
 def scrub() -> None:
     logger.info("Scrubbing intiated")
-    errors = []
-
     storage_path = current_app.config['STORAGE_PATH']
-
+    active_beams_ids = db.session.query(Beam.id).filter(~Beam.pending_deletion, ~Beam.deleted)
     expected_files = set()
-    active_beams = _get_active_beams()
-    for beam in active_beams:
+    requires_update = False
+    for beam_id in active_beams_ids:
+        beam = db.session.query(Beam).filter_by(id=beam_id).first()
+        beam_size = 0
         for beam_file in beam.files:
-            if not beam_file.storage_name and not beam_file.size:
-                errors.append("{} has no storage name and a size greated than 0".format(
-                    beam_file.id
-                ))
+            file_id = beam_file.id
+            if not beam_file.size:
+                current_app.raven.captureMessage("File has no size",
+                                                 extra={'file_id': file_id},
+                                                 level="info")
                 beam_file.size = 0
-                continue
+                requires_update = True
 
             if not beam_file.storage_name:
+                current_app.raven.captureMessage("File has no storage name",
+                                                 extra={'file_id': file_id},
+                                                 level="info")
                 continue
 
-            full_path = os.path.join(storage_path, beam_file.storage_name)
-            expected_files.add(full_path)
-            if not os.path.exists(full_path):
-                errors.append("{} ({}) does not exist".format(full_path, beam_file.id))
-                continue
+            file_path = os.path.join(storage_path, beam_file.storage_name)
+            if os.path.exists(file_path):
+                expected_files.add(file_path)
+            else:
+                current_app.raven.captureMessage("File does not exist",
+                                                 extra={'file_id': file_id,
+                                                        'file_path': file_path},
+                                                 level="info")
 
-            file_info = os.stat(full_path)
+            file_info = os.stat(file_path)
             if file_info.st_size != beam_file.size:
-                errors.append("Size of {} ({}) is {} bytes on the disk but {} bytes in the database".format(
-                    full_path, beam_file.id, file_info.st_size, beam_file.size
-            ))
+                current_app.raven.captureMessage("Wrong file size",
+                                                 extra={'file_path': file_path,
+                                                        'file_id': file_id,
+                                                        'written_size': beam_file.size,
+                                                        'actual_size': file_info.st_size},
+                                                 level="info")
                 beam_file.size = file_info.st_size
+                requires_update = True
 
-        sum_size = sum(f.size for f in beam.files if f.size is not None)
-        if beam.size != sum_size:
-            errors.append("Size of beam {} is {}, but the sum of its file sizes is {}".format(
-                beam.id, beam.size, sum_size
-            ))
-            beam.size = sum_size
+            beam_size += beam_file.size
 
+        if beam.size != beam_size:
+            current_app.raven.captureMessage("Wrong beam size",
+                                             extra={'beam_id': beam.id,
+                                                    'written_size': beam.size,
+                                                    'actual_size': beam_size},
+                                             level="info")
+
+    actual_files = set()
     for root, _, files in os.walk(storage_path):
-        for file_ in files:
-            full_path = os.path.join(root, file_)
-            if full_path not in expected_files:
-                errors.append('Unexpected files {}'.format(full_path))
+        for f in files:
+            actual_files.add(os.path.join(root, f))
+    unexpected_files = actual_files - expected_files
+    for unexpected_file in unexpected_files:
+        current_app.raven.captureMessage("Unexpected files",
+                                         extra={"unexpected_file": unexpected_file},
+                                         level="info")
 
-    if errors:
+    if requires_update:
         db.session.commit()
-        raise Exception(errors)
 
 
 @queue.task
