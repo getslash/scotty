@@ -28,26 +28,24 @@ def get_all():
         .options(joinedload(Beam.pins), joinedload(Beam.type), joinedload(Beam.issues)))
 
     for param in request.values:
+        param_values = request.values[param]
         if param == "tag":
-            tags = request.values['tag']
-            for tag in tags.split(';'):
-                beam_query = beam_query.filter(Beam.tags.any(Tag.tag == tag))
+            beam_query = beam_query.filter(Beam.tags.any(Tag.tag.in_(param_values.split(';'))))
         elif param == "pinned":
             pinned = db.session.query(distinct(Pin.beam_id))
             beam_query = beam_query.filter(Beam.id.in_(pinned))
         elif param == "uid":
             try:
-                uid = int(request.values['uid'])
+                uid = int(param_values)
             except ValueError:
                 abort(http.client.BAD_REQUEST)
             beam_query = beam_query.filter_by(initiator=uid)
         elif param == "email":
-            email = request.values['email']
-            user = db.session.query(User).filter_by(email=email).first()
+            user = db.session.query(User).filter_by(email=param_values).first()
             beam_query = beam_query.filter_by(initiator=user.id) if user else beam_query.filter(false())
-            
+
     page = request.args.get('page', 1, type=int)
-    
+
     beams_obj = [b.to_dict(current_app.config['VACUUM_THRESHOLD']) for b in \
          beam_query.order_by(Beam.id.desc()).limit(_BEAMS_PER_PAGE).offset((page - 1) * _BEAMS_PER_PAGE)]
 
