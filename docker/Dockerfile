@@ -5,7 +5,7 @@ RUN sudo chown -R rust:rust .
 RUN cd transporter && cargo build --release
 RUN cd combadge && cargo build --release
 
-FROM node:6 as frontend-builder
+FROM node:10 as frontend-builder
 # build frontend
 RUN npm install -g ember-cli
 ADD ./webapp/ ./frontend/
