@@ -2,9 +2,11 @@ import http
 from flask import Blueprint, request, jsonify, Response
 from typing import Union, Tuple
 from .utils import validate_schema
+from .types import ServerResponse, DBOperationResponse
 from ..models import db, Tracker
 
 trackers = Blueprint("trackers", __name__, template_folder="templates")
+
 
 
 @trackers.route('', methods=['POST'])
@@ -24,7 +26,7 @@ trackers = Blueprint("trackers", __name__, template_folder="templates")
     },
     'required': ['tracker']
 })
-def create() -> Union[Response, Tuple[str, int]]:
+def create() -> ServerResponse:
     tracker = request.json['tracker']
     if tracker['type'] not in ('jira', 'file', 'faulty'):
         return 'Bad tracker type', http.client.BAD_REQUEST
@@ -41,7 +43,7 @@ def create() -> Union[Response, Tuple[str, int]]:
 
 
 @trackers.route('/<int:tracker>', methods=['DELETE'])
-def delete(tracker: int) -> Union[str, Tuple[str, int]]:
+def delete(tracker: int) -> DBOperationResponse:
     tracker = db.session.query(Tracker).filter_by(id=tracker).first()
     if not tracker:
         return 'Tracker not found', http.client.NOT_FOUND
@@ -52,7 +54,7 @@ def delete(tracker: int) -> Union[str, Tuple[str, int]]:
 
 
 @trackers.route('/<int:tracker>', methods=['GET'])
-def get(tracker: int) -> Union[Response, Tuple[str, int]]:
+def get(tracker: int) -> ServerResponse:
     tracker_obj = db.session.query(Tracker).filter_by(id=tracker).first()
     if not tracker:
         return 'Tracker not found', http.client.NOT_FOUND
@@ -67,7 +69,7 @@ def get_all() -> Response:
 
 
 @trackers.route('/by_name/<tracker_name>', methods=['GET'])
-def get_by_name(tracker_name: str) -> Union[Response, Tuple[str, int]]:
+def get_by_name(tracker_name: str) -> ServerResponse:
     tracker = db.session.query(Tracker).filter_by(name=tracker_name).first()
     if not tracker:
         return 'Tracker not found', http.client.NOT_FOUND
@@ -90,7 +92,7 @@ def get_by_name(tracker_name: str) -> Union[Response, Tuple[str, int]]:
     },
     'required': ['tracker']
 })
-def update(tracker: int) -> Union[Response, Tuple[str, int]]:
+def update(tracker: int) -> ServerResponse:
     tracker_data = request.json['tracker']
     tracker_obj = db.session.query(Tracker).filter_by(id=tracker).first()
     if not tracker_obj:

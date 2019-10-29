@@ -10,8 +10,8 @@ from typing import Union, Tuple
 from .auth import require_user, get_or_create_user, InvalidEmail
 from ..models import Beam, db, User, Pin, Tag, BeamType, Issue, Key
 from .utils import validate_schema, is_valid_hostname
+from .types import ServerResponse
 from ..tasks import create_key, beam_up
-
 
 
 beams = Blueprint("beams", __name__, template_folder="templates")
@@ -21,7 +21,7 @@ _BEAMS_PER_PAGE = 50
 _ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email', 'page']
 @beams.route('', methods=['GET'], strict_slashes=False)
 def get_all() -> Response:
-    if any({param not in _ALLOWED_PARAMS for param in request.values}):    
+    if any({param not in _ALLOWED_PARAMS for param in request.values}):
         abort(http.client.BAD_REQUEST)
 
     beam_query = (
@@ -77,7 +77,7 @@ def get_all() -> Response:
     },
     'required': ['beam']
 })
-def create(user: User) -> Union[Response, Tuple[str, int]]:
+def create(user: User) -> ServerResponse:
     ssh_key = None
     if request.json['beam']['auth_method'] == 'rsa':
         try:
@@ -144,7 +144,7 @@ def create(user: User) -> Union[Response, Tuple[str, int]]:
 
 
 @beams.route('/<int:beam_id>', methods=['GET'])
-def get(beam_id: int) -> Union[Response, Tuple[str, int]]:
+def get(beam_id: int) -> ServerResponse:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
         return "No such beam", http.client.NOT_FOUND

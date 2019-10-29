@@ -3,6 +3,7 @@ import sqlalchemy
 from flask import Blueprint, request, jsonify, Response
 from typing import Union, Tuple
 from .utils import validate_schema
+from .types import ServerResponse, DBOperationResponse
 from ..models import db, Issue
 from ..issue_trackers import is_valid_issue
 
@@ -24,14 +25,14 @@ issues = Blueprint("issues", __name__, template_folder="templates")
     },
     'required': ['issue']
 })
-def create() -> Union[Response, Tuple[str, int]]:
+def create() -> ServerResponse:
     data = request.json['issue']
     id_in_tracker = data['id_in_tracker'].strip()
     if not id_in_tracker:
         return 'Invalid issue id', http.client.CONFLICT
 
     issue = Issue(tracker_id=data['tracker_id'], id_in_tracker=id_in_tracker, open=True)
-    
+
     db.session.add(issue)
     try:
         db.session.commit()
@@ -45,7 +46,7 @@ def create() -> Union[Response, Tuple[str, int]]:
 
 
 @issues.route('/<int:issue>', methods=['DELETE'])
-def delete(issue: int) -> Union[str, Tuple[str, int]]:
+def delete(issue: int) -> DBOperationResponse:
     issue = db.session.query(Issue).filter_by(id=issue).first()
     if not issue:
         return 'Issue not found', http.client.NOT_FOUND
@@ -56,7 +57,7 @@ def delete(issue: int) -> Union[str, Tuple[str, int]]:
 
 
 @issues.route('/<int:issue>', methods=['GET'])
-def get(issue: int) -> Union[Response, Tuple[str, int]]:
+def get(issue: int) -> ServerResponse:
     issue_obj = db.session.query(Issue).filter_by(id=issue).first()
     if not issue_obj:
         return 'Issue not found', http.client.NOT_FOUND
@@ -65,7 +66,7 @@ def get(issue: int) -> Union[Response, Tuple[str, int]]:
 
 
 @issues.route('/get_by_tracker/', methods=['GET'])
-def get_by_tracker() -> Union[Response, Tuple[str, int]]:
+def get_by_tracker() -> ServerResponse:
     id_in_tracker = request.args.get('id_in_tracker')
     tracker_id = request.args.get('tracker_id')
     if id_in_tracker is None:

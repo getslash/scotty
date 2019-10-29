@@ -6,6 +6,7 @@ from flux import current_timeline
 from flask import Blueprint, request, jsonify, abort, current_app, Response
 from typing import Mapping, Union, Tuple, Optional, Any
 from .utils import validate_schema
+from .types import ServerResponse
 from ..models import db, File, Beam
 
 
@@ -35,21 +36,21 @@ def _strip_gz(storage_name: str) -> str:
     return storage_name
 
 
-def _dictify_file(f: File) -> Mapping[str, Optional[Any]]:   
+def _dictify_file(f: File) -> Mapping[str, Optional[Any]]:
     url = f"{request.host_url}/file_contents/{urllib.parse.quote(_strip_gz(f.storage_name))}" if f.storage_name else None
     mtime = None if f.mtime is None else f.mtime.isoformat() + 'Z'
-    return {"id": f.id, 
-            "file_name": f.file_name, 
-            "status": f.status, 
-            "size": f.size, 
+    return {"id": f.id,
+            "file_name": f.file_name,
+            "status": f.status,
+            "size": f.size,
             "beam": f.beam_id,
-            "storage_name": f.storage_name, 
-            "url": url, 
+            "storage_name": f.storage_name,
+            "url": url,
             "mtime": mtime}
 
 
 @files.route('/<int:file_id>', methods=['GET'])
-def get(file_id: int) -> Union[Response, Tuple[str, int]]:
+def get(file_id: int) -> ServerResponse:
     file_rec = db.session.query(File).filter_by(id=file_id).first()
     if not file_rec:
         return "No such file", http.client.NOT_FOUND
