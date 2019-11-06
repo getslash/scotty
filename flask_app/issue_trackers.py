@@ -7,9 +7,10 @@ import logbook
 from flask import current_app
 from jira import JIRA as JIRAAPI
 from jira.exceptions import JIRAError
+from typing import List
 
 from .app import needs_app_context
-from .models import Tracker as TrackerModel, db
+from .models import Tracker as TrackerModel, db, Issue
 
 logger = logbook.Logger(__name__)
 
@@ -26,21 +27,21 @@ class Tracker:
         else:
             raise ValueError("Unknown model type {}".format(model.type))
 
-    def refresh(self, issues):
+    def refresh(self, issues: List[Issue]) -> None:
         raise NotImplementedError()
 
-    def is_valid_issue(self, id_in_tracker):
+    def is_valid_issue(self, id_in_tracker: str) -> bool:
         raise NotImplementedError()
 
 
 class JIRA(Tracker):
-    def __init__(self, *, url, config):
+    def __init__(self, *, url: str, config: str):
         self._url = url
-        config = json.loads(config)
-        self._jira = JIRAAPI(url, basic_auth=(config['username'], config['password']), timeout=5)
-        self._resolution_grace = timedelta(days=config.get('resolution_grace', 0))
+        config_json = json.loads(config)
+        self._jira = JIRAAPI(url, basic_auth=(config_json['username'], config_json['password']), timeout=5)
+        self._resolution_grace = timedelta(days=config_json.get('resolution_grace', 0))
 
-    def _refresh_issue(self, issue_obj):
+    def _refresh_issue(self, issue_obj: Issue) -> None:
         issue = self._jira.issue(issue_obj.id_in_tracker)
         if issue.fields.resolutiondate is None:
             issue_obj.open = True
@@ -50,7 +51,7 @@ class JIRA(Tracker):
             now = flux.current_timeline.datetime.now().replace(tzinfo=timezone.utc)
             issue_obj.open = (now - resolution_date) < self._resolution_grace
 
-    def refresh(self, issues):
+    def refresh(self, issues: List[Issue]) -> None:
         for issue_obj in issues:
             try:
                 self._refresh_issue(issue_obj)
@@ -61,7 +62,7 @@ class JIRA(Tracker):
 
         db.session.commit()
 
-    def is_valid_issue(self, id_in_tracker):
+    def is_valid_issue(self, id_in_tracker: str) -> bool:
         try:
             self._jira.issue(id_in_tracker)
         except JIRAError:
@@ -72,10 +73,10 @@ class JIRA(Tracker):
 
 # pylint: disable=abstract-method
 class File(Tracker):
-    def __init__(self, name):
-        self._name = name
+    def __init__(self, name: str) -> None:
+        self._name: str = name
 
-    def refresh(self, issues):
+    def refresh(self, issues: List[Issue]) -> None:
         with open(self._name, 'r') as f:
             data = json.load(f)
             for issue in issues:
@@ -83,15 +84,15 @@ class File(Tracker):
 
 
 class Faulty(Tracker):
-    def refresh(self, issues):
+    def refresh(self, issues: List[Issue]) -> None:
         raise Exception("Tracker Error")
 
 
-def refresh(tracker, issues):
+def refresh(tracker: TrackerModel, issues: List[Issue]) -> None:
     Tracker.get(tracker).refresh(issues)
 
 
-def is_valid_issue(issue):
+def is_valid_issue(issue: Issue) -> bool:
     tracker_obj = db.session.query(TrackerModel).filter_by(id=issue.tracker_id).first()
     if not tracker_obj:
         return False

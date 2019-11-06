@@ -28,7 +28,7 @@ def validate_schema(schema):
 
 # https://stackoverflow.com/questions/2532053/validate-a-hostname-string?answertab=votes#tab-top
 _ALLOWED_HOSTNAMES = re.compile(r"(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
-def is_valid_hostname(hostname):
+def is_valid_hostname(hostname: str) -> bool:
     if len(hostname) > 255:
         return False
     if hostname[-1] == ".":

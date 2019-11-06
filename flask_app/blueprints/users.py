@@ -1,17 +1,18 @@
 import http
-from flask import Blueprint, jsonify, abort
+from flask import Blueprint, jsonify, abort, Response
+from typing import Mapping, Any
 from ..models import db, User
 
 
 users = Blueprint("users", __name__, template_folder="templates")
 
 
-def _dictify_user(user):
+def _dictify_user(user: User) -> Mapping[str, Any]:
     return {'user': {'id': user.id, 'email': user.email, 'name': user.name}}
 
 
 @users.route('/by_email/<email>', methods=['GET'])
-def get_by_email(email):
+def get_by_email(email: str) -> Response:
     user = db.session.query(User).filter_by(email=email).first()
     if not user:
         abort(http.client.NOT_FOUND)
@@ -20,7 +21,7 @@ def get_by_email(email):
 
 
 @users.route('/<int:user_id>', methods=['GET'])
-def get(user_id):
+def get(user_id: int) -> Response:
     user = db.session.query(User).filter_by(id=user_id).first()
     if not user:
         abort(http.client.NOT_FOUND)

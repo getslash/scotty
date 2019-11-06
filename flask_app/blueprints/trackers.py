@@ -1,9 +1,12 @@
 import http
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
+from typing import Union, Tuple
 from .utils import validate_schema
+from .types import ServerResponse, DBOperationResponse
 from ..models import db, Tracker
 
 trackers = Blueprint("trackers", __name__, template_folder="templates")
+
 
 
 @trackers.route('', methods=['POST'])
@@ -23,7 +26,7 @@ trackers = Blueprint("trackers", __name__, template_folder="templates")
     },
     'required': ['tracker']
 })
-def create():
+def create() -> ServerResponse:
     tracker = request.json['tracker']
     if tracker['type'] not in ('jira', 'file', 'faulty'):
         return 'Bad tracker type', http.client.BAD_REQUEST
@@ -40,7 +43,7 @@ def create():
 
 
 @trackers.route('/<int:tracker>', methods=['DELETE'])
-def delete(tracker):
+def delete(tracker: int) -> DBOperationResponse:
     tracker = db.session.query(Tracker).filter_by(id=tracker).first()
     if not tracker:
         return 'Tracker not found', http.client.NOT_FOUND
@@ -51,22 +54,22 @@ def delete(tracker):
 
 
 @trackers.route('/<int:tracker>', methods=['GET'])
-def get(tracker):
-    tracker = db.session.query(Tracker).filter_by(id=tracker).first()
+def get(tracker: int) -> ServerResponse:
+    tracker_obj = db.session.query(Tracker).filter_by(id=tracker).first()
     if not tracker:
         return 'Tracker not found', http.client.NOT_FOUND
 
-    return jsonify({'tracker': tracker.to_dict()})
+    return jsonify({'tracker': tracker_obj.to_dict()})
 
 
 @trackers.route('', methods=['GET'], strict_slashes=False)
-def get_all():
+def get_all() -> Response:
     tracker_models = db.session.query(Tracker)
     return jsonify({'trackers': [tracker.to_dict() for tracker in tracker_models]})
 
 
 @trackers.route('/by_name/<tracker_name>', methods=['GET'])
-def get_by_name(tracker_name):
+def get_by_name(tracker_name: str) -> ServerResponse:
     tracker = db.session.query(Tracker).filter_by(name=tracker_name).first()
     if not tracker:
         return 'Tracker not found', http.client.NOT_FOUND
@@ -89,21 +92,21 @@ def get_by_name(tracker_name):
     },
     'required': ['tracker']
 })
-def update(tracker):
+def update(tracker: int) -> ServerResponse:
     tracker_data = request.json['tracker']
-    tracker = db.session.query(Tracker).filter_by(id=tracker).first()
-    if not tracker:
+    tracker_obj = db.session.query(Tracker).filter_by(id=tracker).first()
+    if not tracker_obj:
         return 'Tracker not found', http.client.NOT_FOUND
 
     if 'name' in tracker_data:
-        tracker.name = tracker_data['name']
+        tracker_obj.name = tracker_data['name']
 
     if 'url' in tracker_data:
-        tracker.url = tracker_data['url']
+        tracker_obj.url = tracker_data['url']
 
     if 'config' in tracker_data:
-        tracker.config = tracker_data['config']
+        tracker_obj.config = tracker_data['config']
 
     db.session.commit()
 
-    return jsonify({'tracker': tracker.to_dict()})
+    return jsonify({'tracker': tracker_obj.to_dict()})
