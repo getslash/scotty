@@ -1,0 +1,69 @@
+name: Combadge workflow
+on:
+  push:
+    tags:
+    - '*'
+jobs:
+  build_transporter:
+    name: Build transporter
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - working-directory: transporter
+      run: cargo build
+
+  build_combadge:
+    name: Publish for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # This should work with only the `include`s but it currently doesn't because of this bug:
+        # https://github.community/t5/How-to-use-Git-and-GitHub/GitHub-Actions-Matrix-options-dont-work-as-documented/td-p/29558
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+        - os: ubuntu-latest
+          artifact_name: combadge
+          artifact_dir: combadge/target/x86_64-unknown-linux-musl/release/
+          asset_name: combadge_linux
+          test_command: cross test --target x86_64-unknown-linux-musl
+          build_command: cross build --target x86_64-unknown-linux-musl --release
+
+        - os: windows-latest
+          artifact_name: combadge.exe
+          artifact_dir: combadge/target/release/
+          asset_name: combadge_windows
+          test_command: cargo test
+          build_command: cargo build --release
+
+        - os: macos-latest
+          artifact_name: combadge
+          artifact_dir: combadge/target/release/
+          asset_name: combadge_darwin
+          test_command: cargo test
+          build_command: cargo build --release
+
+    steps:
+    - uses: hecrj/setup-rust-action@master
+    - uses: actions/checkout@v1
+    - name: Install cross
+      if: matrix.os == 'ubuntu-latest'
+      run: cargo install cross
+    - run: rustup component add clippy rustfmt
+    - name: lint
+      working-directory: combadge
+      run: cargo clippy --all-targets -- -D warnings
+    - name: Test
+      working-directory: combadge
+      run: ${{ matrix.test_command }}
+    - name: Build
+      working-directory: combadge
+      run: ${{ matrix.build_command }}
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{ matrix.artifact_dir }}${{ matrix.artifact_name }}
+        asset_name: ${{ matrix.asset_name }}
+        tag: ${{ github.ref }}
+        overwrite: true

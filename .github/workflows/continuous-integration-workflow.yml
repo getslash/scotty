@@ -1,0 +1,50 @@
+name: CI workflow
+on: [push]
+jobs:
+  setup-python:
+    name: Setup Python
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v1
+    - name: install libpq-dev
+      run: sudo apt-get install libpq-dev #https://github.com/actions/virtual-environments/issues/12
+    - run: pip install poetry
+    - run: poetry install
+    - run: ~/.cache/pypoetry/virtualenvs/scotty-*-py3.8/bin/mypy flask_app/
+
+  setup-node:
+    name: Setup node-js
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 8
+    - run: |
+        curl -o- -L https://yarnpkg.com/install.sh | bash
+        export PATH=$HOME/.yarn/bin:$PATH
+    - uses: actions/setup-ruby@v1
+      with:
+        ruby-version: '2.x'
+    - run: gem install scss_lint
+    - name: build frontend
+      working-directory: webapp
+      run: |
+        yarn install
+        yarn lint:js
+        ./node_modules/ember-cli/bin/ember build
+
+  check-artifacts:
+    name: Check ${{ matrix.artifact }}
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        artifact: [transporter, combadge]
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions-rs/cargo@v1
+    - working-directory: ${{ matrix.artifact }}
+      run: cargo check
+
