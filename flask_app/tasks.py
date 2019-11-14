@@ -41,7 +41,7 @@ import string
 from .app import create_app, needs_app_context
 from . import issue_trackers
 from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues
-from .paths import get_combadge_path
+from .paths import get_combadge_path, COMBADGE_ASSETS_DIR
 from flask import current_app
 
 
