@@ -3,7 +3,7 @@ matrix:
     - language: python
       env:
         - MYPYPATH=stubs
-      python: 3.7
+      python: 3.8
       cache:
         - poetry
       install:
