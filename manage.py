@@ -8,10 +8,8 @@ import string
 import subprocess
 from collections import defaultdict
 from pathlib import Path
-import subprocess
 
-from _lib.bootstrapping import bootstrap_env, from_project_root, requires_env, from_env_bin
-bootstrap_env()
+from _lib.bootstrapping import from_project_root, from_env_bin
 
 from _lib.params import APP_NAME
 from _lib.frontend import frontend, ember
@@ -128,7 +126,6 @@ def bootstrap(develop, app):
         deps.append("develop")
     if app:
         deps.append("app")
-    bootstrap_env(deps)
     click.echo(click.style("Environment up to date", fg='green'))
 
 
@@ -136,7 +133,6 @@ def bootstrap(develop, app):
 @click.option('--livereload/--no-livereload', is_flag=True, default=True)
 @click.option('-p', '--port', default=8000, envvar='TESTSERVER_PORT')
 @click.option('--tmux/--no-tmux', is_flag=True, default=True)
-@requires_env("app", "develop")
 def testserver(tmux, livereload, port):
     if tmux:
         return _run_tmux_frontend(port=port)
@@ -170,7 +166,6 @@ def unittest():
     _run_unittest()
 
 
-@requires_env("app", "develop")
 def _run_unittest():
     subprocess.check_call(
         [from_env_bin("py.test"), "tests/test_ut"], cwd=from_project_root())
@@ -182,7 +177,6 @@ def slash(slash_args):
     _run_slash(slash_args)
 
 
-@requires_env("app", "develop")
 def _run_slash(slash_args=()):
     subprocess.check_call(
         [from_env_bin("slash"), "run"]+list(slash_args), cwd=from_project_root())
@@ -193,7 +187,6 @@ def fulltest():
     _run_fulltest()
 
 
-@requires_env("app", "develop")
 def _run_fulltest(extra_args=()):
     subprocess.check_call([from_env_bin("py.test"), "tests"]
                           + list(extra_args), cwd=from_project_root())
@@ -222,7 +215,6 @@ def _wait_for_travis_availability():
 
 
 @cli.command()
-@requires_env("app", "develop")
 def shell():
     from flask_app.app import create_app
     from flask_app import models

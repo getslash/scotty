@@ -2,8 +2,6 @@ import click
 
 import logbook
 
-from .bootstrapping import requires_env
-
 _logger = logbook.Logger(__name__)
 
 @click.group()
@@ -13,7 +11,6 @@ def celery():
 
 @celery.command()
 @click.argument('name')
-@requires_env('app')
 def task(name):
 
     from flask_app import tasks

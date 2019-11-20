@@ -14,15 +14,6 @@ from_env = functools.partial(os.path.join, _ENV_DIR)
 from_env_bin = functools.partial(from_env, "bin")
 
 
-def requires_env(*names):
-    def decorator(func):
-        @functools.wraps(func)
-        def new_func(*args, **kwargs):
-            bootstrap_env(names)
-            return func(*args, **kwargs)
-        return new_func
-    return decorator
-
 
 def which(bin):
     for directory in os.environ['PATH'].split(':'):
@@ -31,18 +22,6 @@ def which(bin):
             return full_path
 
     raise ValueError('Could not find a python interpreter named {}'.format(bin))
-
-
-def bootstrap_env(deps=("base",)):
-    cmd = "poetry install"
-    if "develop" not in deps:
-        cmd += ' --no-dev'
-    
-    subprocess.check_call(cmd, shell=True)
-
-    python = os.path.abspath(os.path.join(_ENV_DIR, "bin", "python"))
-    if os.path.abspath(sys.executable) != python and _PREVENT_FORK_MARKER not in os.environ:
-        os.execve(python, [python] + sys.argv, dict(os.environ, _PREVENT_FORK_MARKER='true'))
 
 
 def _is_dep_out_of_date(dep):

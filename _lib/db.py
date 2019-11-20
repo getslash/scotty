@@ -8,8 +8,6 @@ import logbook
 
 import click
 
-from .bootstrapping import requires_env
-
 _DATABASE_URI_RE = re.compile(r"(?P<driver>(?P<db_type>sqlite|postgresql)(\+.*)?):\/\/(?P<host>[^/]*)\/(?P<db>.+)")
 
 
@@ -41,7 +39,6 @@ def _create_postgres(match):
 
 
 @db.command()
-@requires_env("app")
 def ensure():
     from flask_app.app import create_app
     from flask_app.models import db
@@ -89,7 +86,6 @@ def wait(num_retries=60, retry_sleep_seconds=1):
     logbook.info("Database connection successful")
 
 @db.command()
-@requires_env("app")
 def drop():
     from flask_app.app import create_app
     from flask_app.models import db
@@ -100,7 +96,6 @@ def drop():
 
 
 @db.command()
-@requires_env("app")
 @click.option('-m', '--message', default=None)
 def revision(message):
     with _migrate_context() as migrate:
@@ -109,14 +104,12 @@ def revision(message):
 
 
 @db.command()
-@requires_env("app")
 def upgrade():
     with _migrate_context() as migrate:
         migrate.upgrade()
 
 
 @db.command()
-@requires_env("app")
 def downgrade():
     with _migrate_context() as migrate:
         migrate.downgrade()
