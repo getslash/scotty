@@ -37,6 +37,7 @@ import flux
 from .app import create_app, needs_app_context
 from . import issue_trackers
 from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues
+from .paths import combadge_paths
 from flask import current_app
 
 
@@ -90,11 +91,9 @@ def create_key(s: str) -> str:
     f.seek(0)
     return RSAKey.from_private_key(file_obj=f, password=None)
 
-COMBADGE_PATH_V1 = os.path.join(os.path.dirname(__file__), "..", "webapp", "dist", "assets", "combadge.py")
-COMBADGE_PATH_V2 = os.path.join(os.path.dirname(__file__), "..", "combadge", "target", "x86_64-unknown-linux-musl", "release", "combadge")
-with open(COMBADGE_PATH_V1, "rb") as combadge_v1:
+with open(combadge_paths['v1'], "rb") as combadge_v1:
     _COMBADGE_V1 = combadge_v1.read()
-with open(COMBADGE_PATH_V2, "rb") as combadge_v2:
+with open(combadge_paths['v2'], "rb") as combadge_v2:
     _COMBADGE_V2 = combadge_v2.read()
 
 
@@ -175,10 +174,10 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
         combadge_path = _upload_combadge(ssh_client, combadge_version)
 
         logger.info(f'{beam_id}: Running combadge at {combadge_path}')
-        combadge_command = {
-            'v1': f'{combadge_path} {str(beam_id)} "{directory}" "{transporter}"',
-            'v2': f'{combadge_path} -b {str(beam_id)} -p {directory} -t {transporter}'
-        }[combadge_version]
+        combadge_commands = {'v1': '{} {} "{}" "{}"',
+                             'v2': '{} -b {} -p {} -t {}'}
+        combadge_command = combadge_commands[combadge_version].format(combadge_path, str(beam_id), directory, transporter)
+
         _, stdout, stderr = ssh_client.exec_command(combadge_command)
         retcode = stdout.channel.recv_exit_status()
         if retcode != 0:

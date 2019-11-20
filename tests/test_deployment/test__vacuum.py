@@ -150,20 +150,21 @@ def test_multiple_issues(tracker, scotty, beam, server_config, long_term_beam, i
     scotty.check_if_beam_deleted(long_term_beam, False)
 
 
-def test_faulty_tracker(scotty, issue, server_config, faulty_tracker, beam_factory):
+@pytest.mark.parametrize("combadge_version", ['v1', 'v2'])
+def test_faulty_tracker(scotty, issue, server_config, faulty_tracker, beam_factory, combadge_version):
     vacuum_threshold = server_config['VACUUM_THRESHOLD']
     beams = []
 
-    regular_beam = beam_factory.get()
+    regular_beam = beam_factory.get(combadge_version=combadge_version)
     beams.append(regular_beam)
 
-    beam_with_issue = beam_factory.get()
+    beam_with_issue = beam_factory.get(combadge_version=combadge_version)
     beam_with_issue.set_issue_association(issue.id_in_scotty, True)
     beam_with_issue.update()
     beams.append(beam_with_issue)
 
     faulty_issue = scotty.create_issue(faulty_tracker, '1')
-    beam_with_faulty_issue = beam_factory.get()
+    beam_with_faulty_issue = beam_factory.get(combadge_version=combadge_version)
     beam_with_faulty_issue.set_issue_association(faulty_issue, True)
     beam_with_faulty_issue.update()
     beams.append(beam_with_faulty_issue)
@@ -220,7 +221,8 @@ def test_multiple_issues_and_multiple_beams(local_beam_dir, scotty, server_confi
     scotty.check_if_beam_deleted(long_term_beam, False)
 
 
-def test_rolling(scotty, beam_factory):
+@pytest.mark.parametrize("combadge_version", ['v1', 'v2'])
+def test_rolling(scotty, beam_factory, combadge_version):
     def update_beams(beams):
         for beam in beams:
             beam.update()
@@ -233,10 +235,10 @@ def test_rolling(scotty, beam_factory):
 
     beams = []
 
-    pinned_beam = beam_factory.get()
+    pinned_beam = beam_factory.get(combadge_version=combadge_version)
     scotty.pin(pinned_beam, True)
 
-    beams.append(beam_factory.get())
+    beams.append(beam_factory.get(combadge_version=combadge_version))
     scotty.sleep(_DAY * 7)
     update_beams(beams)
     scotty.check_if_beam_deleted(beams[0], False)
@@ -245,7 +247,7 @@ def test_rolling(scotty, beam_factory):
     scotty.check_if_beam_deleted(pinned_beam, False)
 
     for idx in range(1, 10):
-        beams.append(beam_factory.get())
+        beams.append(beam_factory.get(combadge_version=combadge_version))
         scotty.sleep(_DAY * 7)
         update_beams(beams)
         check_deleted_by_index(beams, idx)
