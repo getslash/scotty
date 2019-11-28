@@ -5,6 +5,8 @@ COMBADGE_PATH_V2 = os.path.join(os.path.dirname(__file__), "..", "combadge", "ta
 
 
 _COMBADGE_PATHS = {'v2': COMBADGE_PATH_V2,
-                  'v1': COMBADGE_PATH_V1}
+                   'v1': COMBADGE_PATH_V1}
 
-combadge_paths = _COMBADGE_PATHS
+
+def get_combadge_path(combadge_version):
+    return _COMBADGE_PATHS.get(combadge_version)

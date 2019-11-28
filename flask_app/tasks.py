@@ -37,7 +37,7 @@ import flux
 from .app import create_app, needs_app_context
 from . import issue_trackers
 from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues
-from .paths import combadge_paths
+from .paths import get_combadge_path
 from flask import current_app
 
 
@@ -91,9 +91,9 @@ def create_key(s: str) -> str:
     f.seek(0)
     return RSAKey.from_private_key(file_obj=f, password=None)
 
-with open(combadge_paths['v1'], "rb") as combadge_v1:
+with open(get_combadge_path('v1'), "rb") as combadge_v1:
     _COMBADGE_V1 = combadge_v1.read()
-with open(combadge_paths['v2'], "rb") as combadge_v2:
+with open(get_combadge_path('v2'), "rb") as combadge_v2:
     _COMBADGE_V2 = combadge_v2.read()
 
 

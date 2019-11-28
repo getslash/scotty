@@ -5,7 +5,7 @@ import psutil
 from sqlalchemy.sql import func
 from flask import Blueprint, current_app, send_from_directory, jsonify, request, redirect, abort, send_file, Response
 from ..models import Beam, db, Pin, Tag, User
-from ..paths import combadge_paths
+from ..paths import get_combadge_path
 from .auth import require_user
 from .utils import validate_schema
 
@@ -69,7 +69,7 @@ def summary() -> Response:
 @views.route("/combadge")
 def get_combadge() -> Response:
     combadge_version = request.args.get('combadge_version', default='v1')
-    combadge_path = combadge_paths.get(combadge_version)
+    combadge_path = get_combadge_path(combadge_version)
     if combadge_path is None:
         abort(http.client.BAD_REQUEST)
     return send_file(combadge_path)
