@@ -124,7 +124,6 @@ fn beam_file(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
         transporter.write_u32::<byteorder::BigEndian>(to_send.len() as u32)?;
         transporter.write_all(to_send)?;
     }
-    drop(buffer);
 
     if let Some(mut encoder) = encoder {
         encoder.get_mut().clear();
