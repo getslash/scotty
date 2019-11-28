@@ -71,6 +71,7 @@ def get_all() -> Response:
                 'ssh_key': {'type': ['string', 'null']},
                 'stored_key': {'type': ['string', 'null']},
                 'tags': {'type': 'array', 'items': {'type': 'string'}},
+                'combadge_version': {'type': 'string'},
             },
             'required': ['auth_method', 'host', 'directory']
         }
@@ -136,8 +137,14 @@ def create(user: User) -> ServerResponse:
 
     if request.json['beam']['auth_method'] != 'independent':
         beam_up.delay(
-            beam.id, beam.host, beam.directory, request.json['beam']['user'], request.json['beam']['auth_method'],
-            ssh_key, request.json['beam'].get('password', ''))
+            beam_id=beam.id,
+            host=beam.host,
+            directory=beam.directory,
+            username=request.json['beam']['user'],
+            auth_method=request.json['beam']['auth_method'],
+            pkey=ssh_key,
+            password=request.json['beam'].get('password', ''),
+            combadge_version=request.json['beam'].get('combadge_version', 'v1'))
 
     return jsonify(
         {'beam': beam.to_dict(current_app.config['VACUUM_THRESHOLD'])})
