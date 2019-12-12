@@ -141,13 +141,6 @@ def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
     return combadge_path
 
 
-def _get_active_beams():
-    active_beams = (db.session.query(Beam)
-                    .filter(~Beam.pending_deletion,
-                            ~Beam.deleted)
-                    .options(joinedload(Beam.files)))
-    return active_beams
-
 
 @queue.task
 @needs_app_context
@@ -380,11 +373,10 @@ def validate_checksum() -> None:
 def scrub() -> None:
     logger.info("Scrubbing intiated")
     storage_path = current_app.config['STORAGE_PATH']
-    active_beams_ids = db.session.query(Beam.id).filter(~Beam.pending_deletion, ~Beam.deleted)
     expected_files = set()
     requires_update = False
-    for beam_id in active_beams_ids:
-        beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    active_beams = db.session.query(Beam).filter(~Beam.pending_deletion, ~Beam.deleted)
+    for beam in active_beams:
         beam_size = 0
         for beam_file in beam.files:
             file_id = beam_file.id
