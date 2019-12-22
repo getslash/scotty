@@ -98,22 +98,6 @@ def create_key(s: str) -> str:
     return RSAKey.from_private_key(file_obj=f, password=None)
 
 
-def _download_combadge_assets() -> None:
-    if not os.path.exists(COMBADGE_ASSETS_DIR):
-        os.makedirs(COMBADGE_ASSETS_DIR)
-    for combadge_type in ['linux', 'darwin', 'windows']:
-        combadge_url = f'https://github.com/getslash/scotty/releases/latest/download/combadge_{combadge_type}'
-        response = requests.get(combadge_url, allow_redirects=True)
-        combadge_path = get_combadge_path(combadge_type)
-        with open(combadge_path, "wb") as combadge_file:
-            combadge_file.write(response.content)
-        combadge_st = os.stat(combadge_path)
-        os.chmod(combadge_path, combadge_st.st_mode | stat.S_IEXEC)
-        logger.debug(f"Updated combadge {combadge_type} asset. Modification time: {response.headers['Last-Modified']}")
-
-
-_download_combadge_assets()
-
 
 _REMINDER = """Hello Captain,<br/><br/>
 This is a reminder that the following beams are pinned by you:
@@ -144,7 +128,7 @@ def _generate_random_combadge_name(stringLength: int) -> str:
 
 def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
     os_type = _get_os_type(ssh_client)
-    combadge_name = _generate_random_combadge_name(stringLength=3)
+    combadge_name = _generate_random_combadge_name(stringLength=10)
     combadge_type_identifier = combadge_version if combadge_version == 'v1' else os_type
     is_nt = combadge_type_identifier == 'windows'
     local_combadge_path = get_combadge_path(combadge_type_identifier)
