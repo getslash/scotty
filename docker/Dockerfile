@@ -24,6 +24,13 @@ RUN pip install "poetry==$POETRY_VERSION"
 RUN poetry config settings.virtualenvs.in-project true
 RUN cd ./src && poetry install
 
+ADD https://github.com/getslash/scotty/releases/latest/download/combadge_linux /src/combadge_assets/combadge_linux
+ADD https://github.com/getslash/scotty/releases/latest/download/combadge_windows /src/combadge_assets/combadge_windows
+ADD https://github.com/getslash/scotty/releases/latest/download/combadge_darwin /src/combadge_assets/combadge_darwin
+RUN sudo chmod 755 /src/combadge_assets/combadge_linux
+RUN sudo chmod 755 /src/combadge_assets/combadge_windows
+RUN sudo chmod 755 /src/combadge_assets/combadge_darwin
+
 # dockerize
 ENV DOCKERIZE_VERSION v0.3.0
 RUN curl -L https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz | tar xz -C /usr/local/bin
