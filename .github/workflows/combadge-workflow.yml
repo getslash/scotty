@@ -2,7 +2,7 @@ name: Combadge workflow
 on:
   push:
     tags:
-    - '*'
+    - 'combadge'
 
 jobs:
   build_transporter:

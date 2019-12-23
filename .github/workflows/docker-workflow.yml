@@ -4,17 +4,114 @@ on:
     branches:
     - master
     tags:
-    - '*'
+    - 'small'
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build_combadge:
+    name: Build ${{ matrix.os }} combadge
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+      # This should work with only the `include`s but it currently doesn't because of this bug:
+      # https://github.community/t5/How-to-use-Git-and-GitHub/GitHub-Actions-Matrix-options-dont-work-as-documented/td-p/29558
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+        - os: ubuntu-latest
+          artifact_name: combadge
+          artifact_path: combadge/target/x86_64-unknown-linux-musl/release/combadge
+          asset_name: combadge_linux
+          test_command: cross test --target x86_64-unknown-linux-musl
+          build_command: cross build --target x86_64-unknown-linux-musl --release
+        - os: windows-latest
+          artifact_name: combadge.exe
+          artifact_path: combadge/target/release/combadge.exe
+          asset_name: combadge_windows
+          test_command: cargo test
+          build_command: cargo build --release
+        - os: macos-latest
+          artifact_name: combadge
+          artifact_path: combadge/target/release/combadge
+          asset_name: combadge_darwin
+          test_command: cargo test
+          build_command: cargo build --release
+
     steps:
-    - uses: actions/checkout@master
-    - name: Publish to Registry
-      uses: elgohr/Publish-Docker-Github-Action@master
+    - uses: hecrj/setup-rust-action@master
+    - uses: actions/checkout@v1
+    - name: Install cross
+      if: matrix.os == 'ubuntu-latest'
+      run: cargo install cross
+    - run: rustup component add clippy rustfmt
+    - name: lint
+      working-directory: combadge
+      run: cargo clippy --all-targets -- -D warnings
+    - name: Test
+      working-directory: combadge
+      run: ${{ matrix.test_command }}
+    - name: Build
+      working-directory: combadge
+      run: ${{ matrix.build_command }}
+    - uses: actions/upload-artifact@v1
       with:
-        name: getslash/scotty
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: ./docker/Dockerfile
-        tag_names: true
+        name: ${{ matrix.asset_name }}
+        path: ${{ matrix.artifact_path }}
+
+  # build_docker:
+  #   name: Build docker image
+  #   runs-on: ubuntu-latest
+  #   needs: build_combadge
+  #   steps:
+  #   - uses: actions/checkout@master
+  #   - uses: actions/download-artifact@v1
+  #     with:
+  #       name: combadge_linux
+  #   - uses: actions/download-artifact@v1
+  #     with:
+  #       name: combadge_darwin
+  #   - uses: actions/download-artifact@v1
+  #     with:
+  #       name: combadge_windows
+  #   - name: Publish to Registry
+  #     uses: elgohr/Publish-Docker-Github-Action@master
+  #     env:
+  #       COMBADGE_DIR: combadge_assets
+  #     with:
+  #       name: getslash/scotty
+  #       username: ${{ secrets.DOCKER_USERNAME }}
+  #       password: ${{ secrets.DOCKER_PASSWORD }}
+  #       dockerfile: ./docker/Dockerfile
+  #       buildargs: COMBADGE_DIR
+  #       tag: ${{ github.ref }}
+  #       overwrite: true
+
+  new_upload:
+    name: new upload
+    runs-on: ubuntu-latest
+    needs: build_combadge
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [linux, windows, darwin]
+        include:
+        - os: linux
+          artifact_path: combadge/target/x86_64-unknown-linux-musl/release/combadge
+          asset_name: combadge_linux
+        - os: windows
+          artifact_path: combadge/target/release/combadge.exe
+          asset_name: combadge_windows
+        - os: darwin
+          artifact_path: combadge/target/release/combadge
+          asset_name: combadge_darwin
+    steps:
+    - uses: actions/download-artifact@v1
+      with:
+        name: ${{ matrix.asset_name }}
+        path: ${{ matrix.artifact_path }}
+    - uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{ matrix.artifact_path }}
+        asset_name: ${{ matrix.asset_name }}
+        tag: ${{ github.ref }}
+        overwrite: true
