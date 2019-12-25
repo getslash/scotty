@@ -1,0 +1,152 @@
+name: Small workflow
+on:
+  push:
+    tags:
+    - 'blah'
+env:
+  COMBADGE_LINUX_ARTIFACT_DIR: combadge/target/x86_64-unknown-linux-musl/release/
+  COMBADGE_DARWIN_ARTIFACT_DIR: combadge/target/release/
+  COMBADGE_WINDOWS_ARTIFACT_DIR: combadge/target/release/
+
+  COMBADGE_LINUX_ASSET_NAME: combadge_linux
+  COMBADGE_WINDOWS_ASSET_NAME: combadge_windows
+  COMBADGE_DARWIN_ASSET_NAME: combadge_darwin
+
+  COMBADGE_LINUX_ARTIFACT_NAME: combadge
+  COMBADGE_WINDOWS_ARTIFACT_NAME: combadge.exe
+  COMBADGE_DARWIN_ARTIFACT_NAME: combadge
+
+  COMBADGE_LINUX_ARTIFACT_PATH: combadge/target/x86_64-unknown-linux-musl/release/combadge
+  COMBADGE_WINDOWS_ARTIFACT_PATH: combadge/target/release/combadge.exe
+  COMBADGE_DARWIN_ARTIFACT_PATH: combadge/target/release/combadge
+
+jobs:
+  build_combadge:
+    name: Build ${{ matrix.os }} combadge
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+      # This should work with only the `include`s but it currently doesn't because of this bug:
+      # https://github.community/t5/How-to-use-Git-and-GitHub/GitHub-Actions-Matrix-options-dont-work-as-documented/td-p/29558
+        os: [ubuntu-latest]
+        include:
+        - os: ubuntu-latest
+          artifact_name: $COMBADGE_LINUX_ARTIFACT_NAME
+          artifact_dir: $COMBADGE_LINUX_ARTIFACT_DIR
+          artifact_path: $COMBADGE_LINUX_ARTIFACT_PATH
+          asset_name: $COMBADGE_LINUX_ASSET_NAME
+          test_command: cross test --target x86_64-unknown-linux-musl
+          build_command: cross build --target x86_64-unknown-linux-musl --release
+          combined: "${COMBADGE_LINUX_ARTIFACT_DIR} ${COMBADGE_LINUX_ARTIFACT_NAME}"
+        # - os: windows-latest
+        #   artifact_name: ${COMBADGE_WINDOWS_ARTIFACT_NAME}
+        #   artifact_dir: ${COMBADGE_WINDOWS_ARTIFACT_DIR}
+        #   asset_name: ${COMBADGE_WINDOWS_ASSET_NAME}
+        #   test_command: cargo test
+        #   build_command: cargo build --release
+        # - os: macos-latest
+        #   artifact_name: ${COMBADGE_DARWIN_ARTIFACT_NAME}
+        #   artifact_dir: ${COMBADGE_DARWIN_ARTIFACT_DIR}
+        #   asset_name: ${COMBADGE_DARWIN_ASSET_NAME}
+        #   test_command: cargo test
+        #   build_command: cargo build --release
+
+    steps:
+    - uses: hecrj/setup-rust-action@master
+    - uses: actions/checkout@v1
+    - run: echo ${{ matrix.artifact_path }}
+    - name: Install cross
+      if: matrix.os == 'ubuntu-latest'
+      run: cargo install cross
+    - run: rustup component add clippy rustfmt
+    - name: lint
+      working-directory: combadge
+      run: cargo clippy --all-targets -- -D warnings
+    - name: Test
+      working-directory: combadge
+      run: ${{ matrix.test_command }}
+    - name: Build
+      working-directory: combadge
+      run: ${{ matrix.build_command }}
+    - uses: actions/upload-artifact@v1
+      with:
+        name: ${{ matrix.asset_name }}
+        path: ${{ matrix.artifact_path }}
+
+#   build_docker:
+#     name: Build docker image
+#     runs-on: ubuntu-latest
+#     needs: build_combadge
+#     steps:
+#     - uses: actions/checkout@master
+#     - uses: actions/download-artifact@v1
+#       with:
+#         name: combadge_linux
+#     - uses: actions/download-artifact@v1
+#       with:
+#         name: combadge_darwin
+#     - uses: actions/download-artifact@v1
+#       with:
+#         name: combadge_windows
+#     - name: Publish to Registry
+#       uses: elgohr/Publish-Docker-Github-Action@master
+#       env:
+#         COMBADGE_DIR: combadge_assets
+#       with:
+#         name: getslash/scotty
+#         username: ${{ secrets.DOCKER_USERNAME }}
+#         password: ${{ secrets.DOCKER_PASSWORD }}
+#         dockerfile: ./docker/Dockerfile
+#         buildargs: COMBADGE_DIR
+#         tag: ${{ github.ref }}
+#         overwrite: true
+
+#   new_upload:
+#     name: new upload
+#     runs-on: ubuntu-latest
+#     needs: build_combadge
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         include:
+#         - artifact_name: ${{COMBADGE_LINUX_ARTIFACT_NAME}}
+#           artifact_dir: ${{COMBADGE_LINUX_ARTIFACT_DIR}}
+#           asset_name: ${{COMBADGE_LINUX_ASSET_NAME}}
+#         - artifact_name: ${COMBADGE_WINDOWS_ARTIFACT_NAME}
+#           artifact_dir: ${COMBADGE_WINDOWS_ARTIFACT_DIR}
+#           asset_name: ${COMBADGE_WINDOWS_ASSET_NAME}
+#         - artifact_name: ${COMBADGE_DARWIN_ARTIFACT_NAME}
+#           artifact_dir: ${COMBADGE_DARWIN_ARTIFACT_DIR}
+#           asset_name: ${COMBADGE_DARWIN_ASSET_NAME}
+#     steps:
+#     - uses: actions/download-artifact@v1
+#       with:
+#         name: ${{ matrix.asset_name }}
+#     - uses: svenstaro/upload-release-action@v1-release
+#       with:
+#         repo_token: ${{ secrets.GITHUB_TOKEN }}
+#         file: ${{ matrix.artifact_dir }}${{ matrix.artifact_name }}
+#         asset_name: ${{ matrix.asset_name }}
+#         tag: ${{ github.ref }}
+#         overwrite: true
+
+#   upload_binaries:
+#     name: Upload binaries to release
+#     runs-on: ubuntu-latest
+#     needs: build_combadge
+#     steps:
+#     - uses: actions/download-artifact@v1
+#       with:
+#         name: combadge_darwin
+#     - uses: actions/download-artifact@v1
+#       with:
+#         name: combadge_windows
+#     - uses: svenstaro/upload-release-action@v1-release
+#       with:
+#         repo_token: ${{ secrets.GITHUB_TOKEN }}
+#         file: ${{ env.COMBADGE_ARTIFACT_DIR }}${{ env.COMBADGE_ARTIFACT_NAME }}
+#         asset_name: ${{ env.COMBADGE_ASSET_NAME }}
+#         tag: ${{ github.ref }}
+#         overwrite: true
+

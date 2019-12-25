@@ -37,6 +37,10 @@ ADD ./_lib ./src/_lib
 ADD ./flask_app ./src/flask_app
 ADD ./migrations ./src/migrations
 
+COPY $COMBADGE_DIR ./src/combadge_assets
+RUN sudo chmod 755 ./src/combadge_assets/combadge_linux/combadge
+RUN sudo chmod 755 ./src/combadge_assets/combadge_darwin/combadge
+
 COPY --from=frontend-builder /frontend/dist /src/webapp/dist
 COPY --from=rust-builder /home/rust/src/transporter/target/x86_64-unknown-linux-musl/release/transporter /usr/bin/transporter
 COPY --from=rust-builder /home/rust/src/combadge/target/x86_64-unknown-linux-musl/release/combadge /src/webapp/dist/assets
