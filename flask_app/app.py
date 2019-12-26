@@ -104,4 +104,7 @@ def create_app(config=None):
     for code in errors:
         app.errorhandler(code)(errors[code])
 
+    from flask_cors import CORS
+    CORS(app)
+
     return app
