@@ -7,4 +7,5 @@ COMBADGE_ASSETS_DIR = os.path.join(os.path.dirname(__file__), "..", "combadge_as
 def get_combadge_path(combadge_version):
     if combadge_version == 'v1':
         return COMBADGE_PATH_V1
-    return os.path.join(COMBADGE_ASSETS_DIR, f"combadge_{combadge_version}")
+    asset_name = 'combadge.exe' if combadge_version == 'windows' else 'combadge'
+    return os.path.join(COMBADGE_ASSETS_DIR, f"combadge_{combadge_version}", asset_name)
