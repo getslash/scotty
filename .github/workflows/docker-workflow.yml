@@ -13,8 +13,12 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: actions-rs/cargo@v1
+    - run: rustup component add clippy rustfmt
+    - name: lint
+      working-directory: combadge
+      run: cargo clippy --all-targets -- -D warnings
     - working-directory: transporter
-      run: cargo build
+      run: cargo build --release
 
   build_combadge:
     name: Build ${{ matrix.os }} combadge
@@ -24,24 +28,24 @@ jobs:
       matrix:
       # This should work with only the `include`s but it currently doesn't because of this bug:
       # https://github.community/t5/How-to-use-Git-and-GitHub/GitHub-Actions-Matrix-options-dont-work-as-documented/td-p/29558
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         include:
         - os: ubuntu-latest
-          artifact_name: combadge
+          artifact_name: combadge_linux
           artifact_path: combadge/target/x86_64-unknown-linux-musl/release/combadge
-          asset_name: combadge_linux
+          asset_name: combadge_linux_asset
           test_command: cross test --target x86_64-unknown-linux-musl
           build_command: cross build --target x86_64-unknown-linux-musl --release
         - os: windows-latest
           artifact_name: combadge.exe
           artifact_path: combadge/target/release/combadge.exe
-          asset_name: combadge_windows
+          asset_name: combadge_windows_asset
           test_command: cargo test
           build_command: cargo build --release
         - os: macos-latest
-          artifact_name: combadge
+          artifact_name: combadge_darwin
           artifact_path: combadge/target/release/combadge
-          asset_name: combadge_darwin
+          asset_name: combadge_darwin_asset
           test_command: cargo test
           build_command: cargo build --release
 
@@ -74,13 +78,16 @@ jobs:
     - uses: actions/checkout@master
     - uses: actions/download-artifact@v1
       with:
-        name: combadge_linux
+        name: combadge_linux_asset
+        path: combadge_assets/combadge_linux
     - uses: actions/download-artifact@v1
       with:
-        name: combadge_darwin
+        name: combadge_darwin_asset
+        path: combadge_assets/combadge_darwin
     - uses: actions/download-artifact@v1
       with:
-        name: combadge_windows
+        name: combadge_windows_asset
+        path: combadge_assets/combadge_windows
     - name: Publish to Registry
       uses: elgohr/Publish-Docker-Github-Action@master
       env:

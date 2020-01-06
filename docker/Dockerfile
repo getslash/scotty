@@ -37,7 +37,7 @@ ADD ./_lib ./src/_lib
 ADD ./flask_app ./src/flask_app
 ADD ./migrations ./src/migrations
 
-COPY $COMBADGE_DIR ./src/combadge_assets
+COPY $COMBADGE_DIR ./src/
 RUN sudo chmod 755 ./src/combadge_assets/combadge_linux/combadge
 RUN sudo chmod 755 ./src/combadge_assets/combadge_darwin/combadge
 
