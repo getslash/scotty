@@ -27,6 +27,7 @@ from celery.schedules import crontab
 from celery.signals import worker_init
 from celery.signals import after_setup_logger, after_setup_task_logger
 from celery.log import redirect_stdouts_to_logger
+from uuid import uuid4
 from raven.contrib.celery import register_signal
 
 from sqlalchemy.orm import joinedload
@@ -34,16 +35,13 @@ from sqlalchemy.sql import exists
 from typing import Any
 
 import flux
-import random
-import requests
-import subprocess
 import stat
 import string
 
 from .app import create_app, needs_app_context
 from . import issue_trackers
 from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues
-from .paths import get_combadge_path, COMBADGE_ASSETS_DIR
+from .paths import get_combadge_path
 from flask import current_app
 
 
@@ -121,23 +119,34 @@ def _get_os_type(ssh_client: SSHClient) -> str:
     return stdout.read().decode("utf-8").strip().lower()
 
 
-def _generate_random_combadge_name(stringLength: int) -> str:
-    random_string = ''.join(random.choice(string.ascii_lowercase) for i in range(stringLength))
+def _generate_random_combadge_name(string_length: int) -> str:
+    random_string = str(uuid4())[:string_length]
     return f"combadge_{random_string}"
 
 
 def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
     os_type = _get_os_type(ssh_client)
-    combadge_name = _generate_random_combadge_name(stringLength=10)
+    combadge_name = _generate_random_combadge_name(string_length=10)
     combadge_type_identifier = combadge_version if combadge_version == 'v1' else os_type
-    is_nt = combadge_type_identifier == 'windows'
+    is_windows = combadge_type_identifier == 'windows'
+
     local_combadge_path = get_combadge_path(combadge_type_identifier)
-    remote_combadge_path = str(PureWindowsPath(os.path.join('C:', 'tmp', f'{combadge_name}.exe'))) if is_nt else os.path.join('/tmp', combadge_name)
+    if is_windows:
+        remote_combadge_dir = str(PureWindowsPath(os.path.join('C:', 'temp')))
+        combadge_name = f'{combadge_name}.exe'
+        remote_combadge_path = str(PureWindowsPath(os.path.join(remote_combadge_dir, combadge_name)))
+    else:
+        remote_combadge_dir = '/tmp'
+        remote_combadge_path = os.path.join(remote_combadge_dir, combadge_name)
     logger.debug(f"combadge path: {remote_combadge_path}")
 
     with SFTPClient.from_transport(ssh_client.get_transport()) as sftp:
+        try:
+            sftp.chdir(remote_combadge_dir)
+        except IOError:
+            sftp.mkdir(remote_combadge_dir)
         sftp.put(local_combadge_path, remote_combadge_path)
-        if not is_nt:
+        if not is_windows:
             combadge_st = os.stat(local_combadge_path)
             sftp.chmod(remote_combadge_path, combadge_st.st_mode | stat.S_IEXEC)
 
