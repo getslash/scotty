@@ -14,9 +14,10 @@ import logging.handlers
 import logbook
 
 import paramiko
-from paramiko import SSHClient
+from paramiko import SSHClient, SFTPClient
 from paramiko.client import AutoAddPolicy
 from paramiko.rsakey import RSAKey
+from pathlib import PureWindowsPath
 
 from jinja2 import Template
 import psutil
@@ -26,6 +27,7 @@ from celery.schedules import crontab
 from celery.signals import worker_init
 from celery.signals import after_setup_logger, after_setup_task_logger
 from celery.log import redirect_stdouts_to_logger
+from uuid import uuid4
 from raven.contrib.celery import register_signal
 
 from sqlalchemy.orm import joinedload
@@ -33,6 +35,8 @@ from sqlalchemy.sql import exists
 from typing import Any
 
 import flux
+import stat
+import string
 
 from .app import create_app, needs_app_context
 from . import issue_trackers
@@ -91,10 +95,6 @@ def create_key(s: str) -> str:
     f.seek(0)
     return RSAKey.from_private_key(file_obj=f, password=None)
 
-with open(get_combadge_path('v1'), "rb") as combadge_v1:
-    _COMBADGE_V1 = combadge_v1.read()
-with open(get_combadge_path('v2'), "rb") as combadge_v2:
-    _COMBADGE_V2 = combadge_v2.read()
 
 
 _REMINDER = """Hello Captain,<br/><br/>
@@ -111,30 +111,46 @@ Sincerely yours,<br/>
 Montgomery Scott
 """
 
-def _get_combadge_by_version(combadge_version: str) -> bytes:
-    return {
-        "v1": _COMBADGE_V1,
-        "v2": _COMBADGE_V2,
-    }[combadge_version]
+def _get_os_type(ssh_client: SSHClient) -> str:
+    _, stdout, stderr = ssh_client.exec_command("uname")
+    retcode = stdout.channel.recv_exit_status()
+    if retcode != 0:
+        return 'windows'
+    return stdout.read().decode("utf-8").strip().lower()
+
+
+def _generate_random_combadge_name(string_length: int) -> str:
+    random_string = str(uuid4())[:string_length]
+    return f"combadge_{random_string}"
 
 
 def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
-    _, stdout, stderr = ssh_client.exec_command("mktemp /tmp/combadge.XXX")
-    retcode = stdout.channel.recv_exit_status()
-    if retcode != 0:
-        raise Exception(stderr.read().decode("utf-8"))
+    os_type = _get_os_type(ssh_client)
+    combadge_name = _generate_random_combadge_name(string_length=10)
+    combadge_type_identifier = combadge_version if combadge_version == 'v1' else os_type
+    is_windows = combadge_type_identifier == 'windows'
 
-    combadge_path = stdout.read().decode("utf-8").strip()
+    local_combadge_path = get_combadge_path(combadge_type_identifier)
+    if is_windows:
+        remote_combadge_dir = str(PureWindowsPath(os.path.join('C:', 'temp')))
+        combadge_name = f'{combadge_name}.exe'
+        remote_combadge_path = str(PureWindowsPath(os.path.join(remote_combadge_dir, combadge_name)))
+    else:
+        remote_combadge_dir = '/tmp'
+        remote_combadge_path = os.path.join(remote_combadge_dir, combadge_name)
+    logger.debug(f"combadge path: {remote_combadge_path}")
 
-    stdin, stdout, stderr = ssh_client.exec_command(f"sh -c \"cat > {combadge_path} && chmod +x {combadge_path}\"")
-    combadge = _get_combadge_by_version(combadge_version)
-    stdin.write(combadge)
-    stdin.channel.shutdown_write()
-    retcode = stdout.channel.recv_exit_status()
-    if retcode != 0:
-        raise Exception(stderr.read().decode("utf-8"))
+    with SFTPClient.from_transport(ssh_client.get_transport()) as sftp:
+        try:
+            sftp.chdir(remote_combadge_dir)
+        except IOError:
+            sftp.mkdir(remote_combadge_dir)
+        sftp.put(local_combadge_path, remote_combadge_path)
+        if not is_windows:
+            combadge_st = os.stat(local_combadge_path)
+            sftp.chmod(remote_combadge_path, combadge_st.st_mode | stat.S_IEXEC)
 
-    return combadge_path
+    return remote_combadge_path
 
 
 def _get_active_beams():
@@ -149,6 +165,7 @@ def _get_active_beams():
 @needs_app_context
 def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method: str, pkey: str, password: str, combadge_version: str) -> None:
     beam = db.session.query(Beam).filter_by(id=beam_id).one()
+    combadge_version = combadge_version or 'v1'
     try:
         delay = flux.current_timeline.datetime.utcnow() - beam.start
         if delay.total_seconds() > 10:
