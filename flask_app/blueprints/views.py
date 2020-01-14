@@ -68,7 +68,7 @@ def summary() -> Response:
 
 @views.route("/combadge")
 def get_combadge() -> Response:
-    combadge_version = request.args.get('combadge_version', default='v1')
+    combadge_version = request.args.get('combadge_version', default='v2')
     combadge_path = get_combadge_path(combadge_version)
     if combadge_path is None:
         abort(http.client.BAD_REQUEST)

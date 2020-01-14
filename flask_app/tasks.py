@@ -166,7 +166,7 @@ def _get_active_beams():
 @needs_app_context
 def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method: str, pkey: str, password: str, combadge_version: str) -> None:
     beam = db.session.query(Beam).filter_by(id=beam_id).one()
-    combadge_version = combadge_version or 'v1'
+    combadge_version = combadge_version or 'v2'
     try:
         delay = flux.current_timeline.datetime.utcnow() - beam.start
         if delay.total_seconds() > 10:
