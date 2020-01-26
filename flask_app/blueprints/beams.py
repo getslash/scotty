@@ -144,7 +144,7 @@ def create(user: User) -> ServerResponse:
             auth_method=request.json['beam']['auth_method'],
             pkey=ssh_key,
             password=request.json['beam'].get('password', ''),
-            combadge_version=request.json['beam'].get('combadge_version', 'v1'))
+            combadge_version=request.json['beam'].get('combadge_version'))
 
     return jsonify(
         {'beam': beam.to_dict(current_app.config['VACUUM_THRESHOLD'])})

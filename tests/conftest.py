@@ -122,7 +122,7 @@ class TestingScotty(Scotty):
 
 @pytest.fixture
 def webapp():
-    return app.create_app()
+    return app.get_or_create_app()
 
 
 @pytest.fixture
@@ -131,6 +131,7 @@ def db(webapp):
         models.db.session.close()
         models.db.drop_all()
         models.db.create_all()
+        yield models.db
 
 
 @pytest.fixture
