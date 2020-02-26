@@ -14,7 +14,7 @@ RUN cd ./frontend/ && node_modules/.bin/ember build --environment production
 
 FROM python:3.7
 
-ENV POETRY_VERSION=0.12.7
+ENV POETRY_VERSION=1.0.3
 
 # nginx
 RUN apt-get update && apt-get -y install build-essential rsync software-properties-common libpq-dev nginx curl redis-server gcc sudo uuid-runtime squashfs-tools libxslt-dev libxml2-dev sshpass libsasl2-dev libldap2-dev git
@@ -22,7 +22,7 @@ RUN apt-get update && apt-get -y install build-essential rsync software-properti
 ADD ./pyproject.toml ./src/
 ADD ./poetry.lock ./src/
 RUN pip install "poetry==$POETRY_VERSION"
-RUN poetry config settings.virtualenvs.in-project true
+RUN poetry config virtualenvs.in-project true
 RUN cd ./src && poetry install
 
 # dockerize
