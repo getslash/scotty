@@ -29,6 +29,7 @@ from celery.signals import after_setup_logger, after_setup_task_logger
 from celery.log import redirect_stdouts_to_logger
 from uuid import uuid4
 from raven.contrib.celery import register_signal
+from sqlalchemy import func, extract, and_, case, or_
 
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import exists
@@ -40,7 +41,7 @@ import string
 
 from .app import create_app, needs_app_context
 from . import issue_trackers
-from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues
+from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues, BeamType
 from .paths import get_combadge_path
 from flask import current_app
 
@@ -279,37 +280,46 @@ def remind_pinned() -> None:
     s.quit()
 
 
+@needs_app_context
+def get_pending_query():
+    now = flux.current_timeline.datetime.utcnow()
+    days_factor = 60 * 60 * 24
+    beam_age_in_days = func.trunc(extract('epoch', now) - extract('epoch', Beam.start)) / days_factor
+    vacuum_threshold = case([(Beam.type_id == None, current_app.config['VACUUM_THRESHOLD']),], else_ = BeamType.vacuum_threshold)
+
+    existing_open_issues = (db.session.query(beam_issues.c.beam_id)
+                                     .join(Issue, Issue.id == beam_issues.c.issue_id)
+                                     .filter(beam_issues.c.beam_id == Beam.id,
+                                             Issue.open)
+                                     .exists())
+
+    pending_query = (db.session.query(Beam.id)
+                              .outerjoin(Pin, Pin.beam_id == Beam.id)
+                              .outerjoin(BeamType, BeamType.id == Beam.type_id)
+                              .outerjoin(File, File.beam_id == Beam.id)
+                              .filter(~Beam.pending_deletion,
+                                      ~Beam.deleted,
+                                      Beam.completed,
+                                      Pin.id == None,
+                                      ~existing_open_issues,
+                                      or_(
+                                          File.beam_id == None,
+                                          beam_age_in_days >= vacuum_threshold
+                                      )))
+    return pending_query
+
+
+
 @queue.task
 @needs_app_context
 def vacuum() -> None:
-    now = flux.current_timeline.datetime.utcnow()
     logger.info("Vacuum intiated")
 
     # Make sure that the storage folder is accessable. Whenever deploying scotty to somewhere, one
     # must create this empty file in the storage directory
     os.stat(os.path.join(current_app.config['STORAGE_PATH'], ".test"))
-
-    db.engine.execute(
-        """UPDATE beam SET pending_deletion=true WHERE beam.id IN (
-        SELECT beam.id FROM beam
-        LEFT JOIN pin ON pin.beam_id = beam.id
-        LEFT JOIN beam_type ON beam.type_id = beam_type.id
-        LEFT JOIN file ON file.beam_id = beam.id
-        WHERE
-        NOT beam.pending_deletion
-        AND NOT beam.deleted
-        AND beam.completed
-        AND pin.id IS NULL
-        AND NOT EXISTS (
-            SELECT id FROM beam_issues
-            INNER JOIN issue ON issue.id = beam_issues.issue_id
-            WHERE beam_issues.beam_id = beam.id
-            AND issue.open)
-        AND (
-            file.beam_id IS NULL
-            OR ((beam.type_id IS NULL) AND (beam.start < %s - '%s days'::interval))
-            OR ((beam.type_id IS NOT NULL) AND (beam.start < %s - (beam_type.vacuum_threshold * INTERVAL '1 DAY')))
-        ))""", now, current_app.config['VACUUM_THRESHOLD'], now)
+    pending_query = get_pending_query()
+    db.session.query(Beam).filter(Beam.id.in_(pending_query)).update(dict(pending_deletion=True), synchronize_session='fetch')
     db.session.commit()
     logger.info("Finished marking vacuum candidates")
 

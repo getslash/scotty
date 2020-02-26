@@ -16,15 +16,19 @@ import raven
 APP = None
 
 
+def get_or_create_app(config=None):
+    global APP
+
+    if APP is None:
+        APP = create_app(config=config)
+
+    return APP
+
+
 def needs_app_context(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        global APP
-
-        if APP is None:
-            APP = create_app()
-
-        with APP.app_context():
+        with get_or_create_app().app_context():
             return f(*args, **kwargs)
 
     return wrapper
