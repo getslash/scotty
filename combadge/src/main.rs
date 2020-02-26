@@ -55,7 +55,7 @@ fn beam_path(transporter: &mut TcpStream, path: &Path, beam_id: u64) -> std::io:
             beam_path(transporter, &entry?.path(), beam_id)?;
         }
     } else {
-        panic!("Error with path: {:?}", path);
+        println!("Path is not a file: {:?}", path);
     }
 
     Ok(())
