@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import os
 import smtplib
 import subprocess
+import tempfile
 from email.mime.text import MIMEText
 from datetime import timedelta
 from collections import defaultdict
@@ -127,12 +128,11 @@ def _generate_random_combadge_name(string_length: int) -> str:
 
 def get_remote_combadge_path(is_windows):
     combadge_name = _generate_random_combadge_name(string_length=10)
+    remote_combadge_dir = tempfile.gettempdir()
     if is_windows:
-        remote_combadge_dir = str(PureWindowsPath(os.path.join('C:', 'temp')))
         combadge_name = f'{combadge_name}.exe'
         remote_combadge_path = str(PureWindowsPath(os.path.join(remote_combadge_dir, combadge_name)))
     else:
-        remote_combadge_dir = '/tmp'
         remote_combadge_path = os.path.join(remote_combadge_dir, combadge_name)
     logger.debug(f"combadge path: {remote_combadge_path}")
     return remote_combadge_path
