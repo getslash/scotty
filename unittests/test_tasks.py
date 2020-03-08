@@ -1,12 +1,13 @@
 import datetime
 import io
+import pathlib
 from unittest import mock
 from uuid import UUID
 
 import munch
 import pytest
 
-from flask_app import tasks
+from flask_app import tasks, paths
 from flask_app.models import Beam, Pin, BeamType
 from flask_app.tasks import vacuum, beam_up
 
@@ -187,8 +188,20 @@ def uuid4(monkeypatch):
     return uuid
 
 
+@pytest.fixture
+def combadge_assets_dir(tmpdir, monkeypatch):
+    tmpdir = pathlib.Path(tmpdir)
+    for os, ext in [("linux", ""), ("windows", ".exe")]:
+        directory = tmpdir / "v2" / f"combadge_{os}"
+        directory.mkdir(parents=True)
+        with (directory / f"combadge{ext}").open("w") as f:
+            f.write("")
+    monkeypatch.setattr(paths, "COMBADGE_ASSETS_DIR", str(tmpdir))
+    return str(tmpdir)
+
+
 @pytest.mark.parametrize("os_type", ["linux", "windows"])
-def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_ssh_client, mock_sftp_client, mock_rsa_key, uuid4, os_type):
+def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_ssh_client, mock_sftp_client, mock_rsa_key, uuid4, os_type, combadge_assets_dir):
     beam = create_beam(start=now, completed=False)
     if os_type == "windows":
         beam.host = "mock-windows-host"
