@@ -6,9 +6,9 @@ from uuid import UUID
 import munch
 import pytest
 
+from flask_app import tasks
 from flask_app.models import Beam, Pin, BeamType
 from flask_app.tasks import vacuum, beam_up
-from flask_app import tasks
 
 
 def is_vacuumed(db_session, beam):
@@ -123,6 +123,11 @@ class MockSSHClient:
             if self.os_type == "linux":
                 self.stdout.write(b"linux")
             else:
+                self.stderr.write((
+                    b"uname : The term 'uname' is not recognized as the name of a cmdlet, function, script file, "
+                    b"or operable program. Check the spelling of the name, or if a path was included, "
+                    b"verify that the path is correct and try again."
+                ))
                 self.recv_exit_status = 1
         elif command == "python -c 'import tempfile; print(tempfile.gettempdir())'":
             if self.os_type == "linux":
