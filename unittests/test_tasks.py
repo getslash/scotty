@@ -193,7 +193,7 @@ def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_s
     if os_type == "windows":
         beam.host = "mock-windows-host"
         db_session.commit()
-    beam_up.delay(
+    result = beam_up.delay(
         beam_id=beam.id,
         host=beam.host,
         directory=beam.directory,
@@ -203,6 +203,7 @@ def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_s
         password=None,
         combadge_version='v2'
     )
+    assert result.successful(), result.traceback
     beam = db_session.query(Beam).filter_by(id=beam.id).one()
     assert beam.error is None
     assert len(mock_ssh_client.instances) == 1
