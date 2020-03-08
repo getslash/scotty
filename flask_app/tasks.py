@@ -122,13 +122,21 @@ def _get_os_type(ssh_client: SSHClient) -> str:
 
 
 def _generate_random_combadge_name(string_length: int) -> str:
-    random_string = str(uuid4())[:string_length]
+    random_string = str(uuid4().hex)[:string_length]
     return f"combadge_{random_string}"
 
 
-def get_remote_combadge_path(is_windows):
+def _get_temp_dir(ssh_client):
+    _, stdout, stderr = ssh_client.exec_command("python -c 'import tempfile; print(tempfile.gettempdir())'")
+    retcode = stdout.channel.recv_exit_status()
+    if retcode != 0:
+        raise RuntimeError(f"failed to get tempdir: {stderr.read()}")
+    return stdout.read().decode("utf-8").strip()
+
+
+def get_remote_combadge_path(ssh_client, is_windows):
     combadge_name = _generate_random_combadge_name(string_length=10)
-    remote_combadge_dir = tempfile.gettempdir()
+    remote_combadge_dir = _get_temp_dir(ssh_client)
     if is_windows:
         combadge_name = f'{combadge_name}.exe'
         remote_combadge_path = str(PureWindowsPath(os.path.join(remote_combadge_dir, combadge_name)))
@@ -138,21 +146,15 @@ def get_remote_combadge_path(is_windows):
     return remote_combadge_path
 
 
-def _get_combadge_type_identifier(ssh_client: SSHClient, combadge_version: str) -> str:
-    os_type = _get_os_type(ssh_client)
-    combadge_type_identifier = combadge_version if combadge_version == 'v1' else os_type
-    return combadge_type_identifier
-
-
 def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
-    combadge_type_identifier = _get_combadge_type_identifier(ssh_client, combadge_version)
-    is_windows = combadge_type_identifier == 'windows'
+    os_type = _get_os_type(ssh_client)
+    is_windows = os_type == 'windows'
 
-    local_combadge_path = get_combadge_path(combadge_type_identifier)
+    local_combadge_path = get_combadge_path(combadge_version, os_type=os_type)
     assert os.path.exists(local_combadge_path)
-    remote_combadge_path = get_remote_combadge_path(is_windows)
+    remote_combadge_path = get_remote_combadge_path(ssh_client, is_windows)
 
-    logger.info(f"uploading combadge of type {combadge_type_identifier} to {remote_combadge_path}")
+    logger.info(f"uploading combadge {combadge_version} for {os_type} to {remote_combadge_path}")
     with SFTPClient.from_transport(ssh_client.get_transport()) as sftp:
         sftp.put(local_combadge_path, remote_combadge_path)
         if not is_windows:

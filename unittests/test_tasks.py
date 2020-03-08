@@ -1,7 +1,14 @@
 import datetime
+import io
+from unittest import mock
+from uuid import UUID
+
+import munch
+import pytest
 
 from flask_app.models import Beam, Pin, BeamType
-from flask_app.tasks import vacuum
+from flask_app.tasks import vacuum, beam_up
+from flask_app import tasks
 
 
 def is_vacuumed(db_session, beam):
@@ -90,3 +97,117 @@ def test_beam_with_beam_type_smaller_threshold_is_vacuumed(eager_celery, db_sess
     db_session.commit()
     vacuum.delay()
     assert is_vacuumed(db_session, beam)
+
+
+class MockSSHClient:
+    instances = []
+
+    def __init__(self):
+        self.instances.append(self)
+        self.policy = None
+        self.connect_args = None
+        self.stdin = io.BytesIO()
+        self.stdout = io.BytesIO()
+        self.recv_exit_status = 0
+        self.stdout.channel = munch.Munch(recv_exit_status=lambda: self.recv_exit_status)
+        self.stderr = io.BytesIO()
+        self.commands = []
+        self.os_type = None
+
+    def exec_command(self, command):
+        self.commands.append(command)
+        self.recv_exit_status = 0
+        self.stdout.truncate(0)
+        self.stdout.seek(0)
+        if command == "uname":
+            if self.os_type == "linux":
+                self.stdout.write(b"linux")
+            else:
+                self.recv_exit_status = 1
+        elif command == "python -c 'import tempfile; print(tempfile.gettempdir())'":
+            if self.os_type == "linux":
+                self.stdout.write(b"/tmp")
+            else:
+                user = self.connect_args['username']
+                self.stdout.write(b"C:\\Users\\" + user.encode() + b"\\AppData\\Local\\Temp")
+        self.stdout.seek(0)
+        self.stdin.seek(0)
+        self.stderr.seek(0)
+        return self.stdin, self.stdout, self.stderr
+
+    def connect(self, host, **kwargs):
+        self.connect_args = dict(host=host, **kwargs)
+        if host == "mock-host":
+            self.os_type = "linux"
+        else:
+            self.os_type = "windows"
+
+    def set_missing_host_key_policy(self, policy):
+        self.policy = policy
+
+    def get_transport(self):
+        return "mock-transport"
+
+    @classmethod
+    def clear(cls):
+        cls.instances = []
+
+
+@pytest.fixture
+def mock_ssh_client(monkeypatch):
+    monkeypatch.setattr(tasks, "SSHClient", MockSSHClient)
+    MockSSHClient.clear()
+    yield MockSSHClient
+    MockSSHClient.clear()
+
+
+@pytest.fixture
+def mock_sftp_client(monkeypatch):
+    SFTPClient = mock.MagicMock()
+    monkeypatch.setattr(tasks, "SFTPClient", SFTPClient)
+    return SFTPClient
+
+
+@pytest.fixture
+def mock_rsa_key(monkeypatch):
+    RSAKey = mock.MagicMock()
+    monkeypatch.setattr(tasks, "RSAKey", RSAKey)
+    return RSAKey
+
+
+@pytest.fixture
+def uuid4(monkeypatch):
+    uuid = UUID('f1e8962b-00c9-4799-aacf-5d616163e03d')
+    monkeypatch.setattr(tasks, "uuid4", lambda: uuid)
+    return uuid
+
+
+@pytest.mark.parametrize("os_type", ["linux", "windows"])
+def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_ssh_client, mock_sftp_client, mock_rsa_key, uuid4, os_type):
+    beam = create_beam(start=now, completed=False)
+    if os_type == "windows":
+        beam.host = "mock-windows-host"
+        db_session.commit()
+    beam_up.delay(
+        beam_id=beam.id,
+        host=beam.host,
+        directory=beam.directory,
+        username='root',
+        auth_method='stored_key',
+        pkey='mock-pkey',
+        password=None,
+        combadge_version='v2'
+    )
+    beam = db_session.query(Beam).filter_by(id=beam.id).one()
+    assert beam.error is None
+    assert len(mock_ssh_client.instances) == 1
+    if os_type == "linux":
+        combadge = f"/tmp/combadge_{uuid4.hex[:10]}"
+    else:
+        combadge = f"C:\\Users\\root\\AppData\\Local\\Temp\\combadge_{uuid4.hex[:10]}.exe"
+    assert mock_ssh_client.instances[0].commands == [
+        "uname",
+        "python -c 'import tempfile; print(tempfile.gettempdir())'",
+        f"{combadge} -b {beam.id} -p {beam.directory} -t scotty",
+    ]
+

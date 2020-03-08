@@ -1,4 +1,4 @@
-from flask_app.tasks import queue, _get_os_type, _get_connected_ssh_client, _get_combadge_type_identifier, _remove_combadge, _upload_combadge, get_remote_combadge_path, _get_combadge_command, beam_up
+from flask_app.tasks import queue, _get_os_type, _get_connected_ssh_client, _remove_combadge, _upload_combadge, get_remote_combadge_path, _get_combadge_command, beam_up
 from flask_app.blueprints.beams import create as create_beam
 from flask_app.models import Beam, User, db
 from paramiko import SSHClient, SFTPClient
@@ -131,21 +131,6 @@ def test_get_connected_ssh_client(os_type, get_ssh_client, get_host_name_by_os_t
     _, stdout, stderr = ssh_client.exec_command("hostname")
     host_name = get_host_name_by_os_type(os_type)
     assert stdout.read().decode().strip() == host_name
-
-
-@pytest.mark.parametrize("os_type", OS_TYPES)
-@pytest.mark.parametrize("combadge_version", ['v1', 'v2'])
-def test_get_combadge_type_identifier(os_type, combadge_version, get_ssh_client):
-    ssh_client = get_ssh_client(os_type)
-    combadge_type_identifier = _get_combadge_type_identifier(ssh_client, combadge_version)
-    excpected_identifier = combadge_version if combadge_version == 'v1' else os_type
-    assert excpected_identifier == combadge_type_identifier
-
-
-def test_get_remote_windows_combadge_path():
-    is_windows = True
-    remote_combadge_path = get_remote_combadge_path(is_windows)
-    assert remote_combadge_path.startswith(str(PureWindowsPath(os.path.join('C:', 'temp'))))
 
 
 @pytest.mark.parametrize("os_type", OS_TYPES)

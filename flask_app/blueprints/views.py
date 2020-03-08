@@ -69,7 +69,8 @@ def summary() -> Response:
 @views.route("/combadge")
 def get_combadge() -> Response:
     combadge_version = request.args.get('combadge_version', default='v2')
-    combadge_path = get_combadge_path(combadge_version)
+    os_type = request.args.get('os_type', default='linux')
+    combadge_path = get_combadge_path(combadge_version, os_type=os_type)
     if combadge_path is None:
         abort(http.client.BAD_REQUEST)
     return send_file(combadge_path)
