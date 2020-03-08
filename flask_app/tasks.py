@@ -1,52 +1,40 @@
 from __future__ import absolute_import
+
+import functools
 import os
 import smtplib
+import stat
 import subprocess
-import tempfile
-from email.mime.text import MIMEText
-from datetime import timedelta
-from collections import defaultdict
-from io import StringIO
-import functools
 import sys
+from collections import defaultdict
+from datetime import timedelta
+from email.mime.text import MIMEText
+from io import StringIO
+from pathlib import PureWindowsPath
+from typing import Any
+from uuid import uuid4
 
-import logging
-import logging.handlers
+import flux
 import logbook
-
 import paramiko
+import psutil
+from celery import Celery
+from celery.schedules import crontab
+from celery.signals import after_setup_logger, after_setup_task_logger
+from celery.signals import worker_init
+from flask import current_app
+from jinja2 import Template
 from paramiko import SSHClient, SFTPClient
 from paramiko.client import AutoAddPolicy
 from paramiko.rsakey import RSAKey
-from pathlib import PureWindowsPath
-
-from jinja2 import Template
-import psutil
-
-from celery import Celery
-from celery.schedules import crontab
-from celery.signals import worker_init
-from celery.signals import after_setup_logger, after_setup_task_logger
-from celery.log import redirect_stdouts_to_logger
-from uuid import uuid4
 from raven.contrib.celery import register_signal
-from sqlalchemy import func, extract, and_, case, or_
-
+from sqlalchemy import func, extract, case, or_
 from sqlalchemy.orm import joinedload
-from sqlalchemy.sql import exists
-from typing import Any, Optional
 
-import flux
-import stat
-import string
-
-from .app import create_app, needs_app_context
 from . import issue_trackers
+from .app import create_app, needs_app_context
 from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues, BeamType
 from .paths import get_combadge_path
-from flask import current_app
-
-
 
 logger = logbook.Logger(__name__)
 
@@ -230,6 +218,7 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
 
         logger.info(f'{beam_id}: Detached from combadge')
     except Exception as e:
+        logger.exception("Failed to beam up")
         beam.error = str(e)
         beam.completed = True
         db.session.commit()
