@@ -79,15 +79,15 @@ jobs:
     - uses: actions/download-artifact@v1
       with:
         name: combadge_linux_asset
-        path: combadge_assets/combadge_linux
+        path: combadge_assets/v2/combadge_linux
     - uses: actions/download-artifact@v1
       with:
         name: combadge_darwin_asset
-        path: combadge_assets/combadge_darwin
+        path: combadge_assets/v2/combadge_darwin
     - uses: actions/download-artifact@v1
       with:
         name: combadge_windows_asset
-        path: combadge_assets/combadge_windows
+        path: combadge_assets/v2/combadge_windows
     - name: Publish to Registry
       uses: elgohr/Publish-Docker-Github-Action@master
       env:
