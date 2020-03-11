@@ -139,7 +139,7 @@ def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
     is_windows = os_type == 'windows'
 
     local_combadge_path = get_combadge_path(combadge_version, os_type=os_type)
-    assert os.path.exists(local_combadge_path)
+    assert os.path.exists(local_combadge_path), f"Combadge at {local_combadge_path} does not exist"
     remote_combadge_path = get_remote_combadge_path(ssh_client, is_windows)
 
     logger.info(f"uploading combadge {combadge_version} for {os_type} to {remote_combadge_path}")
