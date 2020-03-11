@@ -1,6 +1,7 @@
 extern crate byteorder;
 extern crate structopt;
 extern crate zstd;
+extern crate walkdir;
 
 mod config;
 mod messages;
@@ -15,6 +16,7 @@ use std::net::TcpStream;
 use std::path::Path;
 use std::time::SystemTime;
 use structopt::StructOpt;
+use walkdir::{WalkDir};
 
 const CHUNK_SIZE: usize = 1024 * 128;
 
@@ -38,21 +40,25 @@ fn beam_up(config: Config) -> std::io::Result<()> {
     transporter.write_u8(ClientMessages::ProtocolVersion as u8)?;
     transporter.write_u16::<byteorder::BigEndian>(2)?;
 
-    beam_path(&mut transporter, path, beam_id)?;
+    beam_path(&mut transporter, path)?;
 
     transporter.write_u8(ClientMessages::BeamComplete as u8)?;
 
     Ok(())
 }
 
-fn beam_path(transporter: &mut TcpStream, path: &Path, beam_id: u64) -> std::io::Result<()> {
+fn beam_path(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
     if !path.exists() {
         return Ok(())
     } else if path.is_file() {
-        beam_file(transporter, &path)?;
+        beam_file(transporter, path.parent(), &path)?;
     } else if path.is_dir() {
-        for entry in fs::read_dir(path)? {
-            beam_path(transporter, &entry?.path(), beam_id)?;
+        println!("Path is a directory: {:?}", path);
+        for entry in WalkDir::new(path).follow_links(false).into_iter().filter_map(|e| e.ok()) {
+            println!("Entry: {:?}", entry);
+            if entry.path().is_file() {
+                beam_file(transporter, Some(&path), &entry.path())?;
+            }
         }
     } else {
         println!("Path is not a file: {:?}", path);
@@ -61,7 +67,8 @@ fn beam_path(transporter: &mut TcpStream, path: &Path, beam_id: u64) -> std::io:
     Ok(())
 }
 
-fn beam_file(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
+fn beam_file(transporter: &mut TcpStream, maybe_base_path: Option<&Path>, path: &Path) -> std::io::Result<()> {
+    println!("Beaming file: {:?}", path);
     let should_compress = match path.extension().and_then(OsStr::to_str) {
         Some("zip") | Some("gz") | Some("bz2") | Some("xz") | Some("zst") | Some("tgz")
         | Some("tbz2") | Some("txz") | Some("ioym") | Some("br") => false,
@@ -74,8 +81,12 @@ fn beam_file(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
     if should_compress {
         textual_path.push_str(".zst");
     }
+    let path_without_base = match maybe_base_path {
+        Some(base_path) => textual_path.replacen(&base_path.to_string_lossy().into_owned(), ".", 1),
+        None => path.to_string_lossy().into_owned(),
+    };
 
-    let path_as_bytes = textual_path.as_bytes();
+    let path_as_bytes = path_without_base.as_bytes();
     transporter.write_u16::<byteorder::BigEndian>(path_as_bytes.len() as u16)?;
     transporter.write_all(path_as_bytes)?;
     println!("Beam path: {:?}", textual_path);
