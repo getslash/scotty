@@ -145,13 +145,12 @@ def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
             combadge_st = os.stat(local_combadge_path)
             sftp.chmod(remote_combadge_path, combadge_st.st_mode | stat.S_IEXEC)
 
-    yield remote_combadge_path
-    _remove_combadge(ssh_client, remote_combadge_path=remote_combadge_path)
+        yield remote_combadge_path
+        _remove_combadge(sftp, remote_combadge_path=remote_combadge_path)
 
 
-def _remove_combadge(ssh_client: SSHClient, remote_combadge_path: str) -> None:
-    with SFTPClient.from_transport(ssh_client.get_transport()) as sftp:
-        sftp.remove(remote_combadge_path)
+def _remove_combadge(sftp: SFTPClient, remote_combadge_path: str) -> None:
+    sftp.remove(remote_combadge_path)
 
 
 def _get_active_beams():

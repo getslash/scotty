@@ -61,7 +61,8 @@ def test_beam_without_file_should_be_vacuumed(eager_celery, db_session, create_b
     assert is_vacuumed(db_session, beam)
 
 
-def test_beam_with_beam_type_greater_threshold_is_not_vacuumed(eager_celery, db_session, create_beam, expired_beam_date, vacuum_threshold):
+def test_beam_with_beam_type_greater_threshold_is_not_vacuumed(eager_celery, db_session, create_beam, expired_beam_date,
+                                                               vacuum_threshold):
     # threshold       default threshold                 now
     #   |    10 days        |            60 days         |
     # -----------------------------------------------------> date
@@ -167,11 +168,52 @@ def mock_ssh_client(monkeypatch):
     MockSSHClient.clear()
 
 
+class MockSFTPClient:
+    instances = []
+    files = {}
+    trash = []
+
+    def __init__(self):
+        self.instances.append(self)
+        self.calls = []
+
+    @classmethod
+    def from_transport(cls, transport):
+        assert transport == "mock-transport"
+        return cls()
+
+    def put(self, local, remote):
+        self.files[remote] = dict(local=local)
+        self.calls.append(dict(action="put", args=dict(local=local, remote=remote)))
+
+    def remove(self, remote):
+        self.trash.append(remote)
+        self.files.pop(remote)
+        self.calls.append(dict(action="remove", args=dict(remote=remote)))
+
+    def chmod(self, remote, mode):
+        self.files[remote]['mode'] = mode
+        self.calls.append(dict(action="chmod", args=dict(remote=remote)))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    @classmethod
+    def clear(cls):
+        cls.instances = []
+        cls.files = {}
+        cls.trash = []
+
+
 @pytest.fixture
 def mock_sftp_client(monkeypatch):
-    SFTPClient = mock.MagicMock()
-    monkeypatch.setattr(tasks, "SFTPClient", SFTPClient)
-    return SFTPClient
+    monkeypatch.setattr(tasks, "SFTPClient", MockSFTPClient)
+    MockSFTPClient.clear()
+    yield MockSFTPClient
+    MockSFTPClient.clear()
 
 
 @pytest.fixture
@@ -201,7 +243,8 @@ def combadge_assets_dir(tmpdir, monkeypatch):
 
 
 @pytest.mark.parametrize("os_type", ["linux", "windows"])
-def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_ssh_client, mock_sftp_client, mock_rsa_key, uuid4, os_type, combadge_assets_dir):
+def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_ssh_client, mock_sftp_client,
+                 mock_rsa_key, uuid4, os_type, combadge_assets_dir):
     beam = create_beam(start=now, completed=False)
     if os_type == "windows":
         beam.host = "mock-windows-host"
@@ -221,13 +264,35 @@ def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_s
     assert beam.error is None
     assert len(mock_ssh_client.instances) == 1
     uuid_part = uuid4.hex[:_COMBADGE_UUID_PART_LENGTH]
-    if os_type == "linux":
-        combadge = f"/tmp/combadge_{uuid_part}"
-    else:
-        combadge = fr"C:\Users\root\AppData\Local\Temp\combadge_{uuid_part}.exe"
+    ext = ".exe" if os_type == "windows" else ""
+    remote_dir = fr"C:\Users\root\AppData\Local\Temp" if os_type == "windows" else "/tmp"
+    sep = "\\" if os_type == "windows" else "/"
+    combadge = f"{remote_dir}{sep}combadge_{uuid_part}{ext}"
     assert mock_ssh_client.instances[0].commands == [
         "uname",
         _TEMPDIR_COMMAND,
         f"{combadge} -b {beam.id} -p {beam.directory} -t scotty",
     ]
+    assert len(mock_sftp_client.instances) == 1
+    expected_calls = [
+        {
+            'action': 'put',
+            'args': {
+                'local': f'{combadge_assets_dir}/v2/combadge_{os_type}/combadge{ext}',
+                'remote': combadge
+            }
+        },
+    ]
+    if os_type == "linux":
+        expected_calls.append({
+            'action': 'chmod',
+            'args': {
+                'remote': combadge
+            },
+        })
+    expected_calls.append({
+        'action': 'remove',
+        'args': {'remote': combadge}
+    })
 
+    assert mock_sftp_client.instances[0].calls == expected_calls
