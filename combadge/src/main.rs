@@ -67,7 +67,7 @@ fn beam_path(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-fn beam_file(transporter: &mut TcpStream, maybe_base_path: Option<&Path>, path: &Path) -> std::io::Result<()> {
+fn beam_file(transporter: &mut TcpStream, base_path: Option<&Path>, path: &Path) -> std::io::Result<()> {
     println!("Beaming file: {:?}", path);
     let should_compress = match path.extension().and_then(OsStr::to_str) {
         Some("zip") | Some("gz") | Some("bz2") | Some("xz") | Some("zst") | Some("tgz")
@@ -81,7 +81,7 @@ fn beam_file(transporter: &mut TcpStream, maybe_base_path: Option<&Path>, path: 
     if should_compress {
         textual_path.push_str(".zst");
     }
-    let path_without_base = match maybe_base_path {
+    let path_without_base = match base_path {
         Some(base_path) => textual_path.replacen(&base_path.to_string_lossy().into_owned(), ".", 1),
         None => path.to_string_lossy().into_owned(),
     };
