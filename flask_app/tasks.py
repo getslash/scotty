@@ -259,7 +259,7 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
         logger.info(f'{beam_id}: Detached from combadge')
     except Exception as e:
         logger.exception("Failed to beam up")
-        beam.error = str(e)
+        beam.error = f"Failed to beam up {beam_id} ({directory}) to {host} using combadge {combadge_version}: {e}"
         beam.completed = True
         db.session.commit()
 
