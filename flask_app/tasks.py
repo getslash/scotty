@@ -38,7 +38,8 @@ from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues, BeamType
 from .paths import get_combadge_path
 
 logger = logbook.Logger(__name__)
-
+_TEMPDIR_COMMAND = "python -c 'import tempfile; print(tempfile.gettempdir())'"
+_COMBADGE_UUID_PART_LENGTH = 10
 
 queue = Celery('tasks', broker=os.environ.get('SCOTTY_CELERY_BROKER_URL', 'amqp://guest:guest@localhost'))
 queue.conf.update(
@@ -112,14 +113,12 @@ def _generate_random_combadge_name(string_length: int) -> str:
     return f"combadge_{random_string}"
 
 
-_TEMPDIR_COMMAND = "python -c 'import tempfile; print(tempfile.gettempdir())'"
-
 def _get_temp_dir(ssh_client):
     return _exec_ssh_command(ssh_client, _TEMPDIR_COMMAND)
 
 
 def get_remote_combadge_path(ssh_client, is_windows):
-    combadge_name = _generate_random_combadge_name(string_length=10)
+    combadge_name = _generate_random_combadge_name(string_length=_COMBADGE_UUID_PART_LENGTH)
     remote_combadge_dir = _get_temp_dir(ssh_client)
     if is_windows:
         combadge_name = f'{combadge_name}.exe'

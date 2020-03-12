@@ -9,7 +9,7 @@ import pytest
 
 from flask_app import tasks, paths
 from flask_app.models import Beam, Pin, BeamType
-from flask_app.tasks import vacuum, beam_up, _TEMPDIR_COMMAND
+from flask_app.tasks import vacuum, beam_up, _TEMPDIR_COMMAND, _COMBADGE_UUID_PART_LENGTH
 
 
 def is_vacuumed(db_session, beam):
@@ -220,10 +220,11 @@ def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_s
     beam = db_session.query(Beam).filter_by(id=beam.id).one()
     assert beam.error is None
     assert len(mock_ssh_client.instances) == 1
+    uuid_part = uuid4.hex[:_COMBADGE_UUID_PART_LENGTH]
     if os_type == "linux":
-        combadge = f"/tmp/combadge_{uuid4.hex[:10]}"
+        combadge = f"/tmp/combadge_{uuid_part}"
     else:
-        combadge = fr"C:\Users\root\AppData\Local\Temp\combadge_{uuid4.hex[:10]}.exe"
+        combadge = fr"C:\Users\root\AppData\Local\Temp\combadge_{uuid_part}.exe"
     assert mock_ssh_client.instances[0].commands == [
         "uname",
         _TEMPDIR_COMMAND,
