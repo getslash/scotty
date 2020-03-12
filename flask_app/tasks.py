@@ -79,7 +79,7 @@ def testing_method(f):
     return wrapper
 
 
-def create_key(s):
+def create_key(s: str) -> str:
     f = StringIO()
     f.write(s)
     f.seek(0)
