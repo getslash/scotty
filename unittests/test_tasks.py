@@ -113,15 +113,15 @@ class MockSSHClient:
         self.connect_args = None
         self.stdin = io.BytesIO()
         self.stdout = io.BytesIO()
-        self.recv_exit_status = 0
-        self.stdout.channel = munch.Munch(recv_exit_status=lambda: self.recv_exit_status)
+        self.exit_status = 0
+        self.stdout.channel = munch.Munch(recv_exit_status=lambda: self.exit_status)
         self.stderr = io.BytesIO()
         self.commands = []
         self.os_type = None
 
     def exec_command(self, command):
         self.commands.append(command)
-        self.recv_exit_status = 0
+        self.exit_status = 0
         self.stdout.truncate(0)
         self.stdout.seek(0)
         if command == "uname":
@@ -133,7 +133,7 @@ class MockSSHClient:
                     b"or operable program. Check the spelling of the name, or if a path was included, "
                     b"verify that the path is correct and try again."
                 ))
-                self.recv_exit_status = 1
+                self.exit_status = 1
         elif command == _TEMPDIR_COMMAND:
             if self.os_type == "linux":
                 self.stdout.write(b"/tmp")
@@ -147,10 +147,7 @@ class MockSSHClient:
 
     def connect(self, host, **kwargs):
         self.connect_args = dict(host=host, **kwargs)
-        if host == "mock-host":
-            self.os_type = "linux"
-        else:
-            self.os_type = "windows"
+        self.os_type = "linux" if host == "mock-host" else "windows"
 
     def set_missing_host_key_policy(self, policy):
         self.policy = policy
