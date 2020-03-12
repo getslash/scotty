@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import contextlib
 import functools
 import os
 import smtplib
@@ -101,12 +102,9 @@ Sincerely yours,<br/>
 Montgomery Scott
 """
 
+
 def _get_os_type(ssh_client: SSHClient) -> str:
-    _, stdout, stderr = ssh_client.exec_command("uname")
-    retcode = stdout.channel.recv_exit_status()
-    if retcode != 0:
-        return 'windows'
-    return stdout.read().decode("utf-8").strip().lower()
+    return _exec_ssh_command(ssh_client, "uname", raise_on_failure=False) or 'windows'
 
 
 def _generate_random_combadge_name(string_length: int) -> str:
@@ -115,11 +113,7 @@ def _generate_random_combadge_name(string_length: int) -> str:
 
 
 def _get_temp_dir(ssh_client):
-    _, stdout, stderr = ssh_client.exec_command("python -c 'import tempfile; print(tempfile.gettempdir())'")
-    retcode = stdout.channel.recv_exit_status()
-    if retcode != 0:
-        raise RuntimeError(f"failed to get tempdir: {stderr.read()}")
-    return stdout.read().decode("utf-8").strip()
+    return _exec_ssh_command(ssh_client, "python -c 'import tempfile; print(tempfile.gettempdir())'")
 
 
 def get_remote_combadge_path(ssh_client, is_windows):
@@ -134,6 +128,7 @@ def get_remote_combadge_path(ssh_client, is_windows):
     return remote_combadge_path
 
 
+@contextlib.contextmanager
 def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
     os_type = _get_os_type(ssh_client)
     is_windows = os_type == 'windows'
@@ -149,7 +144,8 @@ def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
             combadge_st = os.stat(local_combadge_path)
             sftp.chmod(remote_combadge_path, combadge_st.st_mode | stat.S_IEXEC)
 
-    return remote_combadge_path
+    yield remote_combadge_path
+    _remove_combadge(ssh_client, remote_combadge_path=remote_combadge_path)
 
 
 def _remove_combadge(ssh_client: SSHClient, remote_combadge_path: str) -> None:
@@ -207,14 +203,10 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
 
         ssh_client = _get_connected_ssh_client(host, username, auth_method, pkey, password)
 
-        combadge_path = _upload_combadge(ssh_client, combadge_version)
-        logger.info(f'{beam_id}: Running combadge at {combadge_path}')
-
-        combadge_command = _get_combadge_command(combadge_version, combadge_path, str(beam_id), directory, transporter)
-        _, stdout, stderr = ssh_client.exec_command(combadge_command)
-        retcode = stdout.channel.recv_exit_status()
-        if retcode != 0:
-            raise Exception(stderr.read().decode("utf-8"))
+        with _upload_combadge(ssh_client, combadge_version) as combadge_path:
+            logger.info(f'{beam_id}: Running combadge at {combadge_path}')
+            combadge_command = _get_combadge_command(combadge_version, combadge_path, str(beam_id), directory, transporter)
+            _exec_ssh_command(ssh_client, combadge_command)
 
         logger.info(f'{beam_id}: Detached from combadge')
     except Exception as e:
@@ -225,6 +217,15 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
 
         if not isinstance(e, paramiko.ssh_exception.AuthenticationException):
             raise
+
+
+def _exec_ssh_command(ssh_client, command, raise_on_failure=True):
+    _, stdout, stderr = ssh_client.exec_command(command)
+    retcode = stdout.channel.recv_exit_status()
+    if retcode == 0:
+        return stdout.read().decode()
+    if raise_on_failure:
+        raise Exception(f"Failed to execute command {command}: {stderr.read().decode('utf-8')}")
 
 
 def vacuum_beam(beam: Beam, storage_path: str) -> None:
