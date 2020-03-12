@@ -1,6 +1,7 @@
 import datetime
 import io
 import pathlib
+import stat
 from unittest import mock
 from uuid import UUID
 
@@ -196,7 +197,7 @@ class MockSFTPClient:
 
     def chmod(self, remote, mode):
         self.files[remote]['mode'] = mode
-        self.calls.append(dict(action="chmod", args=dict(remote=remote)))
+        self.calls.append(dict(action="chmod", args=dict(remote=remote, mode=mode)))
 
     def __enter__(self):
         return self
@@ -212,6 +213,20 @@ class MockSFTPClient:
         cls.instances = []
         cls.files = {}
         cls.trash = []
+
+    @classmethod
+    def get_one_instance_or_raise(cls):
+        assert len(cls.instances) == 1, f"Expected one instance, got: {cls.instances}"
+        return cls.instances[0]
+
+    def assert_calls_equal_to(self, expected_calls):
+        assert len(self.calls) == len(expected_calls)
+        for actual_call, expected_call in zip(self.calls, expected_calls):
+            if expected_call['action'] == 'chmod':
+                assert actual_call['args']['remote'] == expected_call['args']['remote']
+                assert actual_call['args']['mode'] & expected_call['args']['mode'] == expected_call['args']['mode']
+            else:
+                assert actual_call == expected_call
 
 
 @pytest.fixture
@@ -293,7 +308,8 @@ def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_s
         expected_calls.append({
             'action': 'chmod',
             'args': {
-                'remote': combadge
+                'remote': combadge,
+                'mode': stat.S_IEXEC,
             },
         })
     expected_calls.append({
@@ -301,4 +317,7 @@ def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_s
         'args': {'remote': combadge}
     })
 
-    assert mock_sftp_client.instances[0].calls == expected_calls
+    mock_sftp_client.get_one_instance_or_raise().assert_calls_equal_to(expected_calls)
+    assert mock_sftp_client.files == {}
+    assert len(mock_sftp_client.trash) == 1
+    assert mock_sftp_client.trash[0] == combadge
