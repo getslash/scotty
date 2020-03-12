@@ -126,7 +126,7 @@ class MockSSHClient:
         self.stdout.seek(0)
         if command == "uname":
             if self.os_type == "linux":
-                self.stdout.write(b"linux")
+                self.stdout.write(b"Linux")
             else:
                 self.stderr.write((
                     b"uname : The term 'uname' is not recognized as the name of a cmdlet, function, script file, "

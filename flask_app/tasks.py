@@ -107,28 +107,34 @@ class RemoteHost:
     _TEMPDIR_COMMAND = "python -c 'import tempfile; print(tempfile.gettempdir())'"
 
     def __init__(self, *, host, username, auth_method, pkey=None, password=None):
-        self._host = host
+        self.host = host
         self._username = username
         self._auth_method = auth_method
         self._pkey = pkey
         self._password = password
         self._ssh_client = None
 
-    @functools.lru_cache
+    @functools.lru_cache(maxsize=None)
     def get_os_type(self) -> str:
-        return self.exec_ssh_command("uname", raise_on_failure=False) or 'windows'
+        uname = self.exec_ssh_command("uname", raise_on_failure=False)
+        if uname is None:
+            return 'windows'
+        return uname.lower()
 
     def get_temp_dir(self) -> str:
         return self.exec_ssh_command(self._TEMPDIR_COMMAND)
 
     def exec_ssh_command(self, command, raise_on_failure=True):
-        logger.info(f"executing on host {self._host} command {command}")
-        _, stdout, stderr = self._ssh_client.exec_command(command)
+        _, stdout, stderr = self.raw_exec_ssh_command(command)
         retcode = stdout.channel.recv_exit_status()
         if retcode == 0:
-            return stdout.read().decode()
+            return stdout.read().decode().strip()
         if raise_on_failure:
             raise Exception(f"Failed to execute command {command}: {stderr.read().decode('utf-8')}")
+
+    def raw_exec_ssh_command(self, command):
+        logger.info(f"executing on host {self.host} command {command}")
+        return self._ssh_client.exec_command(command)
 
     def get_sftp_client(self):
         return SFTPClient.from_transport(self._ssh_client.get_transport())
@@ -149,7 +155,7 @@ class RemoteHost:
         else:
             raise Exception('Invalid auth method')
 
-        self._ssh_client.connect(self._host, **kwargs)
+        self._ssh_client.connect(self.host, **kwargs)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -194,7 +200,10 @@ class RemoteCombadge:
 
     def _remove_combadge(self):
         if self._remote_combadge_path is not None and self._sftp is not None:
-            self._sftp.remove(self._remote_combadge_path)
+            try:
+                self._sftp.remove(self._remote_combadge_path)
+            except FileNotFoundError:
+                logger.warn(f"Combadge {self._remote_combadge_path} not found when trying to remove it")
 
     def __enter__(self):
         self._upload_combadge()
@@ -212,6 +221,10 @@ class RemoteCombadge:
         }
         combadge_command = combadge_commands[self._combadge_version]
         self._remote_host.exec_ssh_command(combadge_command)
+
+    def ping(self):
+        _, stdout, stderr = self._remote_host.raw_exec_ssh_command(self._remote_combadge_path)
+        return 'usage' in (stdout.read().decode() + stderr.read().decode()).lower()
 
 
 def _get_active_beams():
