@@ -130,7 +130,7 @@ class RemoteHost:
         if retcode == 0:
             return stdout.read().decode().strip()
         if raise_on_failure:
-            raise Exception(f"Failed to execute command {command}: {stderr.read().decode('utf-8')}")
+            raise RuntimeError(f"Failed to execute command {command}: {stderr.read().decode('utf-8')}")
 
     def raw_exec_ssh_command(self, command):
         logger.info(f"executing on host {self.host} command {command}")
@@ -153,7 +153,7 @@ class RemoteHost:
         elif self._auth_method == 'password':
             kwargs['password'] = self._password
         else:
-            raise Exception('Invalid auth method')
+            raise ValueError(f'Invalid auth method: {self._auth_method}')
 
         self._ssh_client.connect(self.host, **kwargs)
         return self
