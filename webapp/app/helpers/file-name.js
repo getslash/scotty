@@ -1,7 +1,7 @@
 import { helper } from '@ember/component/helper';
 
 export function fileName([value]) {
-  if (value.startsWith("./")) {
+  if (value.startsWith("./") || value.startsWith(".\\")) {
     return value.slice(2);
   }
   return value;
