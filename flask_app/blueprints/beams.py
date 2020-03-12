@@ -1,18 +1,19 @@
 import http
-from sqlalchemy import distinct
-from sqlalchemy.sql import false
-from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import IntegrityError
-from paramiko.ssh_exception import SSHException
-from flux import current_timeline
-from flask import Blueprint, abort, request, current_app, jsonify, Response
-from typing import Union, Tuple
-from .auth import require_user, get_or_create_user, InvalidEmail
-from ..models import Beam, db, User, Pin, Tag, BeamType, Issue, Key
-from .utils import validate_schema, is_valid_hostname
-from .types import ServerResponse
-from ..tasks import create_key, beam_up
+from typing import Tuple, Union
 
+from flask import Blueprint, Response, abort, current_app, jsonify, request
+from flux import current_timeline
+from paramiko.ssh_exception import SSHException
+from sqlalchemy import distinct
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
+from sqlalchemy.sql import false
+
+from ..models import Beam, BeamType, Issue, Key, Pin, Tag, User, db
+from ..tasks import beam_up, create_key
+from .auth import InvalidEmail, get_or_create_user, require_user
+from .types import ServerResponse
+from .utils import is_valid_hostname, validate_schema
 
 beams = Blueprint("beams", __name__, template_folder="templates")
 

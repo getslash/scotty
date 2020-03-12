@@ -1,9 +1,10 @@
 import enum
-from datetime import timedelta
-from ..conftest import issue
 import logging
+from datetime import timedelta
 
 import pytest
+
+from ..conftest import issue
 
 _DAY = timedelta(days=1)
 

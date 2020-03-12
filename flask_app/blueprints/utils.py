@@ -1,9 +1,10 @@
-import re
 import http
+import re
 from functools import wraps
-from jsonschema import Draft4Validator
+
 import logbook
-from flask import request, abort
+from flask import abort, request
+from jsonschema import Draft4Validator
 
 
 def validate_schema(schema):

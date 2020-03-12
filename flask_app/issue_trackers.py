@@ -1,16 +1,17 @@
 import json
 from datetime import timedelta, timezone
+from typing import List
 
 import flux
 import logbook
-
 from flask import current_app
 from jira import JIRA as JIRAAPI
 from jira.exceptions import JIRAError
-from typing import List
 
 from .app import needs_app_context
-from .models import Tracker as TrackerModel, db, Issue
+from .models import Issue
+from .models import Tracker as TrackerModel
+from .models import db
 
 logger = logbook.Logger(__name__)
 

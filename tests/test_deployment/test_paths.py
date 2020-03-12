@@ -1,7 +1,8 @@
+import os
+
 import pytest
 
 from flask_app.paths import get_combadge_path
-import os
 
 
 @pytest.mark.parametrize('os_type', ['linux', 'windows', 'darwin'])

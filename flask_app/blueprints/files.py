@@ -1,14 +1,15 @@
-import os
 import http
+import os
 import urllib.parse
-import logbook
-from flux import current_timeline
-from flask import Blueprint, request, jsonify, abort, current_app, Response
-from typing import Mapping, Union, Tuple, Optional, Any
-from .utils import validate_schema
-from .types import ServerResponse
-from ..models import db, File, Beam
+from typing import Any, Mapping, Optional, Tuple, Union
 
+import logbook
+from flask import Blueprint, Response, abort, current_app, jsonify, request
+from flux import current_timeline
+
+from ..models import Beam, File, db
+from .types import ServerResponse
+from .utils import validate_schema
 
 files = Blueprint("files", __name__, template_folder="templates")
 

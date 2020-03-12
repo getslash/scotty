@@ -1,10 +1,13 @@
-import os
 import http.client
+import os
+
 import logbook
 import psutil
+from flask import (Blueprint, Response, abort, current_app, jsonify, redirect,
+                   request, send_file, send_from_directory)
 from sqlalchemy.sql import func
-from flask import Blueprint, current_app, send_from_directory, jsonify, request, redirect, abort, send_file, Response
-from ..models import Beam, db, Pin, Tag, User
+
+from ..models import Beam, Pin, Tag, User, db
 from ..paths import get_combadge_path
 from .auth import require_user
 from .utils import validate_schema

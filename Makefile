@@ -11,6 +11,14 @@ clean:
 test:
 	make -C webapp test
 
+do_format:
+	poetry run isort -rc unittests tests flask_app
+
+check:
+	poetry run isort -rc --check unittests tests flask_app
+	poetry run mypy flask_app/
+	poetry run pytest unittests/
+
 webapp:
 	poetry install
 	.venv/bin/python manage.py frontend build

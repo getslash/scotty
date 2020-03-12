@@ -4,14 +4,13 @@ import os
 import tempfile
 import uuid
 from collections import namedtuple
+from time import sleep
 
 import pytest
 from scottypy import Scotty
 from urlobject import URLObject as URL
 
 from flask_app import app, models
-
-from time import sleep
 
 BeamType = namedtuple('BeamType', ('name', 'threshold'))
 BeamInfo = namedtuple('BeamInfo', ('beam', 'type'))

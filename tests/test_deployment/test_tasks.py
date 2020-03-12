@@ -1,11 +1,12 @@
-import flask_login
-from flask_app.tasks import queue, beam_up, RemoteHost, RemoteCombadge
-from flask_app.models import Beam, User, db
-from flux import current_timeline
-from flask_app.blueprints.auth import get_or_create_user
 import os
-import pytest
 
+import flask_login
+import pytest
+from flux import current_timeline
+
+from flask_app.blueprints.auth import get_or_create_user
+from flask_app.models import Beam, User, db
+from flask_app.tasks import RemoteCombadge, RemoteHost, beam_up, queue
 
 OS_TYPES = ['linux', 'windows']
 HOST_NAME_BY_OS_TYPE = {

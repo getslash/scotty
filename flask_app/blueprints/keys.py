@@ -1,9 +1,10 @@
 import http.client
-from flask import Blueprint, request, jsonify, Response
 from typing import Union
-from .utils import validate_schema
-from ..models import db, Key
 
+from flask import Blueprint, Response, jsonify, request
+
+from ..models import Key, db
+from .utils import validate_schema
 
 keys = Blueprint("keys", __name__, template_folder="templates")
 

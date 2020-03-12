@@ -1,13 +1,12 @@
-import subprocess
-import http.client
-
 import gzip
+import http.client
 import os
 import shutil
+import subprocess
 
 import pytest
-
 from requests.exceptions import HTTPError
+
 
 def test_sanity(scotty):
     scotty.sanity_check()

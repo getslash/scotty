@@ -1,9 +1,11 @@
 import http
-from flask import Blueprint, request, jsonify, Response
-from typing import Union, Tuple
+from typing import Tuple, Union
+
+from flask import Blueprint, Response, jsonify, request
+
+from ..models import Tracker, db
+from .types import DBOperationResponse, ServerResponse
 from .utils import validate_schema
-from .types import ServerResponse, DBOperationResponse
-from ..models import db, Tracker
 
 trackers = Blueprint("trackers", __name__, template_folder="templates")
 

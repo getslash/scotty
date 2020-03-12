@@ -1,9 +1,11 @@
 import http
-import requests
-import slash
 import uuid
 from itertools import chain, combinations
+
 import pytest
+import requests
+import slash
+
 
 def powerset(iterable):
     s = list(iterable)

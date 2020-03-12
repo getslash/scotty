@@ -21,20 +21,20 @@ import paramiko
 import psutil
 from celery import Celery
 from celery.schedules import crontab
-from celery.signals import after_setup_logger, after_setup_task_logger
-from celery.signals import worker_init
+from celery.signals import (after_setup_logger, after_setup_task_logger,
+                            worker_init)
 from flask import current_app
 from jinja2 import Template
-from paramiko import SSHClient, SFTPClient
+from paramiko import SFTPClient, SSHClient
 from paramiko.client import AutoAddPolicy
 from paramiko.rsakey import RSAKey
 from raven.contrib.celery import register_signal
-from sqlalchemy import func, extract, case, or_
+from sqlalchemy import case, extract, func, or_
 from sqlalchemy.orm import joinedload
 
 from . import issue_trackers
 from .app import create_app, needs_app_context
-from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues, BeamType
+from .models import Beam, BeamType, File, Issue, Pin, Tracker, beam_issues, db
 from .paths import get_combadge_path
 
 logger = logbook.Logger(__name__)
@@ -214,7 +214,7 @@ class RemoteCombadge:
         if self._sftp is not None:
             self._sftp.close()
 
-    def run(self, *, beam_id: int, directory: str, transporter: str):
+    def run(self, *, beam_id: int, directory: str, transporter: str) -> None:
         combadge_commands = {
             'v1': f'{self._remote_combadge_path} {beam_id} "{directory}" "{transporter}"',
             'v2': f'{self._remote_combadge_path} -b {beam_id} -p {directory} -t {transporter}'

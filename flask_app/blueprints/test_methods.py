@@ -1,8 +1,11 @@
 import os
-import flux
-from flask import Blueprint, send_file, current_app, request, make_response, Response
-from ..tasks import sleep as celery_sleep
 import time as real_time
+
+import flux
+from flask import (Blueprint, Response, current_app, make_response, request,
+                   send_file)
+
+from ..tasks import sleep as celery_sleep
 
 test_methods = Blueprint("test_methods", __name__, template_folder="templates")
 

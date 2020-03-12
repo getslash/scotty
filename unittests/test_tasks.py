@@ -7,10 +7,10 @@ from uuid import UUID
 import munch
 import pytest
 
-from flask_app import tasks, paths
-from flask_app.models import Beam, Pin, BeamType
-from flask_app.tasks import vacuum, beam_up, _COMBADGE_UUID_PART_LENGTH, RemoteHost
-
+from flask_app import paths, tasks
+from flask_app.models import Beam, BeamType, Pin
+from flask_app.tasks import (_COMBADGE_UUID_PART_LENGTH, RemoteHost, beam_up,
+                             vacuum)
 
 _TEMPDIR_COMMAND = RemoteHost._TEMPDIR_COMMAND
 
