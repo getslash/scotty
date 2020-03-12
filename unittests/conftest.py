@@ -33,6 +33,7 @@ def app_context(monkeypatch, storage_path, vacuum_threshold):
             ),
             "STORAGE_PATH": storage_path,
             "VACUUM_THRESHOLD": vacuum_threshold,
+            "TRANSPORTER_HOST": "scotty",
         }
     )
     app_context = app.app_context()
