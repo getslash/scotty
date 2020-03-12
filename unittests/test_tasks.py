@@ -9,7 +9,7 @@ import pytest
 
 from flask_app import tasks, paths
 from flask_app.models import Beam, Pin, BeamType
-from flask_app.tasks import vacuum, beam_up
+from flask_app.tasks import vacuum, beam_up, _TEMPDIR_COMMAND
 
 
 def is_vacuumed(db_session, beam):
@@ -130,12 +130,12 @@ class MockSSHClient:
                     b"verify that the path is correct and try again."
                 ))
                 self.recv_exit_status = 1
-        elif command == "python -c 'import tempfile; print(tempfile.gettempdir())'":
+        elif command == _TEMPDIR_COMMAND:
             if self.os_type == "linux":
                 self.stdout.write(b"/tmp")
             else:
                 user = self.connect_args['username']
-                self.stdout.write(b"C:\\Users\\" + user.encode() + b"\\AppData\\Local\\Temp")
+                self.stdout.write(fr"C:\Users\{user}\AppData\Local\Temp".encode())
         self.stdout.seek(0)
         self.stdin.seek(0)
         self.stderr.seek(0)
@@ -223,10 +223,10 @@ def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_s
     if os_type == "linux":
         combadge = f"/tmp/combadge_{uuid4.hex[:10]}"
     else:
-        combadge = f"C:\\Users\\root\\AppData\\Local\\Temp\\combadge_{uuid4.hex[:10]}.exe"
+        combadge = fr"C:\Users\root\AppData\Local\Temp\combadge_{uuid4.hex[:10]}.exe"
     assert mock_ssh_client.instances[0].commands == [
         "uname",
-        "python -c 'import tempfile; print(tempfile.gettempdir())'",
+        _TEMPDIR_COMMAND,
         f"{combadge} -b {beam.id} -p {beam.directory} -t scotty",
     ]
 

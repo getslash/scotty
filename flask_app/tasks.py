@@ -112,8 +112,10 @@ def _generate_random_combadge_name(string_length: int) -> str:
     return f"combadge_{random_string}"
 
 
+_TEMPDIR_COMMAND = "python -c 'import tempfile; print(tempfile.gettempdir())'"
+
 def _get_temp_dir(ssh_client):
-    return _exec_ssh_command(ssh_client, "python -c 'import tempfile; print(tempfile.gettempdir())'")
+    return _exec_ssh_command(ssh_client, _TEMPDIR_COMMAND)
 
 
 def get_remote_combadge_path(ssh_client, is_windows):
