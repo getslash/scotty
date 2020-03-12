@@ -9,7 +9,10 @@ import pytest
 
 from flask_app import tasks, paths
 from flask_app.models import Beam, Pin, BeamType
-from flask_app.tasks import vacuum, beam_up, _TEMPDIR_COMMAND, _COMBADGE_UUID_PART_LENGTH
+from flask_app.tasks import vacuum, beam_up, _COMBADGE_UUID_PART_LENGTH, RemoteHost
+
+
+_TEMPDIR_COMMAND = RemoteHost._TEMPDIR_COMMAND
 
 
 def is_vacuumed(db_session, beam):
@@ -155,6 +158,9 @@ class MockSSHClient:
     def get_transport(self):
         return "mock-transport"
 
+    def close(self):
+        pass
+
     @classmethod
     def clear(cls):
         cls.instances = []
@@ -199,6 +205,9 @@ class MockSFTPClient:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def close(self):
         pass
 
     @classmethod

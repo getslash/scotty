@@ -12,7 +12,7 @@ from datetime import timedelta
 from email.mime.text import MIMEText
 from io import StringIO
 from pathlib import PureWindowsPath
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 import flux
@@ -38,7 +38,6 @@ from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues, BeamType
 from .paths import get_combadge_path
 
 logger = logbook.Logger(__name__)
-_TEMPDIR_COMMAND = "python -c 'import tempfile; print(tempfile.gettempdir())'"
 _COMBADGE_UUID_PART_LENGTH = 10
 
 queue = Celery('tasks', broker=os.environ.get('SCOTTY_CELERY_BROKER_URL', 'amqp://guest:guest@localhost'))
@@ -104,53 +103,115 @@ Montgomery Scott
 """
 
 
-def _get_os_type(ssh_client: SSHClient) -> str:
-    return _exec_ssh_command(ssh_client, "uname", raise_on_failure=False) or 'windows'
+class RemoteHost:
+    _TEMPDIR_COMMAND = "python -c 'import tempfile; print(tempfile.gettempdir())'"
+
+    def __init__(self, *, host, username, auth_method, pkey=None, password=None):
+        self._host = host
+        self._username = username
+        self._auth_method = auth_method
+        self._pkey = pkey
+        self._password = password
+        self._ssh_client = None
+
+    @functools.lru_cache
+    def get_os_type(self) -> str:
+        return self.exec_ssh_command("uname", raise_on_failure=False) or 'windows'
+
+    def get_temp_dir(self) -> str:
+        return self.exec_ssh_command(self._TEMPDIR_COMMAND)
+
+    def exec_ssh_command(self, command, raise_on_failure=True):
+        logger.info(f"executing on host {self._host} command {command}")
+        _, stdout, stderr = self._ssh_client.exec_command(command)
+        retcode = stdout.channel.recv_exit_status()
+        if retcode == 0:
+            return stdout.read().decode()
+        if raise_on_failure:
+            raise Exception(f"Failed to execute command {command}: {stderr.read().decode('utf-8')}")
+
+    def get_sftp_client(self):
+        return SFTPClient.from_transport(self._ssh_client.get_transport())
+
+    def close(self):
+        if self._ssh_client is not None:
+            self._ssh_client.close()
+
+    def __enter__(self):
+        self._ssh_client = ssh_client = SSHClient()
+        ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+
+        kwargs = {'username': self._username, 'look_for_keys': False}
+        if self._auth_method in ('rsa', 'stored_key'):
+            kwargs['pkey'] = create_key(self._pkey)
+        elif self._auth_method == 'password':
+            kwargs['password'] = self._password
+        else:
+            raise Exception('Invalid auth method')
+
+        self._ssh_client.connect(self._host, **kwargs)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
 
-def _generate_random_combadge_name(string_length: int) -> str:
-    random_string = str(uuid4().hex)[:string_length]
-    return f"combadge_{random_string}"
+class RemoteCombadge:
+    def __init__(self, *, remote_host: RemoteHost, combadge_version: str):
+        self._combadge_version = combadge_version
+        self._remote_host = remote_host
+        self._remote_combadge_path = None
 
+    def _generate_random_combadge_name(self, string_length: int) -> str:
+        random_string = str(uuid4().hex)[:string_length]
+        return f"combadge_{random_string}"
 
-def _get_temp_dir(ssh_client):
-    return _exec_ssh_command(ssh_client, _TEMPDIR_COMMAND)
+    def _get_remote_combadge_path(self):
+        combadge_name = self._generate_random_combadge_name(string_length=_COMBADGE_UUID_PART_LENGTH)
+        remote_combadge_dir = self._remote_host.get_temp_dir()
+        if self._remote_host.get_os_type() == "windows":
+            combadge_name = f'{combadge_name}.exe'
+            remote_combadge_path = str(PureWindowsPath(os.path.join(remote_combadge_dir, combadge_name)))
+        else:
+            remote_combadge_path = os.path.join(remote_combadge_dir, combadge_name)
+        logger.debug(f"combadge path: {remote_combadge_path}")
+        return remote_combadge_path
 
+    def _upload_combadge(self):
+        os_type = self._remote_host.get_os_type()
 
-def get_remote_combadge_path(ssh_client, is_windows):
-    combadge_name = _generate_random_combadge_name(string_length=_COMBADGE_UUID_PART_LENGTH)
-    remote_combadge_dir = _get_temp_dir(ssh_client)
-    if is_windows:
-        combadge_name = f'{combadge_name}.exe'
-        remote_combadge_path = str(PureWindowsPath(os.path.join(remote_combadge_dir, combadge_name)))
-    else:
-        remote_combadge_path = os.path.join(remote_combadge_dir, combadge_name)
-    logger.debug(f"combadge path: {remote_combadge_path}")
-    return remote_combadge_path
+        local_combadge_path = get_combadge_path(self._combadge_version, os_type=os_type)
+        assert os.path.exists(local_combadge_path), f"Combadge at {local_combadge_path} does not exist"
+        remote_combadge_path = self._get_remote_combadge_path()
 
-
-@contextlib.contextmanager
-def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
-    os_type = _get_os_type(ssh_client)
-    is_windows = os_type == 'windows'
-
-    local_combadge_path = get_combadge_path(combadge_version, os_type=os_type)
-    assert os.path.exists(local_combadge_path), f"Combadge at {local_combadge_path} does not exist"
-    remote_combadge_path = get_remote_combadge_path(ssh_client, is_windows)
-
-    logger.info(f"uploading combadge {combadge_version} for {os_type} to {remote_combadge_path}")
-    with SFTPClient.from_transport(ssh_client.get_transport()) as sftp:
-        sftp.put(local_combadge_path, remote_combadge_path)
-        if not is_windows:
+        logger.info(f"uploading combadge {self._combadge_version} for {os_type} to {remote_combadge_path}")
+        self._sftp = self._remote_host.get_sftp_client()
+        self._sftp.put(local_combadge_path, remote_combadge_path)
+        if os_type != 'windows':
             combadge_st = os.stat(local_combadge_path)
-            sftp.chmod(remote_combadge_path, combadge_st.st_mode | stat.S_IEXEC)
+            self._sftp.chmod(remote_combadge_path, combadge_st.st_mode | stat.S_IEXEC)
+        self._remote_combadge_path = remote_combadge_path
 
-        yield remote_combadge_path
-        _remove_combadge(sftp, remote_combadge_path=remote_combadge_path)
+    def _remove_combadge(self):
+        if self._remote_combadge_path is not None and self._sftp is not None:
+            self._sftp.remove(self._remote_combadge_path)
 
+    def __enter__(self):
+        self._upload_combadge()
+        return self
 
-def _remove_combadge(sftp: SFTPClient, remote_combadge_path: str) -> None:
-    sftp.remove(remote_combadge_path)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._remove_combadge()
+        if self._sftp is not None:
+            self._sftp.close()
+
+    def run(self, *, beam_id: int, directory: str, transporter: str):
+        combadge_commands = {
+            'v1': f'{self._remote_combadge_path} {beam_id} "{directory}" "{transporter}"',
+            'v2': f'{self._remote_combadge_path} -b {beam_id} -p {directory} -t {transporter}'
+        }
+        combadge_command = combadge_commands[self._combadge_version]
+        self._remote_host.exec_ssh_command(combadge_command)
 
 
 def _get_active_beams():
@@ -161,36 +222,13 @@ def _get_active_beams():
     return active_beams
 
 
-def _get_connected_ssh_client(host, username, auth_method, pkey=None, password=None):
-    ssh_client = SSHClient()
-    ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-
-    kwargs = {'username': username, 'look_for_keys': False}
-    if auth_method in ('rsa', 'stored_key'):
-        kwargs['pkey'] = create_key(pkey)
-    elif auth_method == 'password':
-        kwargs['password'] = password
-    else:
-        raise Exception('Invalid auth method')
-
-    ssh_client.connect(host, **kwargs)
-    return ssh_client
-
-
-def _get_combadge_command(combadge_version: str, combadge_path: str, beam_id: str, directory: str, transporter: str) -> str:
-    combadge_commands = {'v1': '{} {} "{}" "{}"',
-                         'v2': '{} -b {} -p {} -t {}'}
-    combadge_command = combadge_commands[combadge_version].format(combadge_path, beam_id, directory, transporter)
-    logger.info(combadge_command)
-    return combadge_command
-
-
 @queue.task
 @needs_app_context
-def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method: str, pkey: str, password: str, combadge_version: str) -> None:
+def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method: str, pkey: str, password: str, combadge_version: Optional[str] = None) -> None:
 
     beam = db.session.query(Beam).filter_by(id=beam_id).one()
-    combadge_version = combadge_version or 'v2'
+    if combadge_version is None:
+        combadge_version = 'v2'
     try:
         delay = flux.current_timeline.datetime.utcnow() - beam.start
         if delay.total_seconds() > 10:
@@ -201,12 +239,9 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
         logger.info(f'Beaming up {username}@{host}:{directory} ({beam_id}) to transporter {transporter}. Auth method: {auth_method}')
         logger.info(f'{beam_id}: Connected to {host}. Uploading combadge version: {combadge_version}')
 
-        ssh_client = _get_connected_ssh_client(host, username, auth_method, pkey, password)
-
-        with _upload_combadge(ssh_client, combadge_version) as combadge_path:
-            logger.info(f'{beam_id}: Running combadge at {combadge_path}')
-            combadge_command = _get_combadge_command(combadge_version, combadge_path, str(beam_id), directory, transporter)
-            _exec_ssh_command(ssh_client, combadge_command)
+        with RemoteHost(host=host, username=username, auth_method=auth_method, pkey=pkey, password=password) as remote_host:
+            with RemoteCombadge(remote_host=remote_host, combadge_version=combadge_version) as remote_combadge:
+                remote_combadge.run(beam_id=beam_id, directory=directory, transporter=transporter)
 
         logger.info(f'{beam_id}: Detached from combadge')
     except Exception as e:
@@ -217,15 +252,6 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
 
         if not isinstance(e, paramiko.ssh_exception.AuthenticationException):
             raise
-
-
-def _exec_ssh_command(ssh_client, command, raise_on_failure=True):
-    _, stdout, stderr = ssh_client.exec_command(command)
-    retcode = stdout.channel.recv_exit_status()
-    if retcode == 0:
-        return stdout.read().decode()
-    if raise_on_failure:
-        raise Exception(f"Failed to execute command {command}: {stderr.read().decode('utf-8')}")
 
 
 def vacuum_beam(beam: Beam, storage_path: str) -> None:
