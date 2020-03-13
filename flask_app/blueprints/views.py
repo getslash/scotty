@@ -7,6 +7,8 @@ from flask import (Blueprint, Response, abort, current_app, jsonify, redirect,
                    request, send_file, send_from_directory)
 from sqlalchemy.sql import func
 
+from flask_app.combadge import DEFAULT_COMBADGE_VERSION
+
 from ..models import Beam, Pin, Tag, User, db
 from ..paths import get_combadge_path
 from .auth import require_user
@@ -71,7 +73,7 @@ def summary() -> Response:
 
 @views.route("/combadge")
 def get_combadge() -> Response:
-    combadge_version = request.args.get('combadge_version', default='v2')
+    combadge_version = request.args.get('combadge_version', default=DEFAULT_COMBADGE_VERSION)
     os_type = request.args.get('os_type', default='linux')
     combadge_path = get_combadge_path(combadge_version, os_type=os_type)
     if combadge_path is None:

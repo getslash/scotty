@@ -1,19 +1,14 @@
 from __future__ import absolute_import
 
-import contextlib
 import functools
 import os
 import smtplib
-import stat
 import subprocess
 import sys
 from collections import defaultdict
 from datetime import timedelta
 from email.mime.text import MIMEText
-from io import StringIO
-from pathlib import PureWindowsPath
 from typing import Any, Optional
-from uuid import uuid4
 
 import flux
 import logbook
@@ -25,20 +20,18 @@ from celery.signals import (after_setup_logger, after_setup_task_logger,
                             worker_init)
 from flask import current_app
 from jinja2 import Template
-from paramiko import SFTPClient, SSHClient
-from paramiko.client import AutoAddPolicy
-from paramiko.rsakey import RSAKey
 from raven.contrib.celery import register_signal
 from sqlalchemy import case, extract, func, or_
 from sqlalchemy.orm import joinedload
 
+from flask_app.combadge import RemoteCombadge
+from flask_app.utils import RemoteHost
+
 from . import issue_trackers
 from .app import create_app, needs_app_context
 from .models import Beam, BeamType, File, Issue, Pin, Tracker, beam_issues, db
-from .paths import get_combadge_path
 
 logger = logbook.Logger(__name__)
-_COMBADGE_UUID_PART_LENGTH = 10
 
 queue = Celery('tasks', broker=os.environ.get('SCOTTY_CELERY_BROKER_URL', 'amqp://guest:guest@localhost'))
 queue.conf.update(
@@ -80,14 +73,6 @@ def testing_method(f):
     return wrapper
 
 
-def create_key(s: str) -> str:
-    f = StringIO()
-    f.write(s)
-    f.seek(0)
-    return RSAKey.from_private_key(file_obj=f, password=None)
-
-
-
 _REMINDER = """Hello Captain,<br/><br/>
 This is a reminder that the following beams are pinned by you:
 <ul>
@@ -101,130 +86,6 @@ If you still need these beams then please ignore this message. However, if these
 Sincerely yours,<br/>
 Montgomery Scott
 """
-
-
-class RemoteHost:
-    _TEMPDIR_COMMAND = "python -c 'import tempfile; print(tempfile.gettempdir())'"
-
-    def __init__(self, *, host, username, auth_method, pkey=None, password=None):
-        self.host = host
-        self._username = username
-        self._auth_method = auth_method
-        self._pkey = pkey
-        self._password = password
-        self._ssh_client = None
-
-    @functools.lru_cache(maxsize=None)
-    def get_os_type(self) -> str:
-        uname = self.exec_ssh_command("uname", raise_on_failure=False)
-        if uname is None:
-            return 'windows'
-        return uname.lower()
-
-    def get_temp_dir(self) -> str:
-        return self.exec_ssh_command(self._TEMPDIR_COMMAND)
-
-    def exec_ssh_command(self, command, raise_on_failure=True):
-        _, stdout, stderr = self.raw_exec_ssh_command(command)
-        retcode = stdout.channel.recv_exit_status()
-        if retcode == 0:
-            return stdout.read().decode().strip()
-        if raise_on_failure:
-            raise RuntimeError(f"Failed to execute command {command}: {stderr.read().decode('utf-8')}")
-
-    def raw_exec_ssh_command(self, command):
-        logger.info(f"executing on host {self.host} command {command}")
-        return self._ssh_client.exec_command(command)
-
-    def get_sftp_client(self):
-        return SFTPClient.from_transport(self._ssh_client.get_transport())
-
-    def close(self):
-        if self._ssh_client is not None:
-            self._ssh_client.close()
-
-    def __enter__(self):
-        self._ssh_client = ssh_client = SSHClient()
-        ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-
-        kwargs = {'username': self._username, 'look_for_keys': False}
-        if self._auth_method in ('rsa', 'stored_key'):
-            kwargs['pkey'] = create_key(self._pkey)
-        elif self._auth_method == 'password':
-            kwargs['password'] = self._password
-        else:
-            raise ValueError(f'Invalid auth method: {self._auth_method}')
-
-        self._ssh_client.connect(self.host, **kwargs)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-
-
-class RemoteCombadge:
-    def __init__(self, *, remote_host: RemoteHost, combadge_version: str):
-        self._combadge_version = combadge_version
-        self._remote_host = remote_host
-        self._remote_combadge_path = None
-
-    def _generate_random_combadge_name(self, string_length: int) -> str:
-        random_string = str(uuid4().hex)[:string_length]
-        return f"combadge_{random_string}"
-
-    def _get_remote_combadge_path(self):
-        combadge_name = self._generate_random_combadge_name(string_length=_COMBADGE_UUID_PART_LENGTH)
-        remote_combadge_dir = self._remote_host.get_temp_dir()
-        if self._remote_host.get_os_type() == "windows":
-            combadge_name = f'{combadge_name}.exe'
-            remote_combadge_path = str(PureWindowsPath(os.path.join(remote_combadge_dir, combadge_name)))
-        else:
-            remote_combadge_path = os.path.join(remote_combadge_dir, combadge_name)
-        logger.debug(f"combadge path: {remote_combadge_path}")
-        return remote_combadge_path
-
-    def _upload_combadge(self):
-        os_type = self._remote_host.get_os_type()
-
-        local_combadge_path = get_combadge_path(self._combadge_version, os_type=os_type)
-        assert os.path.exists(local_combadge_path), f"Combadge at {local_combadge_path} does not exist"
-        remote_combadge_path = self._get_remote_combadge_path()
-
-        logger.info(f"uploading combadge {self._combadge_version} for {os_type} to {remote_combadge_path}")
-        self._sftp = self._remote_host.get_sftp_client()
-        self._sftp.put(local_combadge_path, remote_combadge_path)
-        if os_type != 'windows':
-            combadge_st = os.stat(local_combadge_path)
-            self._sftp.chmod(remote_combadge_path, combadge_st.st_mode | stat.S_IEXEC)
-        self._remote_combadge_path = remote_combadge_path
-
-    def _remove_combadge(self):
-        if self._remote_combadge_path is not None and self._sftp is not None:
-            try:
-                self._sftp.remove(self._remote_combadge_path)
-            except FileNotFoundError:
-                logger.warn(f"Combadge {self._remote_combadge_path} not found when trying to remove it")
-
-    def __enter__(self):
-        self._upload_combadge()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._remove_combadge()
-        if self._sftp is not None:
-            self._sftp.close()
-
-    def run(self, *, beam_id: int, directory: str, transporter: str) -> None:
-        combadge_commands = {
-            'v1': f'{self._remote_combadge_path} {beam_id} "{directory}" "{transporter}"',
-            'v2': f'{self._remote_combadge_path} -b {beam_id} -p {directory} -t {transporter}'
-        }
-        combadge_command = combadge_commands[self._combadge_version]
-        self._remote_host.exec_ssh_command(combadge_command)
-
-    def ping(self):
-        _, stdout, stderr = self._remote_host.raw_exec_ssh_command(self._remote_combadge_path)
-        return 'usage' in (stdout.read().decode() + stderr.read().decode()).lower()
 
 
 def _get_active_beams():

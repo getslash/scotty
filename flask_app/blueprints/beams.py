@@ -9,8 +9,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import false
 
+from flask_app.utils import create_key
+
 from ..models import Beam, BeamType, Issue, Key, Pin, Tag, User, db
-from ..tasks import beam_up, create_key
+from ..tasks import beam_up
 from .auth import InvalidEmail, get_or_create_user, require_user
 from .types import ServerResponse
 from .utils import is_valid_hostname, validate_schema
