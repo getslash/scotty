@@ -7,5 +7,5 @@ authors = ["InfraDev <infradev@infinidat.com>"]
 # TODO: Why did you turn off default features?
 structopt = { version = "0.2" }
 byteorder = "*"
-zstd = "*"
 walkdir = "*"
+flate2 = "*"
