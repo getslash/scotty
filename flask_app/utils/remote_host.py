@@ -18,7 +18,7 @@ class RemoteHost:
     _TEMPDIR_COMMAND = "python -c 'import tempfile; print(tempfile.gettempdir())'"
 
     def __init__(self, *, host, username, auth_method, pkey=None, password=None):
-        self.host = host
+        self._host = host
         self._username = username
         self._auth_method = auth_method
         self._pkey = pkey
@@ -44,7 +44,7 @@ class RemoteHost:
             raise RuntimeError(f"Failed to execute command {command}: {stderr.read().decode('utf-8')}")
 
     def raw_exec_ssh_command(self, command):
-        logger.info(f"executing on host {self.host} command {command}")
+        logger.info(f"executing on host {self._host} command {command}")
         return self._ssh_client.exec_command(command)
 
     def get_sftp_client(self):
@@ -66,7 +66,7 @@ class RemoteHost:
         else:
             raise ValueError(f'Invalid auth method: {self._auth_method}')
 
-        self._ssh_client.connect(self.host, **kwargs)
+        self._ssh_client.connect(self._host, **kwargs)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
