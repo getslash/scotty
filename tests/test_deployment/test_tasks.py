@@ -82,7 +82,7 @@ def standardize_hostname(hostname):
 @pytest.mark.parametrize("os_type", OS_TYPES)
 def test_exec_ssh_command(os_type):
     with get_remote_host(os_type) as remote_host:
-        assert standardize_hostname(remote_host.exec_ssh_command("hostname")) == standardize_hostname(remote_host.host)
+        assert standardize_hostname(remote_host.exec_ssh_command("hostname")) == standardize_hostname(remote_host._host)
 
 
 def test_remote_combadge(os_type, combadge_version):
