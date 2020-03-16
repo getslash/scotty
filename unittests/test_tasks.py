@@ -8,11 +8,12 @@ from uuid import UUID
 import munch
 import pytest
 
-from flask_app import combadge, paths, tasks, utils
-from flask_app.combadge import _COMBADGE_UUID_PART_LENGTH
+from flask_app import paths, utils
 from flask_app.models import Beam, BeamType, Pin
 from flask_app.tasks import beam_up, vacuum
-from flask_app.utils import RemoteHost
+from flask_app.utils import remote_combadge, remote_host
+from flask_app.utils.remote_combadge import _COMBADGE_UUID_PART_LENGTH
+from flask_app.utils.remote_host import RemoteHost
 
 _TEMPDIR_COMMAND = RemoteHost._TEMPDIR_COMMAND
 
@@ -167,7 +168,7 @@ class MockSSHClient:
 
 @pytest.fixture
 def mock_ssh_client(monkeypatch):
-    monkeypatch.setattr(utils, "SSHClient", MockSSHClient)
+    monkeypatch.setattr(remote_host, "SSHClient", MockSSHClient)
     MockSSHClient.clear()
     yield MockSSHClient
     MockSSHClient.clear()
@@ -232,7 +233,7 @@ class MockSFTPClient:
 
 @pytest.fixture
 def mock_sftp_client(monkeypatch):
-    monkeypatch.setattr(utils, "SFTPClient", MockSFTPClient)
+    monkeypatch.setattr(remote_host, "SFTPClient", MockSFTPClient)
     MockSFTPClient.clear()
     yield MockSFTPClient
     MockSFTPClient.clear()
@@ -241,14 +242,14 @@ def mock_sftp_client(monkeypatch):
 @pytest.fixture
 def mock_rsa_key(monkeypatch):
     RSAKey = mock.MagicMock()
-    monkeypatch.setattr(utils, "RSAKey", RSAKey)
+    monkeypatch.setattr(remote_host, "RSAKey", RSAKey)
     return RSAKey
 
 
 @pytest.fixture
 def uuid4(monkeypatch):
     uuid = UUID('f1e8962b-00c9-4799-aacf-5d616163e03d')
-    monkeypatch.setattr(combadge, "uuid4", lambda: uuid)
+    monkeypatch.setattr(remote_combadge, "uuid4", lambda: uuid)
     return uuid
 
 

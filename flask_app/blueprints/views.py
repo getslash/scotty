@@ -1,13 +1,12 @@
 import http.client
-import os
 
 import logbook
 import psutil
-from flask import (Blueprint, Response, abort, current_app, jsonify, redirect,
-                   request, send_file, send_from_directory)
+from flask import (Blueprint, Response, abort, current_app, jsonify, request,
+                   send_file)
 from sqlalchemy.sql import func
 
-from flask_app.combadge import DEFAULT_COMBADGE_VERSION
+from flask_app.utils.remote_combadge import DEFAULT_COMBADGE_VERSION
 
 from ..models import Beam, Pin, Tag, User, db
 from ..paths import get_combadge_path

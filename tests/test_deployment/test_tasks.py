@@ -5,10 +5,10 @@ import pytest
 from flux import current_timeline
 
 from flask_app.blueprints.auth import get_or_create_user
-from flask_app.combadge import RemoteCombadge
-from flask_app.models import Beam, User, db
+from flask_app.models import Beam
 from flask_app.tasks import beam_up, queue
 from flask_app.utils import RemoteHost
+from flask_app.utils.remote_combadge import RemoteCombadge
 
 OS_TYPES = ['linux', 'windows']
 HOST_NAME_BY_OS_TYPE = {

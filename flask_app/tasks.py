@@ -24,8 +24,8 @@ from raven.contrib.celery import register_signal
 from sqlalchemy import case, extract, func, or_
 from sqlalchemy.orm import joinedload
 
-from flask_app.combadge import RemoteCombadge
-from flask_app.utils import RemoteHost
+from flask_app.utils.remote_combadge import RemoteCombadge
+from flask_app.utils.remote_host import RemoteHost
 
 from . import issue_trackers
 from .app import create_app, needs_app_context

@@ -6,7 +6,7 @@ from uuid import uuid4
 import logbook
 
 from flask_app.paths import get_combadge_path
-from flask_app.utils import RemoteHost
+from flask_app.utils.remote_host import RemoteHost
 
 _COMBADGE_UUID_PART_LENGTH = 10
 DEFAULT_COMBADGE_VERSION = 'v1'  # the current version (v2) is not the default because it's not as stable as v1
