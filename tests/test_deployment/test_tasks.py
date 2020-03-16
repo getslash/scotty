@@ -12,8 +12,8 @@ from flask_app.utils.remote_combadge import RemoteCombadge
 
 OS_TYPES = ['linux', 'windows']
 HOST_NAME_BY_OS_TYPE = {
-    'windows': 'gdc-qa-io-350.lab.gdc.il.infinidat.com',
-    'linux': 'gdc-qa-io-017.lab.gdc.il.infinidat.com'
+    'windows': os.environ.get("WINDOWS_HOST"),
+    'linux': os.environ.get("LINUX_HOST"),
 }
 COMBADGE_VERSIONS = ['v1', 'v2']
 UNSUPPORTED_OS_TYPES_PER_COMBADGE_VERSION = {
