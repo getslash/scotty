@@ -27,10 +27,7 @@ class RemoteHost:
 
     @functools.lru_cache(maxsize=None)
     def get_os_type(self) -> str:
-        uname = self.exec_ssh_command("uname", raise_on_failure=False)
-        if uname is None:
-            return 'windows'
-        return uname.lower()
+        return (self.exec_ssh_command("uname", raise_on_failure=False) or 'windows').lower()
 
     def get_temp_dir(self) -> str:
         return self.exec_ssh_command(self._TEMPDIR_COMMAND)
