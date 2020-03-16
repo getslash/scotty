@@ -113,9 +113,8 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
         logger.info(f'Beaming up {username}@{host}:{directory} ({beam_id}) to transporter {transporter}. Auth method: {auth_method}')
         logger.info(f'{beam_id}: Connected to {host}. Uploading combadge version: {combadge_version}')
 
-        with RemoteHost(host=host, username=username, auth_method=auth_method, pkey=pkey, password=password) as remote_host:
-            with RemoteCombadge(remote_host=remote_host, combadge_version=combadge_version) as remote_combadge:
-                remote_combadge.run(beam_id=beam_id, directory=directory, transporter=transporter)
+        with RemoteHost(host=host, username=username, auth_method=auth_method, pkey=pkey, password=password) as remote_host, RemoteCombadge(remote_host=remote_host, combadge_version=combadge_version) as remote_combadge:
+            remote_combadge.run(beam_id=beam_id, directory=directory, transporter=transporter)
 
         logger.info(f'{beam_id}: Detached from combadge')
     except Exception as e:
