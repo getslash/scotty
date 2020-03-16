@@ -1,7 +1,21 @@
 import datetime
+import io
+import pathlib
+import stat
+from unittest import mock
+from uuid import UUID
 
-from flask_app.models import Beam, Pin, BeamType
-from flask_app.tasks import vacuum
+import munch
+import pytest
+
+from flask_app import paths, utils
+from flask_app.models import Beam, BeamType, Pin
+from flask_app.tasks import beam_up, vacuum
+from flask_app.utils import remote_combadge, remote_host
+from flask_app.utils.remote_combadge import _COMBADGE_UUID_PART_LENGTH
+from flask_app.utils.remote_host import RemoteHost
+
+_TEMPDIR_COMMAND = RemoteHost._TEMPDIR_COMMAND
 
 
 def is_vacuumed(db_session, beam):
@@ -53,7 +67,8 @@ def test_beam_without_file_should_be_vacuumed(eager_celery, db_session, create_b
     assert is_vacuumed(db_session, beam)
 
 
-def test_beam_with_beam_type_greater_threshold_is_not_vacuumed(eager_celery, db_session, create_beam, expired_beam_date, vacuum_threshold):
+def test_beam_with_beam_type_greater_threshold_is_not_vacuumed(eager_celery, db_session, create_beam, expired_beam_date,
+                                                               vacuum_threshold):
     # threshold       default threshold                 now
     #   |    10 days        |            60 days         |
     # -----------------------------------------------------> date
@@ -90,3 +105,221 @@ def test_beam_with_beam_type_smaller_threshold_is_vacuumed(eager_celery, db_sess
     db_session.commit()
     vacuum.delay()
     assert is_vacuumed(db_session, beam)
+
+
+class MockSSHClient:
+    instances = []
+
+    def __init__(self):
+        self.instances.append(self)
+        self.policy = None
+        self.connect_args = None
+        self.stdin = io.BytesIO()
+        self.stdout = io.BytesIO()
+        self.exit_status = 0
+        self.stdout.channel = munch.Munch(recv_exit_status=lambda: self.exit_status)
+        self.stderr = io.BytesIO()
+        self.commands = []
+        self.os_type = None
+
+    def exec_command(self, command):
+        self.commands.append(command)
+        self.exit_status = 0
+        self.stdout.truncate(0)
+        self.stdout.seek(0)
+        if command == "uname":
+            if self.os_type == "linux":
+                self.stdout.write(b"Linux")
+            else:
+                self.stderr.write((
+                    b"uname : The term 'uname' is not recognized as the name of a cmdlet, function, script file, "
+                    b"or operable program. Check the spelling of the name, or if a path was included, "
+                    b"verify that the path is correct and try again."
+                ))
+                self.exit_status = 1
+        elif command == _TEMPDIR_COMMAND:
+            if self.os_type == "linux":
+                self.stdout.write(b"/tmp")
+            else:
+                user = self.connect_args['username']
+                self.stdout.write(fr"C:\Users\{user}\AppData\Local\Temp".encode())
+        self.stdout.seek(0)
+        self.stdin.seek(0)
+        self.stderr.seek(0)
+        return self.stdin, self.stdout, self.stderr
+
+    def connect(self, host, **kwargs):
+        self.connect_args = dict(host=host, **kwargs)
+        self.os_type = "linux" if host == "mock-host" else "windows"
+
+    def set_missing_host_key_policy(self, policy):
+        self.policy = policy
+
+    def get_transport(self):
+        return "mock-transport"
+
+    def close(self):
+        pass
+
+    @classmethod
+    def clear(cls):
+        cls.instances = []
+
+
+@pytest.fixture
+def mock_ssh_client(monkeypatch):
+    monkeypatch.setattr(remote_host, "SSHClient", MockSSHClient)
+    MockSSHClient.clear()
+    yield MockSSHClient
+    MockSSHClient.clear()
+
+
+class MockSFTPClient:
+    instances = []
+    files = {}
+    trash = []
+
+    def __init__(self):
+        self.instances.append(self)
+        self.calls = []
+
+    @classmethod
+    def from_transport(cls, transport):
+        assert transport == "mock-transport"
+        return cls()
+
+    def put(self, local, remote):
+        self.files[remote] = dict(local=local)
+        self.calls.append(dict(action="put", args=dict(local=local, remote=remote)))
+
+    def remove(self, remote):
+        self.trash.append(remote)
+        self.files.pop(remote)
+        self.calls.append(dict(action="remove", args=dict(remote=remote)))
+
+    def chmod(self, remote, mode):
+        self.files[remote]['mode'] = mode
+        self.calls.append(dict(action="chmod", args=dict(remote=remote, mode=mode)))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def close(self):
+        pass
+
+    @classmethod
+    def clear(cls):
+        cls.instances = []
+        cls.files = {}
+        cls.trash = []
+
+    @classmethod
+    def get_one_instance_or_raise(cls):
+        assert len(cls.instances) == 1, f"Expected one instance, got: {cls.instances}"
+        return cls.instances[0]
+
+    def assert_calls_equal_to(self, expected_calls):
+        assert len(self.calls) == len(expected_calls)
+        for actual_call, expected_call in zip(self.calls, expected_calls):
+            if expected_call['action'] == 'chmod':
+                assert actual_call['args']['remote'] == expected_call['args']['remote']
+                assert actual_call['args']['mode'] & expected_call['args']['mode'] == expected_call['args']['mode']
+            else:
+                assert actual_call == expected_call
+
+
+@pytest.fixture
+def mock_sftp_client(monkeypatch):
+    monkeypatch.setattr(remote_host, "SFTPClient", MockSFTPClient)
+    MockSFTPClient.clear()
+    yield MockSFTPClient
+    MockSFTPClient.clear()
+
+
+@pytest.fixture
+def mock_rsa_key(monkeypatch):
+    RSAKey = mock.MagicMock()
+    monkeypatch.setattr(remote_host, "RSAKey", RSAKey)
+    return RSAKey
+
+
+@pytest.fixture
+def uuid4(monkeypatch):
+    uuid = UUID('f1e8962b-00c9-4799-aacf-5d616163e03d')
+    monkeypatch.setattr(remote_combadge, "uuid4", lambda: uuid)
+    return uuid
+
+
+@pytest.fixture
+def combadge_assets_dir(tmpdir, monkeypatch):
+    tmpdir = pathlib.Path(tmpdir)
+    for os, ext in [("linux", ""), ("windows", ".exe")]:
+        directory = tmpdir / "v2" / f"combadge_{os}"
+        directory.mkdir(parents=True)
+        with (directory / f"combadge{ext}").open("w") as f:
+            f.write("")
+    monkeypatch.setattr(paths, "COMBADGE_ASSETS_DIR", str(tmpdir))
+    return str(tmpdir)
+
+
+@pytest.mark.parametrize("os_type", ["linux", "windows"])
+def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_ssh_client, mock_sftp_client,
+                 mock_rsa_key, uuid4, os_type, combadge_assets_dir):
+    beam = create_beam(start=now, completed=False)
+    if os_type == "windows":
+        beam.host = "mock-windows-host"
+        db_session.commit()
+    result = beam_up.delay(
+        beam_id=beam.id,
+        host=beam.host,
+        directory=beam.directory,
+        username='root',
+        auth_method='stored_key',
+        pkey='mock-pkey',
+        password=None,
+        combadge_version='v2'
+    )
+    assert result.successful(), result.traceback
+    beam = db_session.query(Beam).filter_by(id=beam.id).one()
+    assert beam.error is None
+    assert len(mock_ssh_client.instances) == 1
+    uuid_part = uuid4.hex[:_COMBADGE_UUID_PART_LENGTH]
+    ext = ".exe" if os_type == "windows" else ""
+    remote_dir = fr"C:\Users\root\AppData\Local\Temp" if os_type == "windows" else "/tmp"
+    sep = "\\" if os_type == "windows" else "/"
+    combadge = f"{remote_dir}{sep}combadge_{uuid_part}{ext}"
+    assert mock_ssh_client.instances[0].commands == [
+        "uname",
+        _TEMPDIR_COMMAND,
+        f"{combadge} -b {beam.id} -p {beam.directory} -t scotty",
+    ]
+    assert len(mock_sftp_client.instances) == 1
+    expected_calls = [
+        {
+            'action': 'put',
+            'args': {
+                'local': f'{combadge_assets_dir}/v2/combadge_{os_type}/combadge{ext}',
+                'remote': combadge
+            }
+        },
+    ]
+    if os_type == "linux":
+        expected_calls.append({
+            'action': 'chmod',
+            'args': {
+                'remote': combadge,
+                'mode': stat.S_IEXEC,
+            },
+        })
+    expected_calls.append({
+        'action': 'remove',
+        'args': {'remote': combadge}
+    })
+
+    mock_sftp_client.get_one_instance_or_raise().assert_calls_equal_to(expected_calls)
+    assert mock_sftp_client.files == {}
+    assert len(mock_sftp_client.trash) == 1
+    assert mock_sftp_client.trash[0] == combadge

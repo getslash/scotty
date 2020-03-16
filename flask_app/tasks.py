@@ -1,54 +1,37 @@
 from __future__ import absolute_import
+
+import functools
 import os
 import smtplib
 import subprocess
-from email.mime.text import MIMEText
-from datetime import timedelta
-from collections import defaultdict
-from io import StringIO
-import functools
 import sys
-
-import logging
-import logging.handlers
-import logbook
-
-import paramiko
-from paramiko import SSHClient, SFTPClient
-from paramiko.client import AutoAddPolicy
-from paramiko.rsakey import RSAKey
-from pathlib import PureWindowsPath
-
-from jinja2 import Template
-import psutil
-
-from celery import Celery
-from celery.schedules import crontab
-from celery.signals import worker_init
-from celery.signals import after_setup_logger, after_setup_task_logger
-from celery.log import redirect_stdouts_to_logger
-from uuid import uuid4
-from raven.contrib.celery import register_signal
-from sqlalchemy import func, extract, and_, case, or_
-
-from sqlalchemy.orm import joinedload
-from sqlalchemy.sql import exists
-from typing import Any
+from collections import defaultdict
+from datetime import timedelta
+from email.mime.text import MIMEText
+from typing import Any, Optional
 
 import flux
-import stat
-import string
-
-from .app import create_app, needs_app_context
-from . import issue_trackers
-from .models import Beam, db, Pin, File, Tracker, Issue, beam_issues, BeamType
-from .paths import get_combadge_path
+import logbook
+import paramiko
+import psutil
+from celery import Celery
+from celery.schedules import crontab
+from celery.signals import (after_setup_logger, after_setup_task_logger,
+                            worker_init)
 from flask import current_app
+from jinja2 import Template
+from raven.contrib.celery import register_signal
+from sqlalchemy import case, extract, func, or_
+from sqlalchemy.orm import joinedload
 
+from flask_app.utils.remote_combadge import RemoteCombadge
+from flask_app.utils.remote_host import RemoteHost
 
+from . import issue_trackers
+from .app import create_app, needs_app_context
+from .models import Beam, BeamType, File, Issue, Pin, Tracker, beam_issues, db
 
 logger = logbook.Logger(__name__)
-
 
 queue = Celery('tasks', broker=os.environ.get('SCOTTY_CELERY_BROKER_URL', 'amqp://guest:guest@localhost'))
 queue.conf.update(
@@ -90,14 +73,6 @@ def testing_method(f):
     return wrapper
 
 
-def create_key(s: str) -> str:
-    f = StringIO()
-    f.write(s)
-    f.seek(0)
-    return RSAKey.from_private_key(file_obj=f, password=None)
-
-
-
 _REMINDER = """Hello Captain,<br/><br/>
 This is a reminder that the following beams are pinned by you:
 <ul>
@@ -112,47 +87,6 @@ Sincerely yours,<br/>
 Montgomery Scott
 """
 
-def _get_os_type(ssh_client: SSHClient) -> str:
-    _, stdout, stderr = ssh_client.exec_command("uname")
-    retcode = stdout.channel.recv_exit_status()
-    if retcode != 0:
-        return 'windows'
-    return stdout.read().decode("utf-8").strip().lower()
-
-
-def _generate_random_combadge_name(string_length: int) -> str:
-    random_string = str(uuid4())[:string_length]
-    return f"combadge_{random_string}"
-
-
-def _upload_combadge(ssh_client: SSHClient, combadge_version: str) -> str:
-    os_type = _get_os_type(ssh_client)
-    combadge_name = _generate_random_combadge_name(string_length=10)
-    combadge_type_identifier = combadge_version if combadge_version == 'v1' else os_type
-    is_windows = combadge_type_identifier == 'windows'
-
-    local_combadge_path = get_combadge_path(combadge_type_identifier)
-    if is_windows:
-        remote_combadge_dir = str(PureWindowsPath(os.path.join('C:', 'temp')))
-        combadge_name = f'{combadge_name}.exe'
-        remote_combadge_path = str(PureWindowsPath(os.path.join(remote_combadge_dir, combadge_name)))
-    else:
-        remote_combadge_dir = '/tmp'
-        remote_combadge_path = os.path.join(remote_combadge_dir, combadge_name)
-    logger.debug(f"combadge path: {remote_combadge_path}")
-
-    with SFTPClient.from_transport(ssh_client.get_transport()) as sftp:
-        try:
-            sftp.chdir(remote_combadge_dir)
-        except IOError:
-            sftp.mkdir(remote_combadge_dir)
-        sftp.put(local_combadge_path, remote_combadge_path)
-        if not is_windows:
-            combadge_st = os.stat(local_combadge_path)
-            sftp.chmod(remote_combadge_path, combadge_st.st_mode | stat.S_IEXEC)
-
-    return remote_combadge_path
-
 
 def _get_active_beams():
     active_beams = (db.session.query(Beam)
@@ -164,9 +98,11 @@ def _get_active_beams():
 
 @queue.task
 @needs_app_context
-def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method: str, pkey: str, password: str, combadge_version: str) -> None:
+def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method: str, pkey: str, password: str, combadge_version: Optional[str] = None) -> None:
+
     beam = db.session.query(Beam).filter_by(id=beam_id).one()
-    combadge_version = combadge_version or 'v1'
+    if combadge_version is None:
+        combadge_version = 'v2'
     try:
         delay = flux.current_timeline.datetime.utcnow() - beam.start
         if delay.total_seconds() > 10:
@@ -175,35 +111,15 @@ def beam_up(beam_id: int, host: str, directory: str, username: str, auth_method:
 
         transporter = current_app.config.get('TRANSPORTER_HOST', 'scotty')
         logger.info(f'Beaming up {username}@{host}:{directory} ({beam_id}) to transporter {transporter}. Auth method: {auth_method}')
-        ssh_client = SSHClient()
-        ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-
-        kwargs = {'username': username, 'look_for_keys': False}
-        if auth_method in ('rsa', 'stored_key'):
-            kwargs['pkey'] = create_key(pkey)
-        elif auth_method == 'password':
-            kwargs['password'] = password
-        else:
-            raise Exception('Invalid auth method')
-
-        ssh_client.connect(host, **kwargs)
         logger.info(f'{beam_id}: Connected to {host}. Uploading combadge version: {combadge_version}')
 
-        combadge_path = _upload_combadge(ssh_client, combadge_version)
-
-        logger.info(f'{beam_id}: Running combadge at {combadge_path}')
-        combadge_commands = {'v1': '{} {} "{}" "{}"',
-                             'v2': '{} -b {} -p {} -t {}'}
-        combadge_command = combadge_commands[combadge_version].format(combadge_path, str(beam_id), directory, transporter)
-
-        _, stdout, stderr = ssh_client.exec_command(combadge_command)
-        retcode = stdout.channel.recv_exit_status()
-        if retcode != 0:
-            raise Exception(stderr.read().decode("utf-8"))
+        with RemoteHost(host=host, username=username, auth_method=auth_method, pkey=pkey, password=password) as remote_host, RemoteCombadge(remote_host=remote_host, combadge_version=combadge_version) as remote_combadge:
+            remote_combadge.run(beam_id=beam_id, directory=directory, transporter=transporter)
 
         logger.info(f'{beam_id}: Detached from combadge')
     except Exception as e:
-        beam.error = str(e)
+        logger.exception("Failed to beam up")
+        beam.error = f"Failed to beam up {beam_id} ({directory}) to {host} using combadge {combadge_version}: {e}"
         beam.completed = True
         db.session.commit()
 

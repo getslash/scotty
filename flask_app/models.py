@@ -1,11 +1,13 @@
 import json
 from datetime import datetime, time
-from flask_sqlalchemy import SQLAlchemy
+from typing import TYPE_CHECKING, Any
+
+import flux
 from flask_login import UserMixin
 from flask_security import RoleMixin
-from sqlalchemy.orm import backref, relationship as sqlalchemy_relationship
-from typing import TYPE_CHECKING, Any
-import flux
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import backref
+from sqlalchemy.orm import relationship as sqlalchemy_relationship
 
 db = SQLAlchemy()
 

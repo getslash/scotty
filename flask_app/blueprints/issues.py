@@ -1,11 +1,13 @@
 import http
+from typing import Tuple, Union
+
 import sqlalchemy
-from flask import Blueprint, request, jsonify, Response
-from typing import Union, Tuple
-from .utils import validate_schema
-from .types import ServerResponse, DBOperationResponse
-from ..models import db, Issue
+from flask import Blueprint, Response, jsonify, request
+
 from ..issue_trackers import is_valid_issue
+from ..models import Issue, db
+from .types import DBOperationResponse, ServerResponse
+from .utils import validate_schema
 
 issues = Blueprint("issues", __name__, template_folder="templates")
 

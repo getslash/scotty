@@ -1,8 +1,9 @@
 import http
-from flask import Blueprint, jsonify, abort, Response
-from typing import Mapping, Any
-from ..models import db, User
+from typing import Any, Mapping
 
+from flask import Blueprint, Response, abort, jsonify
+
+from ..models import User, db
 
 users = Blueprint("users", __name__, template_folder="templates")
 

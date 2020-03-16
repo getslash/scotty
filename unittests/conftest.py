@@ -1,15 +1,14 @@
 # pylint: disable=redefined-outer-name
-import os
 import datetime
+import os
 
 import flask_migrate
 import pytest
 
-from flask_app.blueprints import user_datastore
-from flask_app.models import db
-from flask_app.tasks import queue
 from flask_app.app import get_or_create_app
-from flask_app.models import Beam, Issue, Tracker, File
+from flask_app.blueprints import user_datastore
+from flask_app.models import Beam, File, Issue, Tracker, db
+from flask_app.tasks import queue
 
 
 @pytest.fixture
@@ -33,6 +32,7 @@ def app_context(monkeypatch, storage_path, vacuum_threshold):
             ),
             "STORAGE_PATH": storage_path,
             "VACUUM_THRESHOLD": vacuum_threshold,
+            "TRANSPORTER_HOST": "scotty",
         }
     )
     app_context = app.app_context()

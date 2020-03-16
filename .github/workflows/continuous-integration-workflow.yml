@@ -22,8 +22,7 @@ jobs:
       run: sudo apt-get install libpq-dev #https://github.com/actions/virtual-environments/issues/12
     - run: pip install poetry
     - run: poetry install
-    - run: poetry run mypy flask_app/
-    - run: poetry run pytest unittests/
+    - run: make check
       env:
         SCOTTY_DATABASE_URI: postgresql://scotty:scotty@localhost:${{ job.services.postgres.ports[5432] }}/scotty_test
 

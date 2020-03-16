@@ -8,3 +8,4 @@ authors = ["InfraDev <infradev@infinidat.com>"]
 structopt = { version = "0.2" }
 byteorder = "*"
 zstd = "*"
+walkdir = "*"
