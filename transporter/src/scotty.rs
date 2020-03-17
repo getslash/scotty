@@ -3,13 +3,12 @@ use reqwest::Error as HttpError;
 use reqwest::{Client, Method, Response, StatusCode};
 use serde::ser::Serialize;
 use serde_json;
-use std::error::Error;
 use std::io::Error as IoError;
 use std::thread::sleep;
 use std::time::Duration;
 
 const TIME_TO_SLEEP: u64 = 5;
-const MAX_ATTEMPTS: u64 = 60000 / TIME_TO_SLEEP * 1;
+const MAX_ATTEMPTS: u64 = 60000 / TIME_TO_SLEEP;
 
 pub struct Scotty {
     url: String,
@@ -52,10 +51,7 @@ struct BeamUpdateRequest<'a> {
 impl<'a> BeamUpdateRequest<'a> {
     fn new(completed: bool, error: Option<&'a str>) -> BeamUpdateRequest<'a> {
         BeamUpdateRequest {
-            beam: BeamUpdateDocument {
-                completed: completed,
-                error: error,
-            },
+            beam: BeamUpdateDocument { completed, error },
         }
     }
 }
@@ -87,7 +83,7 @@ pub type ScottyResult<T> = Result<T, ScottyError>;
 impl Scotty {
     pub fn new(url: String) -> Scotty {
         Scotty {
-            url: url,
+            url,
             client: Client::new(),
         }
     }
@@ -99,7 +95,7 @@ impl Scotty {
         json: REQUEST,
     ) -> ScottyResult<Response> {
         for attempt in 0..MAX_ATTEMPTS {
-            let mut response = self
+            let response = self
                 .client
                 .request(method.clone(), &url)
                 .json(&json)
@@ -137,7 +133,7 @@ impl Scotty {
             format!("{}/files", self.url),
             FilePostRequest {
                 file_name: file_name.to_string(),
-                beam_id: beam_id,
+                beam_id,
             },
         )?;
         let file_params: FilePostResponse = response.json()?;
@@ -151,13 +147,13 @@ impl Scotty {
     pub fn file_beam_end(
         &mut self,
         file_id: &str,
-        err: Option<&Error>,
+        err: Option<&str>,
         file_size: Option<usize>,
         file_checksum: Option<String>,
         mtime: Option<Mtime>,
     ) -> ScottyResult<()> {
         let error_string = match err {
-            Some(err) => err.description(),
+            Some(err) => err,
             _ => "",
         };
         self.send_request(
@@ -168,7 +164,7 @@ impl Scotty {
                 error: error_string.to_string(),
                 size: file_size,
                 checksum: file_checksum,
-                mtime: mtime,
+                mtime,
             },
         )?;
         Ok(())

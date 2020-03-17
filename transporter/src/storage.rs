@@ -21,7 +21,7 @@ impl FileStorage {
         let mut path_buffer = PathBuf::new();
         path_buffer.push(&self.base_directory);
         path_buffer.push(file_name);
-        let file = File::create(&path_buffer).map_err(|io| TransporterError::StorageIoError(io))?;
+        let file = File::create(&path_buffer).map_err(TransporterError::StorageIoError)?;
         Ok(file)
     }
 }

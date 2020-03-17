@@ -25,7 +25,7 @@ extern crate url;
 use clap::{App, Arg};
 use storage::FileStorage;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type BeamId = usize;
 pub type Mtime = u64;
@@ -83,14 +83,13 @@ fn main() {
         Err(why) => panic!("Cannot open storage: {}", why),
     };
 
-    let _guard = matches.value_of("sentry_dsn").map(|dsn| sentry::init(dsn));
+    let _guard = matches.value_of("sentry_dsn").map(sentry::init);
 
-    match server::listen(
+    if let Err(why) = server::listen(
         storage,
         matches.value_of("bind_address").unwrap(),
         matches.value_of("scotty_url").unwrap(),
     ) {
-        Err(why) => panic!("Server crashed: {}", why),
-        _ => (),
+        panic!("Server crashed: {}", why)
     }
 }

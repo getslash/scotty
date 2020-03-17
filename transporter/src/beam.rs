@@ -9,7 +9,7 @@ use std::cmp::min;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 
-const CHUNK_SIZE: usize = 1048576usize;
+const CHUNK_SIZE: usize = 1_048_576_usize;
 
 #[derive(Debug)]
 pub enum ClientMessages {
@@ -67,12 +67,12 @@ type FileData = (usize, Sha512, Option<Mtime>);
 fn read_file_name(stream: &mut TcpStream) -> TransporterResult<String> {
     let file_name_length = stream
         .read_u16::<BigEndian>()
-        .map_err(|io| TransporterError::ClientIoError(io))? as usize;
+        .map_err(TransporterError::ClientIoError)? as usize;
     let mut file_name = String::new();
     let file_name_length_read = stream
         .take(file_name_length as u64)
         .read_to_string(&mut file_name)
-        .map_err(|io| TransporterError::ClientIoError(io))?;
+        .map_err(TransporterError::ClientIoError)?;
     assert_eq!(file_name_length_read, file_name_length);
     Ok(file_name)
 }
@@ -92,7 +92,7 @@ fn download(
         Some(
             stream
                 .read_u64::<BigEndian>()
-                .map_err(|io| TransporterError::ClientIoError(io))?,
+                .map_err(TransporterError::ClientIoError)?,
         )
     } else {
         None
@@ -101,8 +101,8 @@ fn download(
     loop {
         let message_code = stream
             .read_u8()
-            .map_err(|io| TransporterError::ClientIoError(io))
-            .and_then(|m| ClientMessages::from_u8(m))?;
+            .map_err(TransporterError::ClientIoError)
+            .and_then(ClientMessages::from_u8)?;
         match message_code {
             ClientMessages::FileChunk => (),
             ClientMessages::FileDone => return Ok((length, checksum, mtime)),
@@ -111,19 +111,19 @@ fn download(
 
         let chunk_size = stream
             .read_u32::<BigEndian>()
-            .map_err(|io| TransporterError::ClientIoError(io))?;
+            .map_err(TransporterError::ClientIoError)?;
         let mut bytes_remaining = chunk_size as usize;
         while bytes_remaining > 0 {
             let to_read = min(bytes_remaining, read_chunk.len());
             let bytes_read = stream
                 .read(&mut read_chunk[0..to_read])
-                .map_err(|io| TransporterError::ClientIoError(io))?;
+                .map_err(TransporterError::ClientIoError)?;
             if bytes_read == 0 {
                 return Err(TransporterError::ClientEOF);
             }
             checksum.input(&read_chunk[0..bytes_read]);
-            file.write_all(&mut read_chunk[0..bytes_read])
-                .map_err(|io| TransporterError::StorageIoError(io))?;
+            file.write_all(&read_chunk[0..bytes_read])
+                .map_err(TransporterError::StorageIoError)?;
             bytes_remaining -= bytes_read;
             length += bytes_read;
         }
@@ -151,7 +151,7 @@ fn beam_file(
         );
         stream
             .write_u8(ServerMessages::SkipFile as u8)
-            .map_err(|io| TransporterError::ClientIoError(io))?;
+            .map_err(TransporterError::ClientIoError)?;
         return Ok(());
     }
 
@@ -161,7 +161,7 @@ fn beam_file(
     );
     stream
         .write_u8(ServerMessages::BeamFile as u8)
-        .map_err(|io| TransporterError::ClientIoError(io))?;
+        .map_err(TransporterError::ClientIoError)?;
 
     info!("{}: Beaming up {} to {}", beam_id, file_name, storage_name);
 
@@ -178,12 +178,18 @@ fn beam_file(
             )?;
             stream
                 .write_u8(ServerMessages::FileBeamed as u8)
-                .map_err(|io| TransporterError::ClientIoError(io))?;
+                .map_err(TransporterError::ClientIoError)?;
             Ok(())
         }
         Err(why) => {
             info!("Error beaming up {}: {}", file_name, why);
-            scotty.file_beam_end(&file_id, Some(&why), None, None, None)?;
+            scotty.file_beam_end(
+                &file_id,
+                Some(format!("{:?}", why).as_str()),
+                None,
+                None,
+                None,
+            )?;
             Err(why)
         }
     }
@@ -197,11 +203,8 @@ fn beam_loop(
 ) -> TransporterResult<()> {
     let mut protocol_version = ProtocolVersion::V1;
     loop {
-        let message_code = ClientMessages::from_u8(
-            stream
-                .read_u8()
-                .map_err(|io| TransporterError::ClientIoError(io))?,
-        )?;
+        let message_code =
+            ClientMessages::from_u8(stream.read_u8().map_err(TransporterError::ClientIoError)?)?;
         match message_code {
             ClientMessages::StartBeamingFile => {
                 beam_file(beam_id, stream, storage, scotty, &protocol_version)?
@@ -210,8 +213,8 @@ fn beam_loop(
             ClientMessages::ProtocolVersion => {
                 protocol_version = stream
                     .read_u16::<BigEndian>()
-                    .map_err(|io| TransporterError::ClientIoError(io))
-                    .and_then(|c| ProtocolVersion::from_u16(c))?;
+                    .map_err(TransporterError::ClientIoError)
+                    .and_then(ProtocolVersion::from_u16)?;
                 info!("Client set the protocol version to {:?}", protocol_version);
             }
             _ => return Err(TransporterError::UnexpectedClientMessageCode(message_code)),
@@ -227,8 +230,8 @@ pub fn beam_up(
 ) -> TransporterResult<()> {
     let beam_id = stream
         .read_u64::<BigEndian>()
-        .map_err(|io| TransporterError::ClientIoError(io))? as usize;
-    error_tags.push((format!("beam_id"), format!("{}", beam_id)));
+        .map_err(TransporterError::ClientIoError)? as usize;
+    error_tags.push(("beam_id".to_string(), format!("{}", beam_id)));
     info!("Received beam up request with beam id {}", beam_id);
 
     match beam_loop(beam_id, &mut stream, &storage, &mut scotty) {
