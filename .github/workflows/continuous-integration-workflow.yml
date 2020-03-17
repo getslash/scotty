@@ -60,5 +60,8 @@ jobs:
     - uses: actions/checkout@v1
     - uses: actions-rs/cargo@v1
     - working-directory: ${{ matrix.artifact }}
-      run: cargo check
-
+      run: |
+        cargo check
+        rustup component add rustfmt clippy
+        cargo fmt -- --check
+        cargo clippy --all-targets --all-features -- -D warnings

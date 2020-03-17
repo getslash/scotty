@@ -1,7 +1,7 @@
 extern crate byteorder;
+extern crate flate2;
 extern crate structopt;
 extern crate walkdir;
-extern crate flate2;
 
 mod config;
 mod messages;
@@ -9,6 +9,8 @@ mod messages;
 use self::config::Config;
 use self::messages::{ClientMessages, ServerMessages};
 use byteorder::{ReadBytesExt, WriteBytesExt};
+use flate2::write::GzEncoder;
+use flate2::Compression;
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{prelude::*, Write};
@@ -16,9 +18,7 @@ use std::net::TcpStream;
 use std::path::Path;
 use std::time::SystemTime;
 use structopt::StructOpt;
-use walkdir::{WalkDir};
-use flate2::Compression;
-use flate2::write::GzEncoder;
+use walkdir::WalkDir;
 
 const CHUNK_SIZE: usize = 1024 * 128;
 
@@ -51,12 +51,16 @@ fn beam_up(config: Config) -> std::io::Result<()> {
 
 fn beam_path(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
     if !path.exists() {
-        return Ok(())
+        return Ok(());
     } else if path.is_file() {
         beam_file(transporter, path.parent(), &path)?;
     } else if path.is_dir() {
         println!("Path is a directory: {:?}", path);
-        for entry in WalkDir::new(path).follow_links(false).into_iter().filter_map(|e| e.ok()) {
+        for entry in WalkDir::new(path)
+            .follow_links(false)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
             println!("Entry: {:?}", entry);
             if entry.path().is_file() {
                 beam_file(transporter, Some(&path), &entry.path())?;
@@ -69,7 +73,11 @@ fn beam_path(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-fn beam_file(transporter: &mut TcpStream, base_path: Option<&Path>, path: &Path) -> std::io::Result<()> {
+fn beam_file(
+    transporter: &mut TcpStream,
+    base_path: Option<&Path>,
+    path: &Path,
+) -> std::io::Result<()> {
     println!("Beaming file: {:?}", path);
     let should_compress = match path.extension().and_then(OsStr::to_str) {
         Some("zip") | Some("gz") | Some("bz2") | Some("xz") | Some("zst") | Some("tgz")
@@ -111,7 +119,10 @@ fn beam_file(transporter: &mut TcpStream, base_path: Option<&Path>, path: &Path)
     transporter.write_u64::<byteorder::BigEndian>(duration.unwrap().as_secs())?;
 
     let mut encoder = if should_compress {
-        Some(GzEncoder::new(Vec::with_capacity(CHUNK_SIZE), Compression::best()))
+        Some(GzEncoder::new(
+            Vec::with_capacity(CHUNK_SIZE),
+            Compression::best(),
+        ))
     } else {
         None
     };

@@ -1,8 +1,8 @@
 mod beam;
-mod storage;
-mod server;
 mod error;
 mod scotty;
+mod server;
+mod storage;
 
 extern crate byteorder;
 extern crate clap;
@@ -22,10 +22,10 @@ extern crate serde_json;
 extern crate time;
 extern crate url;
 
-use storage::FileStorage;
 use clap::{App, Arg};
+use storage::FileStorage;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type BeamId = usize;
 pub type Mtime = u64;
@@ -76,21 +76,20 @@ fn main() {
         .level(log::LevelFilter::Trace)
         .chain(std::io::stdout())
         .apply()
-        .unwrap();;
+        .unwrap();
 
     let storage = match FileStorage::open(matches.value_of("storage_path").unwrap()) {
         Ok(s) => s,
         Err(why) => panic!("Cannot open storage: {}", why),
     };
 
-    let _guard = matches.value_of("sentry_dsn").map(|dsn| sentry::init(dsn));
+    let _guard = matches.value_of("sentry_dsn").map(sentry::init);
 
-    match server::listen(
+    if let Err(why) = server::listen(
         storage,
         matches.value_of("bind_address").unwrap(),
         matches.value_of("scotty_url").unwrap(),
     ) {
-        Err(why) => panic!("Server crashed: {}", why),
-        _ => (),
+        panic!("Server crashed: {}", why)
     }
 }
