@@ -10,8 +10,8 @@ _DAY = timedelta(days=1)
 
 
 def _validate_no_purge_time(beam):
-        beam.update()
-        assert beam.purge_time == None
+    beam.update()
+    assert beam.purge_time == None
 
 
 def test_short_beam_vacuum(scotty, short_beam):
@@ -70,7 +70,7 @@ def test_short_beam_with_issue_closed(scotty, short_beam, issue):
 
     beam.set_issue_association(issue.id_in_scotty, True)
 
-    scotty.sleep(_DAY * (vacuum_threshold+1))
+    scotty.sleep(_DAY * (vacuum_threshold + 1))
     _validate_no_purge_time(beam)
     scotty.check_if_beam_deleted(beam, False)
 
@@ -115,8 +115,10 @@ def test_beam_with_issue_unassigned(scotty, short_beam, issue):
     scotty.check_if_beam_deleted(beam, True)
 
 
-def test_multiple_issues(tracker, scotty, beam, server_config, long_term_beam, issue_factory):
-    vacuum_threshold = server_config['VACUUM_THRESHOLD']
+def test_multiple_issues(
+    tracker, scotty, beam, server_config, long_term_beam, issue_factory
+):
+    vacuum_threshold = server_config["VACUUM_THRESHOLD"]
     beam, _ = beam
 
     issue1 = issue_factory.get()
@@ -151,9 +153,11 @@ def test_multiple_issues(tracker, scotty, beam, server_config, long_term_beam, i
     scotty.check_if_beam_deleted(long_term_beam, False)
 
 
-@pytest.mark.parametrize("combadge_version", ['v1', 'v2'])
-def test_faulty_tracker(scotty, issue, server_config, faulty_tracker, beam_factory, combadge_version):
-    vacuum_threshold = server_config['VACUUM_THRESHOLD']
+@pytest.mark.parametrize("combadge_version", ["v1", "v2"])
+def test_faulty_tracker(
+    scotty, issue, server_config, faulty_tracker, beam_factory, combadge_version
+):
+    vacuum_threshold = server_config["VACUUM_THRESHOLD"]
     beams = []
 
     regular_beam = beam_factory.get(combadge_version=combadge_version)
@@ -164,7 +168,7 @@ def test_faulty_tracker(scotty, issue, server_config, faulty_tracker, beam_facto
     beam_with_issue.update()
     beams.append(beam_with_issue)
 
-    faulty_issue = scotty.create_issue(faulty_tracker, '1')
+    faulty_issue = scotty.create_issue(faulty_tracker, "1")
     beam_with_faulty_issue = beam_factory.get(combadge_version=combadge_version)
     beam_with_faulty_issue.set_issue_association(faulty_issue, True)
     beam_with_faulty_issue.update()
@@ -188,11 +192,22 @@ def test_faulty_tracker(scotty, issue, server_config, faulty_tracker, beam_facto
     scotty.check_if_beam_deleted(beam_with_issue, True)
 
 
-@pytest.mark.parametrize("combadge_version", ['v1', 'v2'])
-def test_multiple_issues_and_multiple_beams(local_beam_dir, scotty, server_config, long_term_beam, issue_factory, combadge_version):
-    vacuum_threshold = server_config['VACUUM_THRESHOLD']
-    beam1 = scotty.get_beam(scotty.beam_up(local_beam_dir, combadge_version=combadge_version))
-    beam2 = scotty.get_beam(scotty.beam_up(local_beam_dir, combadge_version=combadge_version))
+@pytest.mark.parametrize("combadge_version", ["v1", "v2"])
+def test_multiple_issues_and_multiple_beams(
+    local_beam_dir,
+    scotty,
+    server_config,
+    long_term_beam,
+    issue_factory,
+    combadge_version,
+):
+    vacuum_threshold = server_config["VACUUM_THRESHOLD"]
+    beam1 = scotty.get_beam(
+        scotty.beam_up(local_beam_dir, combadge_version=combadge_version)
+    )
+    beam2 = scotty.get_beam(
+        scotty.beam_up(local_beam_dir, combadge_version=combadge_version)
+    )
     states = {beam1: False, beam2: False}
     issue1 = issue_factory.get()
     issue2 = issue_factory.get()
@@ -222,7 +237,7 @@ def test_multiple_issues_and_multiple_beams(local_beam_dir, scotty, server_confi
     scotty.check_if_beam_deleted(long_term_beam, False)
 
 
-@pytest.mark.parametrize("combadge_version", ['v1', 'v2'])
+@pytest.mark.parametrize("combadge_version", ["v1", "v2"])
 def test_rolling(scotty, beam_factory, combadge_version):
     def update_beams(beams):
         for beam in beams:

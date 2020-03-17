@@ -42,15 +42,23 @@ def create_app(config=None):
 
     app = flask.Flask(__name__, static_folder=os.path.join(ROOT_DIR, "..", "static"))
 
-    app.config['COMBADGE_CONTACT_TIMEOUT'] = 60 * 60
-    app.config['SHA512SUM'] = '/usr/bin/sha512sum'
-    app.config['STORAGE_PATH'] = os.environ.get('STORAGE_PATH')
-    _CONF_D_PATH = os.environ.get('CONFIG_DIRECTORY', os.path.join(ROOT_DIR, "..", "conf.d"))
+    app.config["COMBADGE_CONTACT_TIMEOUT"] = 60 * 60
+    app.config["SHA512SUM"] = "/usr/bin/sha512sum"
+    app.config["STORAGE_PATH"] = os.environ.get("STORAGE_PATH")
+    _CONF_D_PATH = os.environ.get(
+        "CONFIG_DIRECTORY", os.path.join(ROOT_DIR, "..", "conf.d")
+    )
 
     configs = [os.path.join(ROOT_DIR, "app.yml")]
 
     if os.path.isdir(_CONF_D_PATH):
-        configs.extend(sorted(os.path.join(_CONF_D_PATH, x) for x in os.listdir(_CONF_D_PATH) if x.endswith(".yml")))
+        configs.extend(
+            sorted(
+                os.path.join(_CONF_D_PATH, x)
+                for x in os.listdir(_CONF_D_PATH)
+                if x.endswith(".yml")
+            )
+        )
     for yaml_path in configs:
         if os.path.isfile(yaml_path):
             with open(yaml_path) as yaml_file:
@@ -58,9 +66,13 @@ def create_app(config=None):
 
     app.config.update(config)
 
-    if 'SQLALCHEMY_DATABASE_URI' not in app.config:
-        app.config['SQLALCHEMY_DATABASE_URI'] = os.path.expandvars(
-            os.environ.get('SQLALCHEMY_DATABASE_URI', 'postgresql://localhost/{0}'.format(app.config['app_name'])))
+    if "SQLALCHEMY_DATABASE_URI" not in app.config:
+        app.config["SQLALCHEMY_DATABASE_URI"] = os.path.expandvars(
+            os.environ.get(
+                "SQLALCHEMY_DATABASE_URI",
+                "postgresql://localhost/{0}".format(app.config["app_name"]),
+            )
+        )
 
     del app.logger.handlers[:]
     redirect_logging()
@@ -68,7 +80,7 @@ def create_app(config=None):
     app.logger.info("Started")
 
     Mail(app)
-    
+
     if os.environ.get("SQLALCHEMY_LOG_QUERIES"):
         logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
@@ -76,10 +88,7 @@ def create_app(config=None):
         app,
         client=raven.Client(
             dsn=app.config.get("SENTRY_DSN"),
-            ignore_exceptions=[
-                SSHException,
-                JIRAError
-            ],
+            ignore_exceptions=[SSHException, JIRAError],
         ),
     )
 
@@ -88,7 +97,17 @@ def create_app(config=None):
     models.db.init_app(app)
 
     from .errors import errors
-    from .blueprints import auth, beams, files, issues, trackers, user_datastore, users, views, keys
+    from .blueprints import (
+        auth,
+        beams,
+        files,
+        issues,
+        trackers,
+        user_datastore,
+        users,
+        views,
+        keys,
+    )
 
     Security(app, user_datastore, register_blueprint=False)
 
@@ -101,8 +120,9 @@ def create_app(config=None):
     app.register_blueprint(keys, url_prefix="/keys")
     app.register_blueprint(views)
 
-    if app.config.get('DEBUG'):
+    if app.config.get("DEBUG"):
         from .blueprints import test_methods
+
         app.register_blueprint(test_methods)
 
     for code in errors:

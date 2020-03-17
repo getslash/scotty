@@ -9,12 +9,15 @@ import slash
 
 def powerset(iterable):
     s = list(iterable)
-    return (frozenset(p) for p in chain.from_iterable((combinations(s, r)) for r in range(len(s)+1)))
+    return (
+        frozenset(p)
+        for p in chain.from_iterable((combinations(s, r)) for r in range(len(s) + 1))
+    )
 
 
 def test_empty_issue(tracker):
     with pytest.raises(requests.exceptions.HTTPError) as e:
-        tracker.create_issue(' ')
+        tracker.create_issue(" ")
     assert e._excinfo[1].response.status_code == http.client.CONFLICT
 
 
@@ -55,32 +58,34 @@ def test_tracker_deletion(beam, tracker, issue_factory):
 
 
 def test_tracker_get_by_name(tracker, scotty):
-    assert scotty.get_tracker_id('tests_tracker') == tracker.id
+    assert scotty.get_tracker_id("tests_tracker") == tracker.id
 
 
-@pytest.mark.parametrize('add_spaces', [True, False])
+@pytest.mark.parametrize("add_spaces", [True, False])
 def test_create_issue_twice(issue_factory, tracker, scotty, add_spaces):
     issue = issue_factory.get()
     new_name = issue.id_in_tracker
     if add_spaces:
-        new_name = '  ' + new_name + '  '
+        new_name = "  " + new_name + "  "
     assert scotty.create_issue(tracker.id, new_name) == issue.id_in_scotty
 
 
-_TRACKER_PARAMS = frozenset(['url', 'name', 'config'])
-@pytest.mark.parametrize('params', powerset(_TRACKER_PARAMS))
+_TRACKER_PARAMS = frozenset(["url", "name", "config"])
+
+
+@pytest.mark.parametrize("params", powerset(_TRACKER_PARAMS))
 def test_tracker_modification(scotty, tracker, params):
     def _get_tracker_data():
-        response = scotty._session.get('{}/trackers/{}'.format(scotty._url, tracker.id))
+        response = scotty._session.get("{}/trackers/{}".format(scotty._url, tracker.id))
         response.raise_for_status()
-        return response.json()['tracker']
+        return response.json()["tracker"]
 
     original_data = _get_tracker_data()
 
     unmodified_params = _TRACKER_PARAMS - params
     kwargs = {p: str(uuid.uuid4()) for p in params}
-    if 'config' in kwargs:
-        kwargs['config'] = {'value': str(uuid.uuid4())}
+    if "config" in kwargs:
+        kwargs["config"] = {"value": str(uuid.uuid4())}
 
     tracker.update(**kwargs)
 

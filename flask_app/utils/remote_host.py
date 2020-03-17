@@ -27,7 +27,9 @@ class RemoteHost:
 
     @functools.lru_cache(maxsize=None)
     def get_os_type(self) -> str:
-        return (self.exec_ssh_command("uname", raise_on_failure=False) or 'windows').lower()
+        return (
+            self.exec_ssh_command("uname", raise_on_failure=False) or "windows"
+        ).lower()
 
     def get_temp_dir(self) -> str:
         return self.exec_ssh_command(self._TEMPDIR_COMMAND)
@@ -38,7 +40,9 @@ class RemoteHost:
         if retcode == 0:
             return stdout.read().decode().strip()
         if raise_on_failure:
-            raise RuntimeError(f"Failed to execute command {command}: {stderr.read().decode('utf-8')}")
+            raise RuntimeError(
+                f"Failed to execute command {command}: {stderr.read().decode('utf-8')}"
+            )
 
     def raw_exec_ssh_command(self, command):
         logger.info(f"executing on host {self._host} command {command}")
@@ -55,13 +59,13 @@ class RemoteHost:
         self._ssh_client = ssh_client = SSHClient()
         ssh_client.set_missing_host_key_policy(AutoAddPolicy())
 
-        kwargs = {'username': self._username, 'look_for_keys': False}
-        if self._auth_method in ('rsa', 'stored_key'):
-            kwargs['pkey'] = create_key(self._pkey)
-        elif self._auth_method == 'password':
-            kwargs['password'] = self._password
+        kwargs = {"username": self._username, "look_for_keys": False}
+        if self._auth_method in ("rsa", "stored_key"):
+            kwargs["pkey"] = create_key(self._pkey)
+        elif self._auth_method == "password":
+            kwargs["password"] = self._password
         else:
-            raise ValueError(f'Invalid auth method: {self._auth_method}')
+            raise ValueError(f"Invalid auth method: {self._auth_method}")
 
         self._ssh_client.connect(self._host, **kwargs)
         return self
