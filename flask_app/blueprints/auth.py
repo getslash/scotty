@@ -25,7 +25,7 @@ class InvalidEmail(Exception):
 
 
 def _get_token_serializer():
-    return TimedSerializer(current_app.config['SECRET_KEY'])
+    return TimedSerializer(current_app.config["SECRET_KEY"])
 
 
 def _get_info(credentials):
@@ -33,16 +33,14 @@ def _get_info(credentials):
     if credentials.access_token_expired:
         credentials.refresh(http_client)
     credentials.authorize(http_client)
-    service = build('oauth2', 'v2', http=http_client)
+    service = build("oauth2", "v2", http=http_client)
     return service.userinfo().get().execute()
 
 
 def get_or_create_user(email, name):
     user = user_datastore.get_user(email)
     if not user:
-        user = user_datastore.create_user(
-            email=email,
-            name=name)
+        user = user_datastore.create_user(email=email, name=name)
         user_datastore.db.session.commit()
     else:
         if name is not None and name != user.name:
@@ -52,31 +50,29 @@ def get_or_create_user(email, name):
     return user
 
 
-@auth.route("/login", methods=['POST'])
+@auth.route("/login", methods=["POST"])
 def login():
     flow = flow_from_clientsecrets(
-        os.path.join(os.path.dirname(__file__), '..', 'client_secret.json'),
+        os.path.join(os.path.dirname(__file__), "..", "client_secret.json"),
         scope="https://www.googleapis.com/auth/userinfo.profile",
-        redirect_uri=request.host_url[:-1])
-    credentials = flow.step2_exchange(request.json['authorizationCode'])
+        redirect_uri=request.host_url[:-1],
+    )
+    credentials = flow.step2_exchange(request.json["authorizationCode"])
 
     user_info = _get_info(credentials)
-    user = get_or_create_user(user_info['email'], user_info['name'])
-    token = _get_token_serializer().dumps({'user_id': user.id})
+    user = get_or_create_user(user_info["email"], user_info["name"])
+    token = _get_token_serializer().dumps({"user_id": user.id})
     login_user(user)
 
-    return jsonify({
-        'id': user.id,
-        'auth_token': token,
-    })
+    return jsonify({"id": user.id, "auth_token": token,})
 
 
-@auth.route("/logout", methods=['POST'])
+@auth.route("/logout", methods=["POST"])
 def logout():
     if current_user.is_authenticated:
         logout_user()
 
-    return ''
+    return ""
 
 
 def _get_user_from_auth_token(auth_token):
@@ -85,16 +81,16 @@ def _get_user_from_auth_token(auth_token):
     except BadSignature:
         abort(http.client.UNAUTHORIZED)
 
-    return user_datastore.get_user(token_data['user_id'])
+    return user_datastore.get_user(token_data["user_id"])
 
 
-@auth.route("/restore", methods=['POST'])
+@auth.route("/restore", methods=["POST"])
 def restore():
-    user = _get_user_from_auth_token(request.json['auth_token'])
+    user = _get_user_from_auth_token(request.json["auth_token"])
     if not user:
         abort(http.client.FORBIDDEN)
 
-    assert user.id == request.json['id']
+    assert user.id == request.json["id"]
     login_user(user)
     return jsonify(request.json)
 
@@ -103,8 +99,8 @@ def _get_anonymous_user():
     user = user_datastore.get_user("anonymous@getslash.github.io")
     if not user:
         user = user_datastore.create_user(
-            email="anonymous@getslash.github.io",
-            name="Anonymous")
+            email="anonymous@getslash.github.io", name="Anonymous"
+        )
         user_datastore.db.session.commit()
 
     return user
@@ -114,7 +110,7 @@ def require_user(allow_anonymous):
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            auth_token = request.headers.get('X-Authentication-Token')
+            auth_token = request.headers.get("X-Authentication-Token")
             user = None
             if auth_token:
                 user = _get_user_from_auth_token(auth_token)
@@ -132,8 +128,9 @@ def require_user(allow_anonymous):
                 else:
                     user = _get_anonymous_user()
 
-            kwargs['user'] = user
+            kwargs["user"] = user
             return f(*args, **kwargs)
 
         return wrapper
+
     return decorator

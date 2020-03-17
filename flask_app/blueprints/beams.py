@@ -21,20 +21,24 @@ beams = Blueprint("beams", __name__, template_folder="templates")
 
 
 _BEAMS_PER_PAGE = 50
-_ALLOWED_PARAMS = ['tag', 'pinned', 'uid', 'email', 'page']
-@beams.route('', methods=['GET'], strict_slashes=False)
+_ALLOWED_PARAMS = ["tag", "pinned", "uid", "email", "page"]
+
+
+@beams.route("", methods=["GET"], strict_slashes=False)
 def get_all() -> Response:
     if any({param not in _ALLOWED_PARAMS for param in request.values}):
         abort(http.client.BAD_REQUEST)
 
-    beam_query = (
-        db.session.query(Beam)
-        .options(joinedload(Beam.pins), joinedload(Beam.type), joinedload(Beam.issues)))
+    beam_query = db.session.query(Beam).options(
+        joinedload(Beam.pins), joinedload(Beam.type), joinedload(Beam.issues)
+    )
 
     for param in request.values:
         param_values = request.values[param]
         if param == "tag":
-            beam_query = beam_query.filter(Beam.tags.any(Tag.tag.in_(param_values.split(';'))))
+            beam_query = beam_query.filter(
+                Beam.tags.any(Tag.tag.in_(param_values.split(";")))
+            )
         elif param == "pinned":
             pinned = db.session.query(distinct(Pin.beam_id))
             beam_query = beam_query.filter(Beam.id.in_(pinned))
@@ -46,157 +50,184 @@ def get_all() -> Response:
             beam_query = beam_query.filter_by(initiator=uid)
         elif param == "email":
             user = db.session.query(User).filter_by(email=param_values).first()
-            beam_query = beam_query.filter_by(initiator=user.id) if user else beam_query.filter(false())
+            beam_query = (
+                beam_query.filter_by(initiator=user.id)
+                if user
+                else beam_query.filter(false())
+            )
 
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get("page", 1, type=int)
 
-    beams_obj = [b.to_dict(current_app.config['VACUUM_THRESHOLD']) for b in \
-         beam_query.order_by(Beam.id.desc()).limit(_BEAMS_PER_PAGE).offset((page - 1) * _BEAMS_PER_PAGE)]
+    beams_obj = [
+        b.to_dict(current_app.config["VACUUM_THRESHOLD"])
+        for b in beam_query.order_by(Beam.id.desc())
+        .limit(_BEAMS_PER_PAGE)
+        .offset((page - 1) * _BEAMS_PER_PAGE)
+    ]
 
-    return jsonify({'beams': beams_obj})
+    return jsonify({"beams": beams_obj})
 
 
-@beams.route('', methods=['POST'])
+@beams.route("", methods=["POST"])
 @require_user(allow_anonymous=True)
-@validate_schema({
-    'type': 'object',
-    'properties': {
-        'beam': {
-            'type': 'object',
-            'properties': {
-                'auth_method': {'type': 'string', 'enum': ['rsa', 'password', 'independent', 'stored_key']},
-                'user': {'type': 'string'},
-                'comment': {'type': ['string', 'null']},
-                'type': {'type': ['string', 'null']},
-                'password': {'type': ['string', 'null']},
-                'directory': {'type': 'string'},
-                'email': {'type': 'string'},
-                'ssh_key': {'type': ['string', 'null']},
-                'stored_key': {'type': ['string', 'null']},
-                'tags': {'type': 'array', 'items': {'type': 'string'}},
-                'combadge_version': {'type': 'string'},
-            },
-            'required': ['auth_method', 'host', 'directory']
-        }
-    },
-    'required': ['beam']
-})
+@validate_schema(
+    {
+        "type": "object",
+        "properties": {
+            "beam": {
+                "type": "object",
+                "properties": {
+                    "auth_method": {
+                        "type": "string",
+                        "enum": ["rsa", "password", "independent", "stored_key"],
+                    },
+                    "user": {"type": "string"},
+                    "comment": {"type": ["string", "null"]},
+                    "type": {"type": ["string", "null"]},
+                    "password": {"type": ["string", "null"]},
+                    "directory": {"type": "string"},
+                    "email": {"type": "string"},
+                    "ssh_key": {"type": ["string", "null"]},
+                    "stored_key": {"type": ["string", "null"]},
+                    "tags": {"type": "array", "items": {"type": "string"}},
+                    "combadge_version": {"type": "string"},
+                },
+                "required": ["auth_method", "host", "directory"],
+            }
+        },
+        "required": ["beam"],
+    }
+)
 def create(user: User) -> ServerResponse:
     ssh_key = None
-    if request.json['beam']['auth_method'] == 'rsa':
+    if request.json["beam"]["auth_method"] == "rsa":
         try:
-            create_key(request.json['beam']['ssh_key'])
-            ssh_key = request.json['beam']['ssh_key']
+            create_key(request.json["beam"]["ssh_key"])
+            ssh_key = request.json["beam"]["ssh_key"]
         except SSHException:
-            return 'Invalid RSA key', http.client.CONFLICT
-    elif request.json['beam']['auth_method'] == 'stored_key':
-        if 'stored_key' not in request.json['beam']:
-            return 'No stored key was specified', http.client.CONFLICT
-        key = db.session.query(Key).filter_by(id=int(request.json['beam']['stored_key'])).first()
+            return "Invalid RSA key", http.client.CONFLICT
+    elif request.json["beam"]["auth_method"] == "stored_key":
+        if "stored_key" not in request.json["beam"]:
+            return "No stored key was specified", http.client.CONFLICT
+        key = (
+            db.session.query(Key)
+            .filter_by(id=int(request.json["beam"]["stored_key"]))
+            .first()
+        )
         if not key:
-            return 'Invalid stored key id', http.client.CONFLICT
+            return "Invalid stored key id", http.client.CONFLICT
         ssh_key = key.key
 
     if user.is_anonymous_user:
-        if 'email' in request.json['beam']:
+        if "email" in request.json["beam"]:
             try:
-                user = get_or_create_user(request.json['beam']['email'], None)
+                user = get_or_create_user(request.json["beam"]["email"], None)
             except InvalidEmail:
-                return 'Invalid email', http.client.CONFLICT
+                return "Invalid email", http.client.CONFLICT
 
-    if not is_valid_hostname(request.json['beam']['host']):
-        return 'Invalid hostname', http.client.CONFLICT
+    if not is_valid_hostname(request.json["beam"]["host"]):
+        return "Invalid hostname", http.client.CONFLICT
 
-    directory = request.json['beam']['directory']
-    if directory == '/':
-        return 'Invalid beam directory', http.client.CONFLICT
+    directory = request.json["beam"]["directory"]
+    if directory == "/":
+        return "Invalid beam directory", http.client.CONFLICT
 
     beam = Beam(
-        start=current_timeline.datetime.utcnow(), size=0,
-        host=request.json['beam']['host'],
-        comment=request.json['beam'].get('comment'),
+        start=current_timeline.datetime.utcnow(),
+        size=0,
+        host=request.json["beam"]["host"],
+        comment=request.json["beam"].get("comment"),
         directory=directory,
         initiator=user.id,
         error=None,
         combadge_contacted=False,
-        pending_deletion=False, completed=False, deleted=False)
+        pending_deletion=False,
+        completed=False,
+        deleted=False,
+    )
 
-    if request.json['beam'].get('type') is not None:
-        type_obj = db.session.query(BeamType).filter_by(name=request.json['beam']['type']).first()
+    if request.json["beam"].get("type") is not None:
+        type_obj = (
+            db.session.query(BeamType)
+            .filter_by(name=request.json["beam"]["type"])
+            .first()
+        )
         if not type_obj:
-            return 'Invalid beam type', http.client.CONFLICT
+            return "Invalid beam type", http.client.CONFLICT
 
         beam.type = type_obj
 
     db.session.add(beam)
     db.session.commit()
 
-    tags = request.json['beam'].get('tags')
+    tags = request.json["beam"].get("tags")
     if tags:
         for tag in tags:
             t = Tag(beam_id=beam.id, tag=tag)
             db.session.add(t)
         db.session.commit()
 
-    if request.json['beam']['auth_method'] != 'independent':
+    if request.json["beam"]["auth_method"] != "independent":
         beam_up.delay(
             beam_id=beam.id,
             host=beam.host,
             directory=beam.directory,
-            username=request.json['beam']['user'],
-            auth_method=request.json['beam']['auth_method'],
+            username=request.json["beam"]["user"],
+            auth_method=request.json["beam"]["auth_method"],
             pkey=ssh_key,
-            password=request.json['beam'].get('password', ''),
-            combadge_version=request.json['beam'].get('combadge_version'))
+            password=request.json["beam"].get("password", ""),
+            combadge_version=request.json["beam"].get("combadge_version"),
+        )
 
-    return jsonify(
-        {'beam': beam.to_dict(current_app.config['VACUUM_THRESHOLD'])})
+    return jsonify({"beam": beam.to_dict(current_app.config["VACUUM_THRESHOLD"])})
 
 
-@beams.route('/<int:beam_id>', methods=['GET'])
+@beams.route("/<int:beam_id>", methods=["GET"])
 def get(beam_id: int) -> ServerResponse:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
         return "No such beam", http.client.NOT_FOUND
-    beam_json = beam.to_dict(current_app.config['VACUUM_THRESHOLD'])
-    beam_json['files'] = [f.id for f in beam.files]
-    return jsonify({'beam': beam_json})
+    beam_json = beam.to_dict(current_app.config["VACUUM_THRESHOLD"])
+    beam_json["files"] = [f.id for f in beam.files]
+    return jsonify({"beam": beam_json})
 
 
-@beams.route('/<int:beam_id>', methods=['PUT'])
-@validate_schema({
-    'type': 'object',
-    'properties': {
-        'beam': {'type': 'object'},
-        'error': {'type': ['string', 'null']},
-        'comment': {'type': ['string', 'null']}
-    },
-})
+@beams.route("/<int:beam_id>", methods=["PUT"])
+@validate_schema(
+    {
+        "type": "object",
+        "properties": {
+            "beam": {"type": "object"},
+            "error": {"type": ["string", "null"]},
+            "comment": {"type": ["string", "null"]},
+        },
+    }
+)
 def update(beam_id: int) -> str:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if beam.pending_deletion or beam.deleted:
         abort(http.client.FORBIDDEN)
 
-    if 'beam' in request.json:
+    if "beam" in request.json:
         if len(request.json) > 1:
             abort(http.client.CONFLICT)
 
-        json = request.json['beam']
+        json = request.json["beam"]
     else:
         json = request.json
 
-    if 'completed' in json:
-        beam.completed = json['completed']
-        beam.error = json.get('error', None)
+    if "completed" in json:
+        beam.completed = json["completed"]
+        beam.error = json.get("error", None)
 
-    if 'comment' in json:
-        beam.comment = json['comment']
+    if "comment" in json:
+        beam.comment = json["comment"]
 
     db.session.commit()
 
-    if 'tags' in json:
+    if "tags" in json:
         db.session.query(Tag).filter_by(beam_id=beam_id).delete()
-        for tag in json['tags']:
+        for tag in json["tags"]:
             db.session.add(Tag(beam_id=beam_id, tag=tag))
 
     try:
@@ -204,10 +235,10 @@ def update(beam_id: int) -> str:
     except IntegrityError:
         pass
 
-    return '{}'
+    return "{}"
 
 
-@beams.route('/<int:beam_id>/tags/<path:tag>', methods=['POST'])
+@beams.route("/<int:beam_id>/tags/<path:tag>", methods=["POST"])
 def put_tag(beam_id: int, tag: str) -> str:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
@@ -219,10 +250,10 @@ def put_tag(beam_id: int, tag: str) -> str:
         db.session.commit()
     except IntegrityError:
         pass
-    return ''
+    return ""
 
 
-@beams.route('/<int:beam_id>/tags/<path:tag>', methods=['DELETE'])
+@beams.route("/<int:beam_id>/tags/<path:tag>", methods=["DELETE"])
 def remove_tag(beam_id: int, tag: str) -> str:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
@@ -232,10 +263,10 @@ def remove_tag(beam_id: int, tag: str) -> str:
     if t:
         db.session.delete(t)
         db.session.commit()
-    return ''
+    return ""
 
 
-@beams.route('/<int:beam_id>/issues/<int:issue_id>', methods=['POST', 'DELETE'])
+@beams.route("/<int:beam_id>/issues/<int:issue_id>", methods=["POST", "DELETE"])
 def set_issue_association(beam_id: int, issue_id: int) -> str:
     beam = db.session.query(Beam).filter_by(id=beam_id).first()
     if not beam:
@@ -245,12 +276,12 @@ def set_issue_association(beam_id: int, issue_id: int) -> str:
     if not issue:
         abort(http.client.NOT_FOUND)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         beam.issues.append(issue)
-    elif request.method == 'DELETE':
+    elif request.method == "DELETE":
         beam.issues.remove(issue)
     else:
         raise AssertionError()
 
     db.session.commit()
-    return ''
+    return ""

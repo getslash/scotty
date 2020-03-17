@@ -61,9 +61,7 @@ def user():
     email = "scotty@testing.infinidat.com"
     user = user_datastore.get_user(email)
     if not user:
-        user = user_datastore.create_user(
-            email=email,
-            name=name)
+        user = user_datastore.create_user(email=email, name=name)
         user_datastore.db.session.commit()
     return user
 
@@ -90,14 +88,18 @@ def file(db_session):
 def create_beam(db_session, host, user, directory, file):
     def _create(*, start, completed, add_file=True):
         beam = Beam(
-            start=start, size=0,
+            start=start,
+            size=0,
             host=host,
-            comment='',
+            comment="",
             directory=directory,
             initiator=user.id,
             error=None,
             combadge_contacted=False,
-            pending_deletion=False, completed=completed, deleted=False)
+            pending_deletion=False,
+            completed=completed,
+            deleted=False,
+        )
         if add_file:
             beam.files.append(file)
         db_session.add(beam)
@@ -119,12 +121,7 @@ def expired_beam_date(now, vacuum_threshold):
 
 @pytest.fixture
 def tracker(db_session):
-    tracker = Tracker(
-        config='{}',
-        name="JIRA",
-        type="jira",
-        url="https://mock-jira",
-    )
+    tracker = Tracker(config="{}", name="JIRA", type="jira", url="https://mock-jira",)
     db_session.add(tracker)
     db_session.commit()
     return tracker

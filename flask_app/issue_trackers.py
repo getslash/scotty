@@ -39,8 +39,12 @@ class JIRA(Tracker):
     def __init__(self, *, url: str, config: str):
         self._url = url
         config_json = json.loads(config)
-        self._jira = JIRAAPI(url, basic_auth=(config_json['username'], config_json['password']), timeout=5)
-        self._resolution_grace = timedelta(days=config_json.get('resolution_grace', 0))
+        self._jira = JIRAAPI(
+            url,
+            basic_auth=(config_json["username"], config_json["password"]),
+            timeout=5,
+        )
+        self._resolution_grace = timedelta(days=config_json.get("resolution_grace", 0))
 
     def _refresh_issue(self, issue_obj: Issue) -> None:
         issue = self._jira.issue(issue_obj.id_in_tracker)
@@ -48,7 +52,8 @@ class JIRA(Tracker):
             issue_obj.open = True
         else:
             resolution_date = flux.current_timeline.datetime.strptime(
-                issue.fields.resolutiondate, '%Y-%m-%dT%H:%M:%S.%f%z')
+                issue.fields.resolutiondate, "%Y-%m-%dT%H:%M:%S.%f%z"
+            )
             now = flux.current_timeline.datetime.now().replace(tzinfo=timezone.utc)
             issue_obj.open = (now - resolution_date) < self._resolution_grace
 
@@ -78,7 +83,7 @@ class File(Tracker):
         self._name: str = name
 
     def refresh(self, issues: List[Issue]) -> None:
-        with open(self._name, 'r') as f:
+        with open(self._name, "r") as f:
             data = json.load(f)
             for issue in issues:
                 issue.open = data[issue.id_in_tracker]

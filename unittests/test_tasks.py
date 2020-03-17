@@ -25,25 +25,33 @@ def is_vacuumed(db_session, beam):
     return beam.deleted
 
 
-def test_completed_beam_past_date_should_be_vacuumed(eager_celery, db_session, create_beam, expired_beam_date):
+def test_completed_beam_past_date_should_be_vacuumed(
+    eager_celery, db_session, create_beam, expired_beam_date
+):
     beam = create_beam(start=expired_beam_date, completed=True)
     vacuum.delay()
     assert is_vacuumed(db_session, beam)
 
 
-def test_beam_before_date_should_not_be_vacuumed(eager_celery, db_session, create_beam, now):
+def test_beam_before_date_should_not_be_vacuumed(
+    eager_celery, db_session, create_beam, now
+):
     beam = create_beam(start=now, completed=True)
     vacuum.delay()
     assert not is_vacuumed(db_session, beam)
 
 
-def test_not_completed_beam_should_not_be_vacuumed(eager_celery, db_session, create_beam, expired_beam_date):
+def test_not_completed_beam_should_not_be_vacuumed(
+    eager_celery, db_session, create_beam, expired_beam_date
+):
     beam = create_beam(start=expired_beam_date, completed=False)
     vacuum.delay()
     assert not is_vacuumed(db_session, beam)
 
 
-def test_beam_with_open_issues_should_not_be_vacuumed(eager_celery, db_session, create_beam, expired_beam_date, issue):
+def test_beam_with_open_issues_should_not_be_vacuumed(
+    eager_celery, db_session, create_beam, expired_beam_date, issue
+):
     beam = create_beam(start=expired_beam_date, completed=True)
     beam.issues.append(issue)
     db_session.commit()
@@ -51,7 +59,9 @@ def test_beam_with_open_issues_should_not_be_vacuumed(eager_celery, db_session, 
     assert not is_vacuumed(db_session, beam)
 
 
-def test_pinned_beam_should_not_be_vacuumed(eager_celery, db_session, create_beam, expired_beam_date, user):
+def test_pinned_beam_should_not_be_vacuumed(
+    eager_celery, db_session, create_beam, expired_beam_date, user
+):
     beam = create_beam(start=expired_beam_date, completed=True)
     pin = Pin(user_id=user.id, beam_id=beam.id)
     db_session.add(pin)
@@ -60,15 +70,18 @@ def test_pinned_beam_should_not_be_vacuumed(eager_celery, db_session, create_bea
     assert not is_vacuumed(db_session, beam)
 
 
-def test_beam_without_file_should_be_vacuumed(eager_celery, db_session, create_beam, expired_beam_date):
+def test_beam_without_file_should_be_vacuumed(
+    eager_celery, db_session, create_beam, expired_beam_date
+):
     beam = create_beam(start=expired_beam_date, completed=True, add_file=False)
     db_session.commit()
     vacuum.delay()
     assert is_vacuumed(db_session, beam)
 
 
-def test_beam_with_beam_type_greater_threshold_is_not_vacuumed(eager_celery, db_session, create_beam, expired_beam_date,
-                                                               vacuum_threshold):
+def test_beam_with_beam_type_greater_threshold_is_not_vacuumed(
+    eager_celery, db_session, create_beam, expired_beam_date, vacuum_threshold
+):
     # threshold       default threshold                 now
     #   |    10 days        |            60 days         |
     # -----------------------------------------------------> date
@@ -87,7 +100,9 @@ def test_beam_with_beam_type_greater_threshold_is_not_vacuumed(eager_celery, db_
     assert not is_vacuumed(db_session, beam)
 
 
-def test_beam_with_beam_type_smaller_threshold_is_vacuumed(eager_celery, db_session, create_beam, now):
+def test_beam_with_beam_type_smaller_threshold_is_vacuumed(
+    eager_celery, db_session, create_beam, now
+):
     # default threshold                threshold      now
     # |  59 days                        |   1 day      |
     # --------------------------------------------------> date
@@ -131,17 +146,19 @@ class MockSSHClient:
             if self.os_type == "linux":
                 self.stdout.write(b"Linux")
             else:
-                self.stderr.write((
-                    b"uname : The term 'uname' is not recognized as the name of a cmdlet, function, script file, "
-                    b"or operable program. Check the spelling of the name, or if a path was included, "
-                    b"verify that the path is correct and try again."
-                ))
+                self.stderr.write(
+                    (
+                        b"uname : The term 'uname' is not recognized as the name of a cmdlet, function, script file, "
+                        b"or operable program. Check the spelling of the name, or if a path was included, "
+                        b"verify that the path is correct and try again."
+                    )
+                )
                 self.exit_status = 1
         elif command == _TEMPDIR_COMMAND:
             if self.os_type == "linux":
                 self.stdout.write(b"/tmp")
             else:
-                user = self.connect_args['username']
+                user = self.connect_args["username"]
                 self.stdout.write(fr"C:\Users\{user}\AppData\Local\Temp".encode())
         self.stdout.seek(0)
         self.stdin.seek(0)
@@ -198,7 +215,7 @@ class MockSFTPClient:
         self.calls.append(dict(action="remove", args=dict(remote=remote)))
 
     def chmod(self, remote, mode):
-        self.files[remote]['mode'] = mode
+        self.files[remote]["mode"] = mode
         self.calls.append(dict(action="chmod", args=dict(remote=remote, mode=mode)))
 
     def __enter__(self):
@@ -224,9 +241,12 @@ class MockSFTPClient:
     def assert_calls_equal_to(self, expected_calls):
         assert len(self.calls) == len(expected_calls)
         for actual_call, expected_call in zip(self.calls, expected_calls):
-            if expected_call['action'] == 'chmod':
-                assert actual_call['args']['remote'] == expected_call['args']['remote']
-                assert actual_call['args']['mode'] & expected_call['args']['mode'] == expected_call['args']['mode']
+            if expected_call["action"] == "chmod":
+                assert actual_call["args"]["remote"] == expected_call["args"]["remote"]
+                assert (
+                    actual_call["args"]["mode"] & expected_call["args"]["mode"]
+                    == expected_call["args"]["mode"]
+                )
             else:
                 assert actual_call == expected_call
 
@@ -248,7 +268,7 @@ def mock_rsa_key(monkeypatch):
 
 @pytest.fixture
 def uuid4(monkeypatch):
-    uuid = UUID('f1e8962b-00c9-4799-aacf-5d616163e03d')
+    uuid = UUID("f1e8962b-00c9-4799-aacf-5d616163e03d")
     monkeypatch.setattr(remote_combadge, "uuid4", lambda: uuid)
     return uuid
 
@@ -266,8 +286,19 @@ def combadge_assets_dir(tmpdir, monkeypatch):
 
 
 @pytest.mark.parametrize("os_type", ["linux", "windows"])
-def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_ssh_client, mock_sftp_client,
-                 mock_rsa_key, uuid4, os_type, combadge_assets_dir):
+def test_beam_up(
+    db_session,
+    now,
+    create_beam,
+    eager_celery,
+    monkeypatch,
+    mock_ssh_client,
+    mock_sftp_client,
+    mock_rsa_key,
+    uuid4,
+    os_type,
+    combadge_assets_dir,
+):
     beam = create_beam(start=now, completed=False)
     if os_type == "windows":
         beam.host = "mock-windows-host"
@@ -276,11 +307,11 @@ def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_s
         beam_id=beam.id,
         host=beam.host,
         directory=beam.directory,
-        username='root',
-        auth_method='stored_key',
-        pkey='mock-pkey',
+        username="root",
+        auth_method="stored_key",
+        pkey="mock-pkey",
         password=None,
-        combadge_version='v2'
+        combadge_version="v2",
     )
     assert result.successful(), result.traceback
     beam = db_session.query(Beam).filter_by(id=beam.id).one()
@@ -288,7 +319,9 @@ def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_s
     assert len(mock_ssh_client.instances) == 1
     uuid_part = uuid4.hex[:_COMBADGE_UUID_PART_LENGTH]
     ext = ".exe" if os_type == "windows" else ""
-    remote_dir = fr"C:\Users\root\AppData\Local\Temp" if os_type == "windows" else "/tmp"
+    remote_dir = (
+        fr"C:\Users\root\AppData\Local\Temp" if os_type == "windows" else "/tmp"
+    )
     sep = "\\" if os_type == "windows" else "/"
     combadge = f"{remote_dir}{sep}combadge_{uuid_part}{ext}"
     assert mock_ssh_client.instances[0].commands == [
@@ -299,25 +332,18 @@ def test_beam_up(db_session, now, create_beam, eager_celery, monkeypatch, mock_s
     assert len(mock_sftp_client.instances) == 1
     expected_calls = [
         {
-            'action': 'put',
-            'args': {
-                'local': f'{combadge_assets_dir}/v2/combadge_{os_type}/combadge{ext}',
-                'remote': combadge
-            }
+            "action": "put",
+            "args": {
+                "local": f"{combadge_assets_dir}/v2/combadge_{os_type}/combadge{ext}",
+                "remote": combadge,
+            },
         },
     ]
     if os_type == "linux":
-        expected_calls.append({
-            'action': 'chmod',
-            'args': {
-                'remote': combadge,
-                'mode': stat.S_IEXEC,
-            },
-        })
-    expected_calls.append({
-        'action': 'remove',
-        'args': {'remote': combadge}
-    })
+        expected_calls.append(
+            {"action": "chmod", "args": {"remote": combadge, "mode": stat.S_IEXEC,},}
+        )
+    expected_calls.append({"action": "remove", "args": {"remote": combadge}})
 
     mock_sftp_client.get_one_instance_or_raise().assert_calls_equal_to(expected_calls)
     assert mock_sftp_client.files == {}

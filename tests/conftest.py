@@ -12,10 +12,11 @@ from urlobject import URLObject as URL
 
 from flask_app import app, models
 
-BeamType = namedtuple('BeamType', ('name', 'threshold'))
-BeamInfo = namedtuple('BeamInfo', ('beam', 'type'))
+BeamType = namedtuple("BeamType", ("name", "threshold"))
+BeamInfo = namedtuple("BeamInfo", ("beam", "type"))
 
-TESTS_TRACKER_NAME = 'tests_tracker'
+TESTS_TRACKER_NAME = "tests_tracker"
+
 
 class FileTracker:
     class Issue:
@@ -50,13 +51,13 @@ class FileTracker:
         os.close(fd)
         tracker = scotty.get_tracker_by_name(TESTS_TRACKER_NAME)
         if tracker is None:
-            id_ = scotty.create_tracker(TESTS_TRACKER_NAME, 'file', path, '')
+            id_ = scotty.create_tracker(TESTS_TRACKER_NAME, "file", path, "")
         else:
-            id_ = tracker['id']
+            id_ = tracker["id"]
         return cls(scotty, path, id_)
 
     def dump(self):
-        with open(self._path, 'w') as f:
+        with open(self._path, "w") as f:
             json.dump(self._issues, f)
 
     def delete(self):
@@ -101,19 +102,20 @@ class FileTracker:
 class TestingScotty(Scotty):
     def __init__(self, *args, **kwargs):
         super(TestingScotty, self).__init__(*args, **kwargs)
-        self._session.headers['X-Scotty-Email'] = "test@getslash.org"
+        self._session.headers["X-Scotty-Email"] = "test@getslash.org"
 
     def sleep(self, time_to_sleep):
-        response = self._session.post("{}/sleep".format(self._url),
-                           data=json.dumps({'time': time_to_sleep.total_seconds()}))
+        response = self._session.post(
+            "{}/sleep".format(self._url),
+            data=json.dumps({"time": time_to_sleep.total_seconds()}),
+        )
         response.raise_for_status()
 
     def pin(self, beam_obj, should_pin):
-        data = {
-            'beam_id': beam_obj.id,
-            'should_pin': should_pin
-        }
-        self._session.put("{}/pin".format(self._url), data=json.dumps(data)).raise_for_status()
+        data = {"beam_id": beam_obj.id, "should_pin": should_pin}
+        self._session.put(
+            "{}/pin".format(self._url), data=json.dumps(data)
+        ).raise_for_status()
 
     def check_if_beam_deleted(self, beam_obj, deleted):
         assert beam_obj.deleted == deleted
@@ -150,27 +152,27 @@ def tempdir(scope="test"):
 
 @pytest.fixture
 def download_dir(tempdir):
-    d = os.path.join(tempdir, 'dest')
+    d = os.path.join(tempdir, "dest")
     os.mkdir(d)
     return d
 
 
 @pytest.fixture
 def local_beam_dir(tempdir):
-    source_dir = os.path.join(tempdir, 'source')
+    source_dir = os.path.join(tempdir, "source")
     os.mkdir(source_dir)
 
-    with open(os.path.join(source_dir, 'a.txt'), 'w') as f:
-        f.write('Hello')
+    with open(os.path.join(source_dir, "a.txt"), "w") as f:
+        f.write("Hello")
 
-    with open(os.path.join(source_dir, 'b.bin'), 'wb') as f:
-        f.write(b'\x10\x12\x04')
+    with open(os.path.join(source_dir, "b.bin"), "wb") as f:
+        f.write(b"\x10\x12\x04")
 
-    subdir = os.path.join(source_dir, 'subdir')
+    subdir = os.path.join(source_dir, "subdir")
     os.mkdir(subdir)
 
-    with open(os.path.join(subdir, 'c.txt'), 'w') as f:
-        f.write('Hello in subdir')
+    with open(os.path.join(subdir, "c.txt"), "w") as f:
+        f.write("Hello in subdir")
 
     return source_dir
 
@@ -190,6 +192,7 @@ def issue_factory(tracker):
     class IssueFactory:
         def get(self):
             return tracker.create_issue(id_in_tracker=None)
+
     return IssueFactory()
 
 
@@ -197,9 +200,12 @@ def issue_factory(tracker):
 def beam_factory(scotty, local_beam_dir):
     class BeamFactory:
         def get(self, combadge_version):
-            beam_data = scotty.beam_up(local_beam_dir, combadge_version=combadge_version)
+            beam_data = scotty.beam_up(
+                local_beam_dir, combadge_version=combadge_version
+            )
             beam = scotty.get_beam(beam_data)
             return beam
+
     return BeamFactory()
 
 
@@ -209,9 +215,7 @@ def server_config(webapp):
 
 
 def _beam_type(name, threshold):
-    t = models.BeamType(
-        name=name,
-        vacuum_threshold=threshold)
+    t = models.BeamType(name=name, vacuum_threshold=threshold)
     models.db.session.add(t)
     models.db.session.commit()
     return BeamType(name, threshold)
@@ -221,9 +225,10 @@ def _beam_type(name, threshold):
 def beam_types(server_config, db, webapp):
     with webapp.app_context():
         return {
-            'short': _beam_type('short', server_config['VACUUM_THRESHOLD'] - 2),
-            'long_term': _beam_type('long_term', 99999),
-            'long': _beam_type('long', server_config['VACUUM_THRESHOLD'] + 2)}
+            "short": _beam_type("short", server_config["VACUUM_THRESHOLD"] - 2),
+            "long_term": _beam_type("long_term", 99999),
+            "long": _beam_type("long", server_config["VACUUM_THRESHOLD"] + 2),
+        }
 
 
 def _wait_for_beam(beam_id, *, scotty):
@@ -245,24 +250,28 @@ def beam(scotty, local_beam_dir):
 
 @pytest.fixture
 def short_beam(scotty, local_beam_dir, beam_types):
-    beam = _wait_for_beam(scotty.beam_up(local_beam_dir, beam_type='short'), scotty=scotty)
-    beam_type = beam_types['short']
+    beam = _wait_for_beam(
+        scotty.beam_up(local_beam_dir, beam_type="short"), scotty=scotty
+    )
+    beam_type = beam_types["short"]
     return BeamInfo(beam, beam_type)
 
 
 @pytest.fixture
 def long_beam(scotty, local_beam_dir, beam_types):
-    beam = _wait_for_beam(scotty.beam_up(local_beam_dir, beam_type='long'), scotty=scotty)
-    beam_type = beam_types['long']
+    beam = _wait_for_beam(
+        scotty.beam_up(local_beam_dir, beam_type="long"), scotty=scotty
+    )
+    beam_type = beam_types["long"]
     return BeamInfo(beam, beam_type)
 
 
 @pytest.fixture
 def long_term_beam(scotty, local_beam_dir, beam_types):
-    beam = scotty.get_beam(scotty.beam_up(local_beam_dir, beam_type='long_term'))
+    beam = scotty.get_beam(scotty.beam_up(local_beam_dir, beam_type="long_term"))
     return beam
 
 
 @pytest.fixture
 def faulty_tracker(scotty):
-    return scotty.create_tracker('faulty_tracker', 'faulty', '', '')
+    return scotty.create_tracker("faulty_tracker", "faulty", "", "")
