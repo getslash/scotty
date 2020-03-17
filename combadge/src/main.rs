@@ -1,7 +1,7 @@
 extern crate byteorder;
 extern crate structopt;
-extern crate zstd;
 extern crate walkdir;
+extern crate flate2;
 
 mod config;
 mod messages;
@@ -17,6 +17,8 @@ use std::path::Path;
 use std::time::SystemTime;
 use structopt::StructOpt;
 use walkdir::{WalkDir};
+use flate2::Compression;
+use flate2::write::GzEncoder;
 
 const CHUNK_SIZE: usize = 1024 * 128;
 
@@ -79,7 +81,7 @@ fn beam_file(transporter: &mut TcpStream, base_path: Option<&Path>, path: &Path)
 
     let mut textual_path = path.to_string_lossy().into_owned();
     if should_compress {
-        textual_path.push_str(".zst");
+        textual_path.push_str(".gz");
     }
     let path_without_base = match base_path {
         Some(base_path) => textual_path.replacen(&base_path.to_string_lossy().into_owned(), ".", 1),
@@ -109,7 +111,7 @@ fn beam_file(transporter: &mut TcpStream, base_path: Option<&Path>, path: &Path)
     transporter.write_u64::<byteorder::BigEndian>(duration.unwrap().as_secs())?;
 
     let mut encoder = if should_compress {
-        Some(zstd::stream::write::Encoder::new(Vec::with_capacity(CHUNK_SIZE), 6).unwrap())
+        Some(GzEncoder::new(Vec::with_capacity(CHUNK_SIZE), Compression::best()))
     } else {
         None
     };
