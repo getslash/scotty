@@ -111,7 +111,7 @@ fn beam_file(transporter: &mut TcpStream, base_path: Option<&Path>, path: &Path)
     transporter.write_u64::<byteorder::BigEndian>(duration.unwrap().as_secs())?;
 
     let mut encoder = if should_compress {
-        Some(GzEncoder::new(Vec::with_capacity(CHUNK_SIZE), Compression::new(6)))
+        Some(GzEncoder::new(Vec::with_capacity(CHUNK_SIZE), Compression::best()))
     } else {
         None
     };
