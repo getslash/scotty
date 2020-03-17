@@ -18,6 +18,7 @@ do_format:
 check:
 	poetry run isort -rc --check unittests tests flask_app
 	poetry run black --check unittests tests flask_app
+	poetry run pylint -j $(shell nproc) flask_app
 	poetry run mypy flask_app/
 	poetry run pytest unittests/
 

@@ -12,8 +12,8 @@ test_methods = Blueprint("test_methods", __name__, template_folder="templates")
 @test_methods.route("/sleep", methods=["POST"])
 def sleep() -> str:
     time = request.json["time"]
-    flux.current_timeline.set_time_factor(0)
-    flux.current_timeline.sleep(time)
+    flux.current_timeline.set_time_factor(0)  # pylint: disable=no-member
+    flux.current_timeline.sleep(time)  # pylint: disable=no-member
     celery_sleep.delay(time)
     real_time.sleep(1)
     return ""

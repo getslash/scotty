@@ -22,6 +22,7 @@ class RemoteCombadge:
         self._combadge_version = combadge_version
         self._remote_host = remote_host
         self._remote_combadge_path = None
+        self._sftp = None
 
     def _generate_random_combadge_name(self, string_length: int) -> str:
         random_string = str(uuid4().hex)[:string_length]

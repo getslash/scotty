@@ -3,7 +3,6 @@ import logging
 import os
 
 import flask
-import logbook
 import raven
 import yaml
 from flask_mail import Mail  # pylint: disable=import-error
@@ -34,6 +33,7 @@ def needs_app_context(f):
     return wrapper
 
 
+# pylint: disable=import-outside-toplevel
 def create_app(config=None):
     if config is None:
         config = {}
@@ -74,10 +74,10 @@ def create_app(config=None):
             )
         )
 
-    del app.logger.handlers[:]
+    del app.logger.handlers[:]  # pylint: disable=no-member
     redirect_logging()
 
-    app.logger.info("Started")
+    app.logger.info("Started")  # pylint: disable=no-member
 
     Mail(app)
 

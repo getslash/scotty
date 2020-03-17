@@ -182,7 +182,7 @@ def mark_timeout() -> None:
     dead_beams = (
         db.session.query(Beam)
         .filter_by(completed=False)
-        .filter(Beam.combadge_contacted == False, Beam.start < timed_out)
+        .filter(~Beam.combadge_contacted, Beam.start < timed_out)
     )
     for beam in dead_beams:
         logger.info(
@@ -248,7 +248,7 @@ def get_pending_query():
         func.trunc(extract("epoch", now) - extract("epoch", Beam.start)) / days_factor
     )
     vacuum_threshold = case(
-        [(Beam.type_id == None, current_app.config["VACUUM_THRESHOLD"]),],
+        [(Beam.type_id.is_(None), current_app.config["VACUUM_THRESHOLD"]),],
         else_=BeamType.vacuum_threshold,
     )
 
@@ -268,9 +268,9 @@ def get_pending_query():
             ~Beam.pending_deletion,
             ~Beam.deleted,
             Beam.completed,
-            Pin.id == None,
+            Pin.id.is_(None),
             ~existing_open_issues,
-            or_(File.beam_id == None, beam_age_in_days >= vacuum_threshold),
+            or_(File.beam_id.is_(None), beam_age_in_days >= vacuum_threshold),
         )
     )
     return pending_query
@@ -291,9 +291,7 @@ def vacuum() -> None:
     db.session.commit()
     logger.info("Finished marking vacuum candidates")
 
-    to_delete = db.session.query(Beam).filter(
-        Beam.pending_deletion == True, Beam.deleted == False
-    )
+    to_delete = db.session.query(Beam).filter(Beam.pending_deletion, ~Beam.deleted)
     for beam in to_delete:
         vacuum_beam(beam, current_app.config["STORAGE_PATH"])
     logger.info("Vacuum done")
@@ -346,7 +344,7 @@ def nightly() -> None:
 @needs_app_context
 def vacuum_check() -> None:
     storage_path = current_app.config["STORAGE_PATH"]
-    deleted_beams = db.session.query(Beam).filter(Beam.deleted == True)
+    deleted_beams = db.session.query(Beam).filter(Beam.deleted)
     for beam in deleted_beams:
         for file_ in beam.files:
             full_path = os.path.join(storage_path, file_.storage_name)
@@ -373,8 +371,8 @@ def validate_checksum() -> None:
     files = (
         File.query.join(Beam)
         .filter(
-            Beam.pending_deletion == False,
-            Beam.deleted == False,
+            ~Beam.pending_deletion,
+            ~Beam.deleted,
             File.checksum.isnot(None),
             File.status == "uploaded",
         )
@@ -477,8 +475,8 @@ def check_free_space() -> None:
 @needs_app_context
 @testing_method
 def sleep(t: int) -> None:
-    flux.current_timeline.set_time_factor(0)
-    flux.current_timeline.sleep(t)
+    flux.current_timeline.set_time_factor(0)  # pylint: disable=no-member
+    flux.current_timeline.sleep(t)  # pylint: disable=no-member
     nightly()
 
 

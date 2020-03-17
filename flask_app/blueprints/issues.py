@@ -1,10 +1,8 @@
 import http
-from typing import Tuple, Union
 
 import sqlalchemy
-from flask import Blueprint, Response, jsonify, request
+from flask import Blueprint, jsonify, request
 
-from ..issue_trackers import is_valid_issue
 from ..models import Issue, db
 from .types import DBOperationResponse, ServerResponse
 from .utils import validate_schema
