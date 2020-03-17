@@ -475,8 +475,8 @@ def check_free_space() -> None:
 @needs_app_context
 @testing_method
 def sleep(t: int) -> None:
-    flux.current_timeline.set_time_factor(0)  # pylint: disable=no-member
-    flux.current_timeline.sleep(t)  # pylint: disable=no-member
+    flux.current_timeline.set_time_factor(0)
+    flux.current_timeline.sleep(t)
     nightly()
 
 

@@ -5,7 +5,7 @@ disable=R,broad-except,protected-access,unused-argument,redefined-builtin,missin
 max-line-length=150
 
 [TYPECHECK]
-ignored-modules=celery,flask_sqlalchemy,apiclient,http.client,ldap,git.exc,distutils,pydantic
+ignored-modules=celery,flask_sqlalchemy,apiclient,http.client,ldap,git.exc,distutils,pydantic,flux
 ignored-classes=scoped_session,SQLAlchemy,Flask,Connection,PurkePath
 generated-members=query,requests.codes..*
 
