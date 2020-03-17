@@ -61,4 +61,12 @@ jobs:
     - uses: actions-rs/cargo@v1
     - working-directory: ${{ matrix.artifact }}
       run: cargo check
-
+    - uses: hecrj/setup-rust-action@master
+    - name: Install rustfmt
+      run: rustup component add rustfmt
+    - name: Format
+      run: cargo fmt -- --check
+    - name: Install clippy
+      run: rustup component add clippy
+    - name: Clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
