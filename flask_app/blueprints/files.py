@@ -1,7 +1,7 @@
 import http
 import os
 import urllib.parse
-from typing import Any, Mapping, Optional, Tuple, Union
+from typing import Any, Mapping, Optional
 
 import logbook
 from flask import Blueprint, Response, abort, current_app, jsonify, request

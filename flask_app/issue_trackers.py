@@ -8,7 +8,6 @@ from flask import current_app
 from jira import JIRA as JIRAAPI
 from jira.exceptions import JIRAError
 
-from .app import needs_app_context
 from .models import Issue
 from .models import Tracker as TrackerModel
 from .models import db

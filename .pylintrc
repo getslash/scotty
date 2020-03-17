@@ -1,0 +1,15 @@
+[MESSAGES CONTROL]
+disable=R,broad-except,protected-access,unused-argument,missing-docstring,invalid-name,wrong-import-order,bad-continuation,global-statement
+
+[FORMAT]
+max-line-length=150
+
+[TYPECHECK]
+ignored-modules=celery,flask_sqlalchemy,apiclient,http.client,ldap,git.exc,distutils,pydantic,flux
+ignored-classes=scoped_session,SQLAlchemy,Flask,Connection,PurkePath
+generated-members=query,requests.codes..*
+
+[REPORTS]
+reports=no
+score=no
+output-format=parseable

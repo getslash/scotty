@@ -1,5 +1,4 @@
 import http
-from typing import Tuple, Union
 
 from flask import Blueprint, Response, abort, current_app, jsonify, request
 from flux import current_timeline
