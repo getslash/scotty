@@ -73,30 +73,36 @@ fn beam_path(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+fn should_compress_file(path: &Path) -> bool {
+    match path.extension().and_then(OsStr::to_str) {
+        Some("zip") | Some("gz") | Some("bz2") | Some("xz") | Some("zst") | Some("tgz")
+        | Some("tbz2") | Some("txz") | Some("ioym") | Some("br") => false,
+        _ => true,
+    }
+}
+
+fn get_textual_path(path: &Path, base_path: Option<&Path>, should_compress: bool) -> String {
+    let mut textual_path = path.to_string_lossy().into_owned();
+    if should_compress {
+        textual_path.push_str(".gz");
+    }
+    match base_path {
+        Some(base_path) => textual_path.replacen(&base_path.to_string_lossy().into_owned(), ".", 1),
+        None => textual_path,
+    }
+}
+
 fn beam_file(
     transporter: &mut TcpStream,
     base_path: Option<&Path>,
     path: &Path,
 ) -> std::io::Result<()> {
     println!("Beaming file: {:?}", path);
-    let should_compress = match path.extension().and_then(OsStr::to_str) {
-        Some("zip") | Some("gz") | Some("bz2") | Some("xz") | Some("zst") | Some("tgz")
-        | Some("tbz2") | Some("txz") | Some("ioym") | Some("br") => false,
-        _ => true,
-    };
 
     transporter.write_u8(ClientMessages::StartBeamingFile as u8)?;
-
-    let mut textual_path = path.to_string_lossy().into_owned();
-    if should_compress {
-        textual_path.push_str(".gz");
-    }
-    let path_without_base = match base_path {
-        Some(base_path) => textual_path.replacen(&base_path.to_string_lossy().into_owned(), ".", 1),
-        None => path.to_string_lossy().into_owned(),
-    };
-
-    let path_as_bytes = path_without_base.as_bytes();
+    let should_compress = should_compress_file(&path);
+    let textual_path = get_textual_path(&path, base_path, should_compress);
+    let path_as_bytes = textual_path.as_bytes();
     transporter.write_u16::<byteorder::BigEndian>(path_as_bytes.len() as u16)?;
     transporter.write_all(path_as_bytes)?;
     println!("Beam path: {:?}", textual_path);
@@ -169,4 +175,116 @@ fn beam_file(
     };
 
     Ok(())
+}
+
+#[cfg(unix)]
+#[cfg(test)]
+mod test_unix {
+    use super::*;
+
+    #[test]
+    fn test_get_textual_path_simple() {
+        assert_eq!(
+            get_textual_path(Path::new("/tmp/a.log"), Some(Path::new("/tmp")), false),
+            "./a.log"
+        )
+    }
+
+    #[test]
+    fn test_get_textual_path_compression() {
+        assert_eq!(
+            get_textual_path(Path::new("/tmp/a.log"), Some(Path::new("/tmp")), true),
+            "./a.log.gz"
+        )
+    }
+
+    #[test]
+    fn test_get_textual_path_no_base_path() {
+        assert_eq!(
+            get_textual_path(Path::new("/tmp/a.log"), None, false),
+            "/tmp/a.log"
+        )
+    }
+
+    #[test]
+    fn test_get_textual_path_no_base_path_compression() {
+        assert_eq!(
+            get_textual_path(Path::new("/tmp/a.log"), None, true),
+            "/tmp/a.log.gz"
+        )
+    }
+
+    #[test]
+    fn test_get_textual_path_subdir() {
+        assert_eq!(
+            get_textual_path(Path::new("/tmp/a/b.log"), Some(Path::new("/tmp")), false),
+            "./a/b.log"
+        )
+    }
+
+    #[test]
+    fn test_should_compress_file() {
+        assert!(should_compress_file(Path::new("/tmp/a.log")))
+    }
+
+    #[test]
+    fn test_should_not_compress_file() {
+        assert!(!should_compress_file(Path::new("/tmp/a.ioym")))
+    }
+}
+
+#[cfg(windows)]
+#[cfg(test)]
+mod test_windows {
+    use super::*;
+
+    #[test]
+    fn test_get_textual_path_simple() {
+        assert_eq!(
+            get_textual_path(Path::new("C:\\a.log"), Some(Path::new("C:\\")), false),
+            ".\\a.log"
+        )
+    }
+
+    #[test]
+    fn test_get_textual_path_compression() {
+        assert_eq!(
+            get_textual_path(Path::new("C:\\a.log"), Some(Path::new("C:\\")), true),
+            ".\\a.log.gz"
+        )
+    }
+
+    #[test]
+    fn test_get_textual_path_no_base_path() {
+        assert_eq!(
+            get_textual_path(Path::new("C:\\a.log"), None, false),
+            "C:\\a.log"
+        )
+    }
+
+    #[test]
+    fn test_get_textual_path_no_base_path_compression() {
+        assert_eq!(
+            get_textual_path(Path::new("C:\\a.log"), None, true),
+            "C:\\a.log.gz"
+        )
+    }
+
+    #[test]
+    fn test_get_textual_path_subdir() {
+        assert_eq!(
+            get_textual_path(Path::new("C:\\a\\b.log"), Some(Path::new("C:\\")), false),
+            ".\\a\\b.log"
+        )
+    }
+
+    #[test]
+    fn test_should_compress_file() {
+        assert!(should_compress_file(Path::new("C:\\a.log")))
+    }
+
+    #[test]
+    fn test_should_not_compress_file() {
+        assert!(!should_compress_file(Path::new("C:\\a.ioym")))
+    }
 }

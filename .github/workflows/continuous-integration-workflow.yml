@@ -62,6 +62,7 @@ jobs:
     - working-directory: ${{ matrix.artifact }}
       run: |
         cargo check
+        cargo test
         rustup component add rustfmt clippy
         cargo fmt -- --check
         cargo clippy --all-targets --all-features -- -D warnings
