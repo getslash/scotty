@@ -67,10 +67,12 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: actions-rs/cargo@v1
+    - name: Install cross
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo install cross
     - working-directory: ${{ matrix.artifact }}
       run: |
-        cargo check
-        cargo test
+        ${{ matrix.test_command }}
         rustup component add rustfmt clippy
         cargo fmt -- --check
         cargo clippy --all-targets --all-features -- -D warnings
