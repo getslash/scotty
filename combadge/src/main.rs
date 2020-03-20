@@ -223,6 +223,14 @@ mod test_unix {
     }
 
     #[test]
+    fn test_get_textual_path_base_path_has_subdir() {
+        assert_eq!(
+            get_textual_path(Path::new("/tmp/a/b.log"), Some(Path::new("/tmp/a")), false),
+            "./b.log"
+        )
+    }
+
+    #[test]
     fn test_should_compress_file() {
         assert!(should_compress_file(Path::new("/tmp/a.log")))
     }
@@ -275,6 +283,14 @@ mod test_windows {
         assert_eq!(
             get_textual_path(Path::new("C:\\a\\b.log"), Some(Path::new("C:\\")), false),
             ".\\a\\b.log"
+        )
+    }
+
+    #[test]
+    fn test_get_textual_path_base_path_has_subdir() {
+        assert_eq!(
+            get_textual_path(Path::new("C:\\a\\b.log"), Some(Path::new("C:\\a")), false),
+            ".\\b.log"
         )
     }
 
