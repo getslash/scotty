@@ -82,14 +82,18 @@ fn should_compress_file(path: &Path) -> bool {
 }
 
 fn get_textual_path(path: &Path, base_path: Option<&Path>, should_compress: bool) -> String {
-    let mut textual_path = path.to_string_lossy().into_owned();
+    let path_no_base = match base_path {
+        Some(base_path) => path
+            .strip_prefix(base_path)
+            .map(|p| Path::new(".").join(p))
+            .unwrap_or_else(|_| path.to_path_buf()),
+        None => path.to_path_buf(),
+    };
+    let mut textual_path = path_no_base.to_string_lossy().into_owned();
     if should_compress {
         textual_path.push_str(".gz");
     }
-    match base_path {
-        Some(base_path) => textual_path.replacen(&base_path.to_string_lossy().into_owned(), ".", 1),
-        None => textual_path,
-    }
+    textual_path
 }
 
 fn beam_file(
@@ -202,6 +206,18 @@ mod test_unix {
     fn test_get_textual_path_no_base_path() {
         assert_eq!(
             get_textual_path(Path::new("/tmp/a.log"), None, false),
+            "/tmp/a.log"
+        )
+    }
+
+    #[test]
+    fn test_get_textual_path_bad_base_path() {
+        assert_eq!(
+            get_textual_path(
+                Path::new("/tmp/a.log"),
+                Some(Path::new("/unrelated")),
+                false
+            ),
             "/tmp/a.log"
         )
     }
