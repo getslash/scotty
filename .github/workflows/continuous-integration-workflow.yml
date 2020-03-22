@@ -50,18 +50,22 @@ jobs:
         ./node_modules/ember-cli/bin/ember build
 
   check-artifacts:
-    name: Check ${{ matrix.artifact }}
-    runs-on: ubuntu-18.04
+    name: Check ${{ matrix.artifact }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         artifact: [transporter, combadge]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v1
-    - uses: actions-rs/cargo@v1
-    - working-directory: ${{ matrix.artifact }}
+    - uses: hecrj/setup-rust-action@master
+    - name: Lint
+      working-directory: ${{ matrix.artifact }}
       run: |
-        cargo check
         rustup component add rustfmt clippy
         cargo fmt -- --check
         cargo clippy --all-targets --all-features -- -D warnings
+    - name: Test
+      working-directory: ${{ matrix.artifact }}
+      run: cargo test
