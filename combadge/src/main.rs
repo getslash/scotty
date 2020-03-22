@@ -82,14 +82,14 @@ fn should_compress_file(path: &Path) -> bool {
 }
 
 fn get_textual_path(path: &Path, base_path: Option<&Path>, should_compress: bool) -> String {
-    let path_no_base = match base_path {
+    let path_without_base = match base_path {
         Some(base_path) => path
             .strip_prefix(base_path)
             .map(|p| Path::new(".").join(p))
             .unwrap_or_else(|_| path.to_path_buf()),
         None => path.to_path_buf(),
     };
-    let mut textual_path = path_no_base.to_string_lossy().into_owned();
+    let mut textual_path = path_without_base.to_string_lossy().into_owned();
     if should_compress {
         textual_path.push_str(".gz");
     }
