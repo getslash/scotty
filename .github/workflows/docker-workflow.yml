@@ -98,5 +98,5 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: ./docker/Dockerfile
         buildargs: COMBADGE_DIR
-        tag: ${{ github.ref }}
+        tag_names: true
         overwrite: true
