@@ -29,7 +29,7 @@ def get_tags() -> Response:
 
 
 @views.route("/pin", methods=["PUT"])
-@require_user(allow_anonymous=False)
+@require_user(allow_anonymous=True)
 @validate_schema(
     {
         "type": "object",

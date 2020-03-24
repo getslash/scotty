@@ -1,7 +1,5 @@
-{{#if session.isAuthenticated}}
-  {{#unless beam.deleted}}
-    <div class="pin-btn">
-      <a alt="pin" onclick={{perform pin pinned}}>{{fa-icon "thumb-tack" class=(if pinned "pinned" "unpinned")}}{{#if pinned}}Unpin{{else}}Pin{{/if}}</a>
-    </div>
-  {{/unless}}
-{{/if}}
+{{#unless beam.deleted}}
+  <div class="pin-btn">
+    <a alt="pin" onclick={{perform pin pinned}}>{{fa-icon "thumb-tack" class=(if pinned "pinned" "unpinned")}}{{#if pinned}}Unpin{{else}}Pin{{/if}}</a>
+  </div>
+{{/unless}}

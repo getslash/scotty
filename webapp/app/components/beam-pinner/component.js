@@ -20,21 +20,14 @@ export default Component.extend({
   }).restartable(),
 
   didInsertElement() {
-    this.get("updatePinned").perform();
+    this.updatePinned();
   },
 
-  monitorPins: observer("beam.pins", "session.data.authenticated.id", function() {
-    this.get("updatePinned").perform();
+  monitorPins: observer("beam.pins.length", function() {
+    this.updatePinned();
   }),
 
-  updatePinned: task(function * () {
-    const store = this.get("store");
-
-    if (this.get("session.data.authenticated.id") === undefined) {
-      this.set("pinned", false);
-    } else {
-      const me = yield store.find("user", this.get("session.data.authenticated.id"));
-      this.set("pinned", this.get("beam.pins").includes(me));
-    }
-  }).drop()
+  updatePinned() {
+    this.set("pinned", this.get("beam.pins.length") > 0);
+  }
 });
