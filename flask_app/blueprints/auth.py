@@ -1,5 +1,4 @@
 import http.client
-import os
 from functools import wraps
 
 from apiclient.discovery import build
