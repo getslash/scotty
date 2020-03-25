@@ -23,7 +23,7 @@ export default Component.extend({
     this.get("updatePinned").perform();
   },
 
-  monitorPins: observer("beam.pins", "session.data.authenticated.id", function() {
+  monitorPins: observer("beam.pins", "beam.pins.length", "session.data.authenticated.id", function() {
     this.get("updatePinned").perform();
   }),
 
