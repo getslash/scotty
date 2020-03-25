@@ -1,5 +1,4 @@
 import http.client
-import os
 from functools import wraps
 
 from apiclient.discovery import build
@@ -53,9 +52,9 @@ def get_or_create_user(email, name):
 @auth.route("/login", methods=["POST"])
 def login():
     flow = flow_from_clientsecrets(
-        os.path.join(os.path.dirname(__file__), "..", "client_secret.json"),
+        filename=current_app.config["CLIENT_SECRET_PATH"],
         scope="https://www.googleapis.com/auth/userinfo.profile",
-        redirect_uri=request.host_url[:-1],
+        redirect_uri=request.json["redirectUri"],
     )
     credentials = flow.step2_exchange(request.json["authorizationCode"])
 
