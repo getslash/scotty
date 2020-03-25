@@ -53,7 +53,7 @@ def get_or_create_user(email, name):
 @auth.route("/login", methods=["POST"])
 def login():
     flow = flow_from_clientsecrets(
-        filename=current_app.config['CLIENT_SECRET_PATH'],
+        filename=current_app.config["CLIENT_SECRET_PATH"],
         scope="https://www.googleapis.com/auth/userinfo.profile",
         redirect_uri=request.json["redirectUri"],
     )
