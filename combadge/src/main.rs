@@ -45,7 +45,7 @@ fn main() {
         Err(e) => {
             warn!("Failed to beam up: {:?}", e.to_string());
             std::process::exit(1);
-        },
+        }
         _ => debug!("Finished"),
     }
 }
