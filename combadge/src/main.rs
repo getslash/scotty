@@ -25,7 +25,7 @@ use walkdir::WalkDir;
 
 const CHUNK_SIZE: usize = 1024 * 128;
 
-fn main() -> std::io::Result<()> {
+fn main() {
     env_logger::init();
     let config = Config::from_args();
     debug!("Started beaming up with {:?}", config);
@@ -33,7 +33,6 @@ fn main() -> std::io::Result<()> {
         Err(e) => error!("Failed to beam up: {:?}", e.to_string()),
         _ => debug!("Finished"),
     }
-    Ok(())
 }
 
 fn beam_up(config: Config) -> std::io::Result<()> {
