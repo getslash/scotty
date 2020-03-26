@@ -2,6 +2,8 @@ extern crate byteorder;
 extern crate flate2;
 extern crate structopt;
 extern crate walkdir;
+extern crate log;
+extern crate env_logger;
 
 mod config;
 mod messages;
@@ -19,14 +21,16 @@ use std::path::Path;
 use std::time::SystemTime;
 use structopt::StructOpt;
 use walkdir::WalkDir;
+use log::{debug, warn, trace};
 
 const CHUNK_SIZE: usize = 1024 * 128;
 
 fn main() -> std::io::Result<()> {
+    env_logger::init();
     let config = Config::from_args();
-    println!("Started");
+    debug!("Started beaming up with {:?}", config);
     beam_up(config)?;
-    println!("Finished");
+    debug!("Finished");
     Ok(())
 }
 
@@ -55,19 +59,19 @@ fn beam_path(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
     } else if path.is_file() {
         beam_file(transporter, path.parent(), &path)?;
     } else if path.is_dir() {
-        println!("Path is a directory: {:?}", path);
+        trace!("Path is a directory: {:?}", path);
         for entry in WalkDir::new(path)
             .follow_links(false)
             .into_iter()
             .filter_map(|e| e.ok())
         {
-            println!("Entry: {:?}", entry);
+            trace!("Entry: {:?}", entry);
             if entry.path().is_file() {
                 beam_file(transporter, Some(&path), &entry.path())?;
             }
         }
     } else {
-        println!("Path is not a file: {:?}", path);
+        warn!("Path is not a file: {:?}", path);
     }
 
     Ok(())
@@ -101,7 +105,7 @@ fn beam_file(
     base_path: Option<&Path>,
     path: &Path,
 ) -> std::io::Result<()> {
-    println!("Beaming file: {:?}", path);
+    debug!("Beaming file: {:?}", path);
 
     transporter.write_u8(ClientMessages::StartBeamingFile as u8)?;
     let should_compress = should_compress_file(&path);
@@ -109,15 +113,15 @@ fn beam_file(
     let path_as_bytes = textual_path.as_bytes();
     transporter.write_u16::<byteorder::BigEndian>(path_as_bytes.len() as u16)?;
     transporter.write_all(path_as_bytes)?;
-    println!("Beam path: {:?}", textual_path);
+    trace!("Beam path: {:?}", textual_path);
 
     let answer = transporter.read_u8().map(ServerMessages::from_u8)?;
     match answer {
         ServerMessages::BeamFile => {
-            println!("Server asks us to beam this file");
+            debug!("Server asks us to beam this file");
         }
         ServerMessages::SkipFile => {
-            println!("Server asks us to skip this file");
+            warn!("Server asks us to skip this file");
             return Ok(());
         }
         _ => panic!("Unexpected server response: {:?}", answer),
@@ -173,7 +177,7 @@ fn beam_file(
     let message_code = transporter.read_u8().map(ServerMessages::from_u8)?;
     match message_code {
         ServerMessages::FileBeamed => {
-            println!("Server reports that the file was beamed");
+            debug!("Server reports that the file was beamed");
         }
         _ => panic!("Unexpected server response: {:?}", message_code),
     };
