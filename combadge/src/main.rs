@@ -1,9 +1,9 @@
 extern crate byteorder;
+extern crate env_logger;
 extern crate flate2;
+extern crate log;
 extern crate structopt;
 extern crate walkdir;
-extern crate log;
-extern crate env_logger;
 
 mod config;
 mod messages;
@@ -13,6 +13,7 @@ use self::messages::{ClientMessages, ServerMessages};
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use flate2::write::GzEncoder;
 use flate2::Compression;
+use log::{debug, trace, warn};
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{prelude::*, Write};
@@ -21,7 +22,6 @@ use std::path::Path;
 use std::time::SystemTime;
 use structopt::StructOpt;
 use walkdir::WalkDir;
-use log::{debug, warn, trace};
 
 const CHUNK_SIZE: usize = 1024 * 128;
 
