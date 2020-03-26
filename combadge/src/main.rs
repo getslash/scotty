@@ -3,9 +3,8 @@ extern crate env_logger;
 extern crate flate2;
 extern crate log;
 extern crate structopt;
+extern crate thiserror;
 extern crate walkdir;
-#[macro_use]
-extern crate custom_error;
 
 mod config;
 mod messages;
@@ -25,14 +24,25 @@ use std::path::Path;
 use std::result::Result;
 use std::time::SystemTime;
 use structopt::StructOpt;
+use thiserror::Error;
 use walkdir::WalkDir;
 
 const CHUNK_SIZE: usize = 1024 * 128;
 
-custom_error! {CombadgeError
-    UnexpectedServerResponse{msg: ServerMessages} = "Unexpected server response {msg}",
-    FailedToConnectToTransporter{transporter_address: String, exception: std::io::Error} = "Could not connect to transporter at {transporter_address}: {exception}",
-    Io{source: io::Error}         = "IO error: {source}",
+#[derive(Error, Debug)]
+enum CombadgeError {
+    #[error("Unexpected server response {msg:?}")]
+    UnexpectedServerResponse { msg: ServerMessages },
+    #[error("Could not connect to transporter at {transporter_address}: {exception}")]
+    FailedToConnectToTransporter {
+        transporter_address: String,
+        exception: std::io::Error,
+    },
+    #[error("IO error: {source}")]
+    Io {
+        #[from]
+        source: io::Error,
+    },
 }
 
 type CombadgeResult<T> = Result<T, CombadgeError>;
