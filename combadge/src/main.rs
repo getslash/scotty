@@ -4,6 +4,8 @@ extern crate flate2;
 extern crate log;
 extern crate structopt;
 extern crate walkdir;
+#[macro_use]
+extern crate custom_error;
 
 mod config;
 mod messages;
@@ -16,14 +18,24 @@ use flate2::Compression;
 use log::{debug, error, trace, warn};
 use std::ffi::OsStr;
 use std::fs::{self, File};
+use std::io;
 use std::io::{prelude::*, Write};
 use std::net::TcpStream;
 use std::path::Path;
+use std::result::Result;
 use std::time::SystemTime;
 use structopt::StructOpt;
 use walkdir::WalkDir;
 
 const CHUNK_SIZE: usize = 1024 * 128;
+
+custom_error! {CombadgeError
+    UnexpectedServerResponse{msg: ServerMessages} = "Unexpected server response {msg}",
+    FailedToConnectToTransporter{transporter_address: String, exception: std::io::Error} = "Could not connect to transporter at {transporter_address}: {exception}",
+    Io{source: io::Error}         = "IO error: {source}",
+}
+
+type CombadgeResult<T> = Result<T, CombadgeError>;
 
 fn main() {
     env_logger::init();
@@ -35,13 +47,22 @@ fn main() {
     }
 }
 
-fn beam_up(config: Config) -> std::io::Result<()> {
+fn beam_up(config: Config) -> CombadgeResult<()> {
     let beam_id = config.beam_id;
 
     // CR: I'm not sure this is necessary
     let path = Path::new(&config.path);
+    let transporter_address = config.transporter_addr.as_str();
 
-    let mut transporter = TcpStream::connect((config.transporter_addr.as_str(), 9000))?;
+    let mut transporter = match TcpStream::connect((transporter_address, 9000)) {
+        Ok(t) => t,
+        Err(e) => {
+            return Err(CombadgeError::FailedToConnectToTransporter {
+                transporter_address: config.transporter_addr,
+                exception: e,
+            })
+        }
+    };
 
     transporter.write_u64::<byteorder::BigEndian>(beam_id)?;
     transporter.write_u8(ClientMessages::ProtocolVersion as u8)?;
@@ -54,7 +75,7 @@ fn beam_up(config: Config) -> std::io::Result<()> {
     Ok(())
 }
 
-fn beam_path(transporter: &mut TcpStream, path: &Path) -> std::io::Result<()> {
+fn beam_path(transporter: &mut TcpStream, path: &Path) -> CombadgeResult<()> {
     if !path.exists() {
         return Ok(());
     } else if path.is_file() {
@@ -105,7 +126,7 @@ fn beam_file(
     transporter: &mut TcpStream,
     base_path: Option<&Path>,
     path: &Path,
-) -> std::io::Result<()> {
+) -> CombadgeResult<()> {
     debug!("Beaming file: {:?}", path);
 
     transporter.write_u8(ClientMessages::StartBeamingFile as u8)?;
@@ -125,7 +146,7 @@ fn beam_file(
             warn!("Server asks us to skip this file");
             return Ok(());
         }
-        _ => panic!("Unexpected server response: {:?}", answer),
+        _ => return Err(CombadgeError::UnexpectedServerResponse { msg: answer }),
     };
 
     let duration = fs::metadata(path)?
@@ -180,7 +201,7 @@ fn beam_file(
         ServerMessages::FileBeamed => {
             debug!("Server reports that the file was beamed");
         }
-        _ => panic!("Unexpected server response: {:?}", message_code),
+        _ => return Err(CombadgeError::UnexpectedServerResponse { msg: message_code }),
     };
 
     Ok(())

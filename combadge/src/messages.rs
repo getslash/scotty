@@ -1,3 +1,5 @@
+use std::string::ToString;
+
 #[derive(Debug)]
 pub enum ClientMessages {
     BeamComplete = 0,
@@ -22,5 +24,16 @@ impl ServerMessages {
             2 => ServerMessages::FileBeamed,
             _ => panic!(),
         }
+    }
+}
+
+impl ToString for ServerMessages {
+    fn to_string(&self) -> String {
+        match *self {
+            ServerMessages::SkipFile => "SkipFile",
+            ServerMessages::BeamFile => "BeamFile",
+            ServerMessages::FileBeamed => "FileBeamed",
+        }
+        .to_string()
     }
 }
