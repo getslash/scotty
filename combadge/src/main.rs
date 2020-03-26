@@ -15,7 +15,7 @@ use self::messages::{ClientMessages, ServerMessages};
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use flate2::write::GzEncoder;
 use flate2::Compression;
-use log::{debug, trace, warn, error};
+use log::{debug, error, trace, warn};
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io;
@@ -43,7 +43,12 @@ fn main() {
     debug!("Started beaming up with {:?}", config);
     match beam_up(&config) {
         Err(e) => {
-            error!("Failed to beam up {:?} to {:?}: {:?}", config.path, config.transporter_addr, e.to_string());
+            error!(
+                "Failed to beam up {:?} to {:?}: {:?}",
+                config.path,
+                config.transporter_addr,
+                e.to_string()
+            );
             std::process::exit(1);
         }
         _ => debug!("Finished"),
