@@ -9,3 +9,6 @@ structopt = { version = "0.2" }
 byteorder = "*"
 walkdir = "*"
 flate2 = "*"
+log = "*"
+env_logger = "*"
+thiserror = "*"
