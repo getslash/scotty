@@ -15,7 +15,7 @@ use self::messages::{ClientMessages, ServerMessages};
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use flate2::write::GzEncoder;
 use flate2::Compression;
-use log::{debug, trace, warn};
+use log::{debug, trace, warn, error};
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io;
@@ -41,16 +41,16 @@ fn main() {
     env_logger::init();
     let config = Config::from_args();
     debug!("Started beaming up with {:?}", config);
-    match beam_up(config) {
+    match beam_up(&config) {
         Err(e) => {
-            warn!("Failed to beam up: {:?}", e.to_string());
+            error!("Failed to beam up {:?} to {:?}: {:?}", config.path, config.transporter_addr, e.to_string());
             std::process::exit(1);
         }
         _ => debug!("Finished"),
     }
 }
 
-fn beam_up(config: Config) -> CombadgeResult<()> {
+fn beam_up(config: &Config) -> CombadgeResult<()> {
     let beam_id = config.beam_id;
 
     // CR: I'm not sure this is necessary
@@ -61,7 +61,7 @@ fn beam_up(config: Config) -> CombadgeResult<()> {
         Ok(t) => t,
         Err(e) => {
             return Err(CombadgeError::FailedToConnectToTransporter {
-                transporter_address: config.transporter_addr,
+                transporter_address: config.transporter_addr.to_string(),
                 exception: e,
             })
         }
