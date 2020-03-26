@@ -40,7 +40,7 @@ type CombadgeResult<T> = Result<T, CombadgeError>;
 fn main() {
     env_logger::init();
     let config = Config::from_args();
-    debug!("Started beaming up with {:?}", config);
+    debug!("Starting beaming up with {:?}", config);
     match beam_up(&config) {
         Err(e) => {
             error!(
