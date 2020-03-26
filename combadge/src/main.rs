@@ -13,7 +13,7 @@ use self::messages::{ClientMessages, ServerMessages};
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use flate2::write::GzEncoder;
 use flate2::Compression;
-use log::{debug, trace, warn};
+use log::{debug, error, trace, warn};
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{prelude::*, Write};
@@ -29,8 +29,10 @@ fn main() -> std::io::Result<()> {
     env_logger::init();
     let config = Config::from_args();
     debug!("Started beaming up with {:?}", config);
-    beam_up(config)?;
-    debug!("Finished");
+    match beam_up(config) {
+        Err(e) => error!("Failed to beam up: {:?}", e.to_string()),
+        _ => debug!("Finished"),
+    }
     Ok(())
 }
 
