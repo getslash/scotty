@@ -1,15 +1,17 @@
 <div class="container-fluid">
-  <div class="form-inline form-group">
-    {{input value=tagName id='beam-filter' class="form-control" placeholder="Tag"}}
-    <button {{action 'addToTagList' tagName}}>Filter</button>
-    {{#if this.tagsCount}}
-      <button {{action 'emptyTagList'}}>Clear</button>
-    {{/if}}
-  </div>
-  <div class="form-inline form-group">
-    {{#each tagList.tags as |tag|}}
-      <button style="background-color:brown; color:azure;" {{action 'removeFromTagList' tag}}>{{tag}}</button>
-    {{/each}}
+  <div class="beam-filter">
+    <div class="form-inline form-group">
+      {{input value=tagName id='beam-filter' class="form-control" placeholder="Tag"}}
+      <button {{action 'addToTagList' tagName}}>Filter</button>
+      {{#if this.tagsCount}}
+        <button {{action 'emptyTagList'}}>Clear</button>
+      {{/if}}
+    </div>
+    <div class="form-inline form-group">
+      {{#each tagList.tags as |tag|}}
+        <button style="background-color:brown; color:azure;" {{action 'removeFromTagList' tag}}>{{tag}}</button>
+      {{/each}}
+    </div>
   </div>
   <div class="beam-list">
     {{#if this.pagedContent}}
