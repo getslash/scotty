@@ -1,4 +1,5 @@
 import http
+import math
 
 from flask import Blueprint, Response, abort, current_app, jsonify, request
 from flux import current_timeline
@@ -20,7 +21,7 @@ beams = Blueprint("beams", __name__, template_folder="templates")
 
 
 _BEAMS_PER_PAGE = 50
-_ALLOWED_PARAMS = ["tag", "pinned", "uid", "email", "page"]
+_ALLOWED_PARAMS = ["tag", "pinned", "uid", "email", "page", "per_page"]
 
 
 @beams.route("", methods=["GET"], strict_slashes=False)
@@ -56,15 +57,17 @@ def get_all() -> Response:
             )
 
     page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", _BEAMS_PER_PAGE, type=int)
+    total_pages = int(math.ceil(beam_query.count() / per_page))
 
     beams_obj = [
         b.to_dict(current_app.config["VACUUM_THRESHOLD"])
         for b in beam_query.order_by(Beam.id.desc())
-        .limit(_BEAMS_PER_PAGE)
-        .offset((page - 1) * _BEAMS_PER_PAGE)
+        .limit(per_page)
+        .offset((page - 1) * per_page)
     ]
 
-    return jsonify({"beams": beams_obj})
+    return jsonify({"beams": beams_obj, "meta": {"total_pages": total_pages}})
 
 
 @beams.route("", methods=["POST"])
