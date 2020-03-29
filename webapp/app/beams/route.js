@@ -1,7 +1,8 @@
 import Route from '@ember/routing/route';
 import { task, timeout } from 'ember-concurrency';
+import RouteMixin from 'ember-cli-pagination/remote/route-mixin';
 
-export default Route.extend({
+export default Route.extend(RouteMixin, {
   queryParams: {
     tag: {refreshModel: true},
     email: {refreshModel: true},
@@ -26,8 +27,9 @@ export default Route.extend({
     } else if (params.uid) {
       query_params.uid = params.uid;
     }
-    
-    return this.store.query("beam", query_params);
+    query_params.per_page = 8;
+
+    return this.findPaged("beam", query_params);
   },
 
   actions: {
