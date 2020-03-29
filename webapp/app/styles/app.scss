@@ -55,7 +55,12 @@ $border-color: #eee;
   overflow-y: scroll;
   padding-right: 5px;
   position: fixed;
+  top: 150px;
   width: 25%;
+}
+
+.beam-filter {
+  position: fixed;
 }
 
 .scotty-button {
