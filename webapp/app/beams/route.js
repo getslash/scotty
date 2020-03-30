@@ -27,7 +27,7 @@ export default Route.extend(RouteMixin, {
     } else if (params.uid) {
       query_params.uid = params.uid;
     }
-    query_params.per_page = 8;
+    query_params.per_page = 50;
 
     return this.findPaged("beam", query_params);
   },
