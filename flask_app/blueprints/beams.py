@@ -58,7 +58,6 @@ def get_all() -> Response:
 
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", _BEAMS_PER_PAGE, type=int)
-    total_pages = int(math.ceil(beam_query.count() / per_page))
 
     beams_obj = [
         b.to_dict(current_app.config["VACUUM_THRESHOLD"])
@@ -66,6 +65,8 @@ def get_all() -> Response:
         .limit(per_page)
         .offset((page - 1) * per_page)
     ]
+
+    total_pages = page + 1 if len(beams_obj) == per_page else page
 
     return jsonify({"beams": beams_obj, "meta": {"total_pages": total_pages}})
 
