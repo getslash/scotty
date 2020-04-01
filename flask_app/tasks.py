@@ -267,7 +267,7 @@ def get_pending_query():
         .filter(
             ~Beam.pending_deletion,
             ~Beam.deleted,
-            Beam.completed,
+            or_(Beam.completed, beam_age_in_days >= vacuum_threshold),
             Pin.id.is_(None),
             ~existing_open_issues,
             or_(File.beam_id.is_(None), beam_age_in_days >= vacuum_threshold),

@@ -41,10 +41,18 @@ def test_beam_before_date_should_not_be_vacuumed(
     assert not is_vacuumed(db_session, beam)
 
 
-def test_not_completed_beam_should_not_be_vacuumed(
+def test_not_completed_beam_past_date_should_be_vacuumed(
     eager_celery, db_session, create_beam, expired_beam_date
 ):
     beam = create_beam(start=expired_beam_date, completed=False)
+    vacuum.delay()
+    assert is_vacuumed(db_session, beam)
+
+
+def test_not_completed_beam_before_date_should_not_be_vacuumed(
+    eager_celery, db_session, create_beam, now
+):
+    beam = create_beam(start=now, completed=False)
     vacuum.delay()
     assert not is_vacuumed(db_session, beam)
 
