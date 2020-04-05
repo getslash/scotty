@@ -151,7 +151,7 @@ def beam_up(
     except Exception as e:
         logger.exception("Failed to beam up")
         beam.error = f"Failed to beam up {beam_id} ({directory}) to {host} using combadge {combadge_version}: {e}"
-        beam.completed = True
+        beam.set_completed(True)
         db.session.commit()
 
         if not isinstance(e, paramiko.ssh_exception.AuthenticationException):
@@ -188,7 +188,7 @@ def mark_timeout() -> None:
         logger.info(
             "Combadge of {} did not contact for more than {}".format(beam.id, timeout)
         )
-        beam.completed = True
+        beam.set_completed(True)
         beam.error = "Combadge didn't contact the transporter"
 
     db.session.commit()

@@ -219,7 +219,7 @@ def update(beam_id: int) -> str:
         json = request.json
 
     if "completed" in json:
-        beam.completed = json["completed"]
+        beam.set_completed(json["completed"])
         beam.error = json.get("error", None)
 
     if "comment" in json:

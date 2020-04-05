@@ -124,6 +124,7 @@ beam_issues = db.Table(
 class Beam(BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     start = db.Column(db.DateTime, index=True)
+    end = db.Column(db.DateTime, index=True, nullable=True)
     size = db.Column(db.BigInteger)
     host = db.Column(db.String)
     comment = db.Column(db.String)
@@ -168,12 +169,18 @@ class Beam(BaseModel):
         )
         return max(days, 0)
 
+    def set_completed(self, completed):
+        self.completed = completed
+        if completed:
+            self.end = flux.current_timeline.datetime.utcnow()
+
     def to_dict(self, default_threshold):
         return {
             "id": self.id,
             "host": self.host,
             "completed": self.completed,
             "start": self.start.isoformat() + "Z",
+            "end": self.end.isoformat() + "Z" if self.end else None,
             "size": self.size,
             "comment": self.comment,
             "initiator": self.initiator,

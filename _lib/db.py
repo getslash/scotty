@@ -119,10 +119,10 @@ def downgrade():
 def _migrate_context():
     from flask_app.app import create_app
     from flask_app.models import db
-    from flask.ext import migrate
+    import flask_migrate
     app = create_app()
 
-    migrate.Migrate(app, db)
+    flask_migrate.Migrate(app, db)
 
     with app.app_context():
-        yield migrate
+        yield flask_migrate

@@ -482,7 +482,7 @@ description = "SQLAlchemy database migrations for Flask applications using Alemb
 name = "flask-migrate"
 optional = false
 python-versions = "*"
-version = "2.5.2"
+version = "2.5.3"
 
 [package.dependencies]
 Flask = ">=0.9"
@@ -1822,7 +1822,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "12c8996690e28af0ca99b26bad1e8e402df10c778bf533afba75f77a46b00353"
+content-hash = "3be71c327230dec627eab36090061519186137c33e8636e1c893d660743889c6"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -2048,8 +2048,8 @@ flask-mail = [
     {file = "Flask-Mail-0.9.1.tar.gz", hash = "sha256:22e5eb9a940bf407bcf30410ecc3708f3c56cc44b29c34e1726fe85006935f41"},
 ]
 flask-migrate = [
-    {file = "Flask-Migrate-2.5.2.tar.gz", hash = "sha256:a96ff1875a49a40bd3e8ac04fce73fdb0870b9211e6168608cbafa4eb839d502"},
-    {file = "Flask_Migrate-2.5.2-py2.py3-none-any.whl", hash = "sha256:6fb038be63d4c60727d5dfa5f581a6189af5b4e2925bc378697b4f0a40cfb4e1"},
+    {file = "Flask-Migrate-2.5.3.tar.gz", hash = "sha256:a69d508c2e09d289f6e55a417b3b8c7bfe70e640f53d2d9deb0d056a384f37ee"},
+    {file = "Flask_Migrate-2.5.3-py2.py3-none-any.whl", hash = "sha256:4dc4a5cce8cbbb06b8dc963fd86cf8136bd7d875aabe2d840302ea739b243732"},
 ]
 flask-principal = [
     {file = "Flask-Principal-0.4.0.tar.gz", hash = "sha256:f5d6134b5caebfdbb86f32d56d18ee44b080876a27269560a96ea35f75c99453"},
