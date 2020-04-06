@@ -20,7 +20,7 @@ check:
 	poetry run black --check unittests tests flask_app
 	poetry run pylint -j $(shell nproc) flask_app
 	poetry run mypy flask_app/
-	poetry run pytest unittests/
+	poetry run pytest -s -vvv unittests/
 
 webapp:
 	poetry install
