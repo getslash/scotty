@@ -170,9 +170,14 @@ class Beam(BaseModel):
         return max(days, 0)
 
     def set_completed(self, completed):
+        if self.completed == completed:
+            return
         self.completed = completed
         if completed:
-            self.end = flux.current_timeline.datetime.utcnow()
+            if self.end is None:
+                self.end = flux.current_timeline.datetime.utcnow()
+        else:
+            self.end = None
 
     def to_dict(self, default_threshold):
         return {
