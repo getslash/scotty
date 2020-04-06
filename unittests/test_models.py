@@ -45,5 +45,3 @@ def test_set_completed_to_false_removes_end(create_beam, db_session):
     beam.set_completed(False)
     db_session.commit()
     assert beam.end is None
-
-
