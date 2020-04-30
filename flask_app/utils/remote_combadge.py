@@ -4,6 +4,7 @@ from pathlib import PureWindowsPath
 from uuid import uuid4
 
 import logbook
+from paramiko import SSHException
 
 from flask_app.paths import get_combadge_path
 from flask_app.utils.remote_host import RemoteHost
@@ -70,6 +71,8 @@ class RemoteCombadge:
                 logger.warn(
                     f"Combadge {self._remote_combadge_path} not found when trying to remove it"
                 )
+            except SSHException as e:
+                logger.warn(f"Failed to remove {self._remote_combadge_path}: {e}")
 
     def __enter__(self):
         self._upload_combadge()
