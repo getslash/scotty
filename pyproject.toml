@@ -118,6 +118,7 @@ zipp = ">=0.6.0"
 emport = ">=1.2"
 slash = "1.0.2"
 pip = ">=19.2"
+email_validator = ">=1.1.1"
 
 [tool.poetry.dev-dependencies]
 pudb = ">=2019.1"
