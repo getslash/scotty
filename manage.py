@@ -60,8 +60,7 @@ def docker_start():
     from flask_app.models import db
     import flask_migrate
     import gunicorn.app.base
-    from werkzeug.contrib.fixers import ProxyFix
-
+    from werkzeug.middleware.proxy_fix import ProxyFix
 
     _ensure_conf()
 
