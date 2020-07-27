@@ -8,9 +8,7 @@ export default Controller.extend({
   modalContent: "",
   session: inject('session'),
 
-  iframe: computed("view", function() {
-    return this.get("view") === "iframe";
-  }),
+  iframe: computed.equal('view', "iframe"),
 
   actions: {
     loginError: function(error) {
@@ -19,11 +17,11 @@ export default Controller.extend({
       $('#appmodal').openModal();
     },
     logout: function() {
-      this.get('session').invalidate();
+      this.session.invalidate();
     }
   },
 
-  me: computed("session.data.authenticated.id", function() {
+  me: computed('session.data.authenticated.id', 'store', function() {
     return this.store.find("user", this.get("session.data.authenticated.id"));
   })
 });

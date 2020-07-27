@@ -10,13 +10,13 @@ export const BeamFilter = EmberObject.extend({
   },
 
   addTag(tag) {
-    if (this.get("tags").indexOf(tag) === -1){
-      this.get("tags").pushObject(tag);
+    if (this.tags.indexOf(tag) === -1){
+      this.tags.pushObject(tag);
     }
   },
 
   removeTag(tag) {
-    this.get("tags").removeObject(tag);
+    this.tags.removeObject(tag);
   },
 
   emptyTagList() {
@@ -24,7 +24,7 @@ export const BeamFilter = EmberObject.extend({
   },
 
   tagsCount() {
-    return this.get("tags").length;
+    return this.tags.length;
   }
 });
 

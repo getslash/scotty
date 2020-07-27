@@ -6,12 +6,12 @@ export default DS.Model.extend({
   email: DS.attr('string'),
 
   displayName: computed("name", "email", function() {
-    if (this.get('name')) {
-      return this.get('name');
+    if (this.name) {
+      return this.name;
     }
 
-    if (this.get('email')) {
-      return this.get('email');
+    if (this.email) {
+      return this.email;
     }
 
     return "...";

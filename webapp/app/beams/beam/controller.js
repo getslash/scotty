@@ -13,7 +13,7 @@ export default Controller.extend({
   parent: controller_inject('beams'),
 
   removeIssue: task(function * (issue) {
-    const model = this.get("model");
+    const model = this.model;
     const beamId = this.get("model.beam.id");
     yield $.ajax({
       type: "delete",
@@ -22,9 +22,9 @@ export default Controller.extend({
   }),
 
   assignIssue: task(function * (tracker, issueName) {
-    const model = this.get("model");
+    const model = this.model;
     const beamId = this.get("model.beam.id");
-    const issue = this.get("store").createRecord(
+    const issue = this.store.createRecord(
       "issue",
       {
         trackerId: tracker.id,

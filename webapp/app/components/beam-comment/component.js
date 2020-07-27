@@ -5,9 +5,9 @@ export default Component.extend({
 
   actions: {
     toggle: function() {
-      const editing = this.get("editing");
+      const editing = this.editing;
       if (editing) {
-        this.get("beam").save();
+        this.beam.save();
       }
       this.set("editing", !editing);
     }

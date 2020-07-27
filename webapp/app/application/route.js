@@ -25,7 +25,7 @@ export default Route.extend(ApplicationRouteMixin, {
     login: function() {
       var self = this;
 
-      this.get('torii').open('google-oauth2').then(function(authorization) {
+      this.torii.open('google-oauth2').then(function(authorization) {
         return self.get('session').authenticate('authenticator:token', authorization).then(
           function(data) {
             return data;
