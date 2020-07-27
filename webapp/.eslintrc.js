@@ -16,7 +16,11 @@ module.exports = {
   },
   rules: {
     'ember/no-observers': 'off',
-    "ember/avoid-leaking-state-in-ember-objects": "off"
+    "ember/avoid-leaking-state-in-ember-objects": "off",
+    "ember/use-ember-data-rfc-395-imports": "off",
+    "ember/no-jquery": "off",
+    "ember/no-get": "off",
+    "ember/no-mixins": "off"
   },
   overrides: [
     // node files

@@ -14,7 +14,7 @@ export default Component.extend({
   sortedModel: computed.sort('files', 'sortKeys'),
 
   pagesList: computed("pages", function () {
-    const pages = this.get("pages");
+    const pages = this.pages;
     let arr = new Array(pages);
     for (let i=1; i <= pages; ++i) {
       arr[i - 1] = i;
@@ -24,20 +24,20 @@ export default Component.extend({
 
   getFiles: task(function * () {
     const query = {
-      offset: (Math.max(0, this.get("page") - 1)) * FILES_PER_PAGE,
+      offset: (Math.max(0, this.page - 1)) * FILES_PER_PAGE,
       limit: FILES_PER_PAGE,
-      filter: this.get("fileFilter"),
+      filter: this.fileFilter,
       beam_id: this.get("model.beam.id")
     };
 
-    const response = yield this.get("store").query('file', query);
+    const response = yield this.store.query('file', query);
     this.set("files", response);
 
     this.set("total", response.meta.total);
     if (response.meta.total > 0) {
       const pages = Math.ceil(response.meta.total / FILES_PER_PAGE);
       this.set("pages", pages);
-      if (this.get("page") > pages) {
+      if (this.page > pages) {
         this.set("page", pages);
       }
     } else {
@@ -47,19 +47,19 @@ export default Component.extend({
 
   didReceiveAttrs() {
     this._super(...arguments);
-    this.get("getFiles").perform();
+    this.getFiles.perform();
   },
 
   watchFileProperties: observer("fileFilter", "page", "model.beam.files", function() {
-    this.get("getFiles").perform();
+    this.getFiles.perform();
   }),
 
   didInsertElement() {
-    this.set("filterValue", this.get("fileFilter"));
+    this.set("filterValue", this.fileFilter);
   },
 
   updateSearchbox: observer("fileFilter", function() {
-    this.set("filterValue", this.get("fileFilter"));
+    this.set("filterValue", this.fileFilter);
   }),
 
   actions: {

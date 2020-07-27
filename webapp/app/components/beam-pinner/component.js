@@ -16,19 +16,19 @@ export default Component.extend({
         should_pin: !pinned
       })
     });
-    this.get("onChange")();
+    this.onChange();
   }).restartable(),
 
   didInsertElement() {
-    this.get("updatePinned").perform();
+    this.updatePinned.perform();
   },
 
   monitorPins: observer("beam.pins", "beam.pins.length", "session.data.authenticated.id", function() {
-    this.get("updatePinned").perform();
+    this.updatePinned.perform();
   }),
 
   updatePinned: task(function * () {
-    const store = this.get("store");
+    const store = this.store;
 
     if (this.get("session.data.authenticated.id") === undefined) {
       this.set("pinned", false);

@@ -10,15 +10,15 @@ export default Component.extend({
 
   actions: {
     remove: function(issue) {
-      this.get("onRemoval")(issue);
+      this.onRemoval(issue);
     },
     click: function() {
       this.set("adding", true);
     },
     toggle: function(submit) {
-      const idInTracker = this.get("idInTracker");
+      const idInTracker = this.idInTracker;
       if (submit && idInTracker) {
-        this.get("onAssign")(this.get("tracker"), idInTracker);
+        this.onAssign(this.tracker, idInTracker);
       }
       this.set("adding", false);
     }

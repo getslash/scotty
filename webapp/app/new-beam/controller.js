@@ -11,7 +11,7 @@ const Auth = Object.extend({
   storedKey: "",
 
   getAuthMethod: function() {
-    switch (this.get("method")) {
+    switch (this.method) {
     case "key":
       return "rsa";
     case "storedKey":
@@ -32,24 +32,24 @@ export default Controller.extend({
   tags: [],
 
   modelChange: observer("model", function() {
-    const model = this.get("model");
+    const model = this.model;
     if (model.get("length") > 0) {
       this.set("auth.storedKey", model.objectAt(0));
     }
   }),
 
   beamUp: task(function * () {
-    const authMethod = this.get("auth").getAuthMethod();
+    const authMethod = this.auth.getAuthMethod();
 
     const beam = this.store.createRecord("beam", {
-      host: this.get("host"),
+      host: this.host,
       sshKey: this.get("auth.key"),
       password: this.get("auth.password"),
       authMethod: authMethod,
-      user: this.get("user"),
-      directory: this.get("directory"),
+      user: this.user,
+      directory: this.directory,
       storedKey: this.get("auth.storedKey"),
-      tags: this.get("tags")
+      tags: this.tags
     });
 
     try {
@@ -77,19 +77,19 @@ export default Controller.extend({
 
   actions: {
     submit: function() {
-      if (!this.get("user")) {
+      if (!this.user) {
         this.set("error", "User field cannot be empty");
         $("#user").focus();
         return;
       }
 
-      if (!this.get("host")) {
+      if (!this.host) {
         this.set("error", "Host field cannot be empty");
         $("#host").focus();
         return;
       }
 
-      if (!this.get("directory")) {
+      if (!this.directory) {
         this.set("error", "Directory field cannot be empty");
         $("#directory").focus();
         return;
@@ -107,7 +107,7 @@ export default Controller.extend({
         return;
       }
 
-      this.get("beamUp").perform();
+      this.beamUp.perform();
     }
   }
 });

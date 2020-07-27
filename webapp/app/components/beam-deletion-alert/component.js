@@ -3,7 +3,7 @@ import { computed } from '@ember/object';
 
 export default Component.extend({
   purgeString: computed("purgeTime", function() {
-    var purgeTime = this.get("purgeTime");
+    var purgeTime = this.purgeTime;
 
     if (purgeTime === 0) {
       return "today";

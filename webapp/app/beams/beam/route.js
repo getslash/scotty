@@ -12,7 +12,7 @@ export default Route.extend({
 
   afterModel: function(model, transision) {
     transision.send("beamSelected", model.beam.id);
-    this.get('refresh').perform(model.beam);
+    this.refresh.perform(model.beam);
   },
 
   refresh: task(function * (beam) {

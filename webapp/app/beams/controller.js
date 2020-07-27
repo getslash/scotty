@@ -23,9 +23,7 @@ export default Controller.extend({
     this.tagList.setTags(this.tag);
   }),
 
-  tagsCount: computed('tagList.tags.length', function() {
-    return this.get('tagList.tags.length');
-  }),
+  tagsCount: computed.reads('tagList.tags.length'),
 
   pagedContent: computed.alias('model'),
 
