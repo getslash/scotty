@@ -11,7 +11,7 @@ from sqlalchemy.sql import false
 from flask_app.utils.remote_host import create_key
 
 from ..models import Beam, BeamType, Issue, Key, Pin, Tag, User, db
-from ..tasks import beam_up
+from ..tasks import beam_up, delete_beam
 from .auth import InvalidEmail, get_or_create_user, require_user
 from .types import ServerResponse
 from .utils import is_valid_hostname, validate_schema
@@ -237,6 +237,15 @@ def update(beam_id: int) -> str:
     except IntegrityError:
         pass
 
+    return "{}"
+
+
+@beams.route("/<int:beam_id>", methods=["DELETE"])
+def delete(beam_id: int) -> str:
+    beam = db.session.query(Beam).filter_by(id=beam_id).first()
+    if not beam:
+        abort(http.client.NOT_FOUND)
+    delete_beam.delay(beam_id=beam.id)
     return "{}"
 
 
