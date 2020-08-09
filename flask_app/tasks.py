@@ -159,18 +159,15 @@ def beam_up(
 
 
 def vacuum_beam(beam: Beam, storage_path: str) -> None:
-    logger.info("Vacuuming {} with {} files".format(beam.id, len(beam.files)))
+    logger.info("Vacuuming {}".format(beam.id))
     for f in beam.files:
         if not f.storage_name:
-            logger.warning("File {} is not stored".format(f))
             continue
 
         path = os.path.join(storage_path, f.storage_name)
         if os.path.exists(path):
             logger.info("Deleting {}".format(path))
             os.unlink(path)
-        else:
-            logger.warning("Path {} does not exist".format(path))
 
     logger.info("Vacuumed {} successfully".format(beam.id))
     beam.deleted = True
