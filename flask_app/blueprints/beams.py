@@ -54,7 +54,10 @@ def get_all() -> Response:
                 if user
                 else beam_query.filter(false())
             )
-
+        elif param == "issue":
+            beam_query = beam_query.filter(
+                Beam.issues.any(Issue.id_in_tracker.in_(param_values.split(";")))
+            )
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", _BEAMS_PER_PAGE, type=int)
 
