@@ -1,10 +1,12 @@
 import datetime
+import os
 import stat
 
 import pytest
+from flask import current_app
 
 from flask_app.models import Beam, BeamType, Pin
-from flask_app.tasks import beam_up, vacuum
+from flask_app.tasks import beam_up, delete_beam, vacuum
 from flask_app.utils.remote_combadge import _COMBADGE_UUID_PART_LENGTH
 from flask_app.utils.remote_host import RemoteHost
 
@@ -187,3 +189,15 @@ def test_beam_up(
     assert mock_sftp_client.files == {}
     assert len(mock_sftp_client.trash) == 1
     assert mock_sftp_client.trash[0] == combadge
+
+
+def test_delete_beam(eager_celery, beam_with_real_file):
+    beam = beam_with_real_file
+    full_file_location = os.path.join(
+        current_app.config["STORAGE_PATH"], beam.files[0].storage_name
+    )
+    assert os.path.exists(full_file_location)
+    assert not beam.deleted
+    delete_beam.delay(beam.id)
+    assert not os.path.exists(full_file_location)
+    assert beam.deleted

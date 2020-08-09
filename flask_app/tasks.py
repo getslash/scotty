@@ -159,15 +159,18 @@ def beam_up(
 
 
 def vacuum_beam(beam: Beam, storage_path: str) -> None:
-    logger.info("Vacuuming {}".format(beam.id))
+    logger.info("Vacuuming {} with {} files".format(beam.id, len(beam.files)))
     for f in beam.files:
         if not f.storage_name:
+            logger.warning("File {} is not stored".format(f))
             continue
 
         path = os.path.join(storage_path, f.storage_name)
         if os.path.exists(path):
             logger.info("Deleting {}".format(path))
             os.unlink(path)
+        else:
+            logger.warning("Path {} does not exist".format(path))
 
     logger.info("Vacuumed {} successfully".format(beam.id))
     beam.deleted = True
@@ -295,6 +298,15 @@ def vacuum() -> None:
     for beam in to_delete:
         vacuum_beam(beam, current_app.config["STORAGE_PATH"])
     logger.info("Vacuum done")
+
+
+@queue.task
+@needs_app_context
+def delete_beam(beam_id: int) -> None:
+    beam = db.session.query(Beam).filter_by(id=beam_id).one()
+    beam.pending_deletion = True
+    db.session.commit()
+    vacuum_beam(beam, current_app.config["STORAGE_PATH"])
 
 
 @queue.task

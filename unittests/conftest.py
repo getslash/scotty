@@ -3,18 +3,22 @@ import datetime
 import io
 import os
 import pathlib
+import shutil
+import sys
 from unittest import mock
 from uuid import UUID
 
 import flask_migrate
+import logbook
 import munch
 import pytest
+from flask import current_app
 
 from flask_app import paths
 from flask_app.app import get_or_create_app
 from flask_app.blueprints import user_datastore
 from flask_app.models import Beam, File, Issue, Tracker, db
-from flask_app.tasks import queue
+from flask_app.tasks import queue, setup_log
 from flask_app.utils import remote_combadge, remote_host
 from flask_app.utils.remote_host import RemoteHost
 
@@ -52,7 +56,10 @@ def app_context(monkeypatch, storage_path, vacuum_threshold):
     with app_context:
         flask_migrate.Migrate(app, db)
         flask_migrate.upgrade()
+        logs = logbook.StreamHandler(sys.stdout, bubble=True)
+        logs.push_application()
         yield app
+        logs.pop_application()
 
 
 @pytest.fixture
@@ -313,3 +320,28 @@ def combadge_assets_dir(tmpdir, monkeypatch):
             f.write("")
     monkeypatch.setattr(paths, "COMBADGE_ASSETS_DIR", str(tmpdir))
     return str(tmpdir)
+
+
+@pytest.fixture
+def beam_with_real_file(db_session):
+    directory = "test-directory"
+    file_name = "test-file"
+    storage_path = current_app.config["STORAGE_PATH"]
+    full_directory = os.path.join(storage_path, directory)
+    if os.path.exists(full_directory):
+        shutil.rmtree(full_directory)
+    os.mkdir(full_directory)
+    full_file_location = os.path.join(storage_path, directory, file_name)
+    with open(full_file_location, "w") as f:
+        f.write("test-content")
+    file = File(file_name=file_name, storage_name=os.path.join(directory, file_name))
+    beam = Beam(
+        start=datetime.datetime.now(),
+        directory=directory,
+        completed=True,
+        files=[file],
+    )
+    db_session.add(file)
+    db_session.add(beam)
+    db_session.commit()
+    return beam
