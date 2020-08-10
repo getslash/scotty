@@ -110,7 +110,9 @@ def file(db_session):
 
 @pytest.fixture
 def create_beam(db_session, host, user, directory, file):
-    def _create(*, start, completed, add_file=True):
+    def _create(*, start=None, completed=True, add_file=True):
+        if start is None:
+            start = datetime.datetime.now()
         beam = Beam(
             start=start,
             size=0,

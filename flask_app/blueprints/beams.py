@@ -20,7 +20,7 @@ beams = Blueprint("beams", __name__, template_folder="templates")
 
 
 _BEAMS_PER_PAGE = 50
-_ALLOWED_PARAMS = ["tag", "pinned", "uid", "email", "page", "per_page"]
+_ALLOWED_PARAMS = ["tag", "pinned", "uid", "email", "page", "per_page", "issue"]
 
 
 @beams.route("", methods=["GET"], strict_slashes=False)
@@ -54,7 +54,10 @@ def get_all() -> Response:
                 if user
                 else beam_query.filter(false())
             )
-
+        elif param == "issue":
+            beam_query = beam_query.filter(
+                Beam.issues.any(Issue.id_in_tracker.in_(param_values.split(";")))
+            )
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", _BEAMS_PER_PAGE, type=int)
 
