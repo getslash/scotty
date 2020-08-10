@@ -20,7 +20,7 @@ beams = Blueprint("beams", __name__, template_folder="templates")
 
 
 _BEAMS_PER_PAGE = 50
-_ALLOWED_PARAMS = ["tag", "pinned", "uid", "email", "page", "per_page"]
+_ALLOWED_PARAMS = ["tag", "pinned", "uid", "email", "page", "per_page", "issue"]
 
 
 @beams.route("", methods=["GET"], strict_slashes=False)
