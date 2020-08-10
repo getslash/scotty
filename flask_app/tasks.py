@@ -299,6 +299,15 @@ def vacuum() -> None:
 
 @queue.task
 @needs_app_context
+def delete_beam(beam_id: int) -> None:
+    beam = db.session.query(Beam).filter_by(id=beam_id).one()
+    beam.pending_deletion = True
+    db.session.commit()
+    vacuum_beam(beam, current_app.config["STORAGE_PATH"])
+
+
+@queue.task
+@needs_app_context
 def refresh_issue_trackers() -> None:
     trackers = db.session.query(Tracker)
     active_beams_ids = db.session.query(Beam.id).filter(
