@@ -89,7 +89,10 @@ class RemoteCombadge:
             "v2": f"{self._remote_combadge_path} -b {beam_id} -p {directory} -t {transporter}",
         }
         combadge_command = combadge_commands[self._combadge_version]
-        self._remote_host.exec_ssh_command(f"RUST_LOG=trace {combadge_command}")
+        os_type = self._remote_host.get_os_type()
+        if os_type != "windows" and self._combadge_version == "v2":
+            combadge_command = f"RUST_LOG=trace {combadge_command}"
+        self._remote_host.exec_ssh_command(combadge_command)
 
     def ping(self):
         _, stdout, stderr = self._remote_host.raw_exec_ssh_command(
