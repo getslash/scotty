@@ -167,7 +167,7 @@ def test_beam_up(
     assert mock_ssh_client.instances[0].commands == [
         "uname",
         _TEMPDIR_COMMAND,
-        f"{combadge} -b {beam.id} -p {beam.directory} -t scotty",
+        f"RUST_LOG=trace {combadge} -b {beam.id} -p {beam.directory} -t scotty",
     ]
     assert len(mock_sftp_client.instances) == 1
     expected_calls = [

@@ -37,11 +37,20 @@ class RemoteHost:
     def exec_ssh_command(self, command, raise_on_failure=True):
         _, stdout, stderr = self.raw_exec_ssh_command(command)
         retcode = stdout.channel.recv_exit_status()
+        stdout_text = stdout.read().decode().strip()
+        stderr_text = stderr.read().decode().strip()
         if retcode == 0:
-            return stdout.read().decode().strip()
+            logger.debug(
+                f"Command {command} completed successfully."
+                f"\nstdout: {stdout_text}"
+                f"\nstderr: {stderr_text}"
+            )
+            return stdout_text
         if raise_on_failure:
             raise RuntimeError(
-                f"Failed to execute command {command}: {stderr.read().decode('utf-8')}"
+                f"Failed to execute command {command}:"
+                f"\nstdout:\n{stdout_text}"
+                f"\nstderr:\n{stderr_text}"
             )
 
     def raw_exec_ssh_command(self, command):
