@@ -164,10 +164,11 @@ def test_beam_up(
     )
     sep = "\\" if os_type == "windows" else "/"
     combadge = f"{remote_dir}{sep}combadge_{uuid_part}{ext}"
+    env_vars = "RUST_LOG=trace " if os_type != "windows" else ""
     assert mock_ssh_client.instances[0].commands == [
         "uname",
         _TEMPDIR_COMMAND,
-        f"RUST_LOG=trace {combadge} -b {beam.id} -p {beam.directory} -t scotty",
+        env_vars + f"{combadge} -b {beam.id} -p {beam.directory} -t scotty",
     ]
     assert len(mock_sftp_client.instances) == 1
     expected_calls = [
