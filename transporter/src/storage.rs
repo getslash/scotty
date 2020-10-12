@@ -17,7 +17,7 @@ impl FileStorage {
         })
     }
 
-    pub fn create(self: &Self, file_name: &str) -> TransporterResult<File> {
+    pub fn create(&self, file_name: &str) -> TransporterResult<File> {
         let mut path_buffer = PathBuf::new();
         path_buffer.push(&self.base_directory);
         path_buffer.push(file_name);
