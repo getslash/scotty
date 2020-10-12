@@ -49,10 +49,7 @@ impl ProtocolVersion {
     }
 
     fn supports_mtime(&self) -> bool {
-        match *self {
-            ProtocolVersion::V1 => false,
-            _ => true,
-        }
+        !matches!(*self, ProtocolVersion::V1)
     }
 }
 
