@@ -118,12 +118,26 @@ fn beam_path(transporter: &mut TcpStream, path: &Path) -> CombadgeResult<()> {
 }
 
 fn should_compress_file(path: &Path) -> bool {
-    match path.extension().and_then(OsStr::to_str) {
-        Some("gz") | Some("bz2") | Some("xz") | Some("zst") | Some("tgz") | Some("tbz2")
-        | Some("txz") | Some("ioym") | Some("br") | Some("png") | Some("jpg") | Some("mp3")
-        | Some("mkv") | Some("mp4") | Some("jpeg") | Some("zip") | Some("pcap") => false,
-        _ => true,
-    }
+    !matches!(
+        path.extension().and_then(OsStr::to_str),
+        Some("gz")
+            | Some("bz2")
+            | Some("xz")
+            | Some("zst")
+            | Some("tgz")
+            | Some("tbz2")
+            | Some("txz")
+            | Some("ioym")
+            | Some("br")
+            | Some("png")
+            | Some("jpg")
+            | Some("mp3")
+            | Some("mkv")
+            | Some("mp4")
+            | Some("jpeg")
+            | Some("zip")
+            | Some("pcap")
+    )
 }
 
 fn get_textual_path(path: &Path, base_path: Option<&Path>, should_compress: bool) -> String {
