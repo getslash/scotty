@@ -33,6 +33,6 @@ def test_remove_combadge_fails_silently_on_ssh_exception(
     with host, combadge:
         pass
     assert len(mock_remove.call_args_list) == 1
+    file_name = list(mock_remove.call_args_list[0])[0][0]
     caplog.seek(0)
-    file_name = mock_remove.call_args_list[0].args[0]
     assert f"Failed to remove {file_name}: {reason}" in caplog.read()
