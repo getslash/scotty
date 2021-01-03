@@ -60,9 +60,7 @@ def get_all() -> Response:
                 filter_ = Issue.id_in_tracker.in_(issue_ids)
             else:
                 filter_ = Issue.id_in_tracker == issue_ids[0]
-            beam_query = beam_query.filter(
-                Beam.issues.any(filter_)
-            )
+            beam_query = beam_query.filter(Beam.issues.any(filter_))
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", _BEAMS_PER_PAGE, type=int)
 
