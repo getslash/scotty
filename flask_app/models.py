@@ -95,7 +95,7 @@ class Issue(BaseModel):
         db.Integer, db.ForeignKey("tracker.id", ondelete="CASCADE"), index=True
     )
     tracker = db.relationship("Tracker")
-    id_in_tracker = db.Column(db.String, nullable=False)
+    id_in_tracker = db.Column(db.String, nullable=False, index=True)
     open = db.Column(db.Boolean, nullable=False)
 
     def to_dict(self):
