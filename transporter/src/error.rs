@@ -33,11 +33,7 @@ quick_error! {
 
 impl TransporterError {
     pub fn is_disconnection(&self) -> bool {
-        match *self {
-            TransporterError::ClientIoError(_) => true,
-            TransporterError::ClientEOF => true,
-            _ => false,
-        }
+        matches!(*self, TransporterError::ClientIoError(_) | TransporterError::ClientEOF)
     }
 }
 
