@@ -28,9 +28,7 @@ def test_completed_beam_past_date_should_be_vacuumed(
     assert is_vacuumed(db_session, beam)
 
 
-def test_beam_before_date_should_not_be_vacuumed(
-    eager_celery, db_session, create_beam, now
-):
+def test_beam_before_date_should_not_be_vacuumed(eager_celery, db_session, create_beam, now):
     beam = create_beam(start=now, completed=True)
     vacuum.delay()
     assert not is_vacuumed(db_session, beam)
@@ -159,9 +157,7 @@ def test_beam_up(
     assert len(mock_ssh_client.instances) == 1
     uuid_part = uuid4.hex[:_COMBADGE_UUID_PART_LENGTH]
     ext = ".exe" if os_type == "windows" else ""
-    remote_dir = (
-        fr"C:\Users\root\AppData\Local\Temp" if os_type == "windows" else "/tmp"
-    )
+    remote_dir = fr"C:\Users\root\AppData\Local\Temp" if os_type == "windows" else "/tmp"
     sep = "\\" if os_type == "windows" else "/"
     combadge = f"{remote_dir}{sep}combadge_{uuid_part}{ext}"
     env_vars = "RUST_LOG=trace " if os_type != "windows" else ""
@@ -182,7 +178,13 @@ def test_beam_up(
     ]
     if os_type == "linux":
         expected_calls.append(
-            {"action": "chmod", "args": {"remote": combadge, "mode": stat.S_IEXEC,},}
+            {
+                "action": "chmod",
+                "args": {
+                    "remote": combadge,
+                    "mode": stat.S_IEXEC,
+                },
+            }
         )
     expected_calls.append({"action": "remove", "args": {"remote": combadge}})
 

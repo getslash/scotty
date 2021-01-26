@@ -23,9 +23,7 @@ def get_tags() -> Response:
         .group_by(Tag.tag)
         .limit(200)
     )
-    return jsonify(
-        {"tags": [{"id": tag[0], "number_of_beams": tag[1]} for tag in tags]}
-    )
+    return jsonify({"tags": [{"id": tag[0], "number_of_beams": tag[1]} for tag in tags]})
 
 
 @views.route("/pin", methods=["PUT"])
@@ -81,9 +79,7 @@ def summary() -> Response:
 
 @views.route("/combadge")
 def get_combadge() -> Response:
-    combadge_version = request.args.get(
-        "combadge_version", default=DEFAULT_COMBADGE_VERSION
-    )
+    combadge_version = request.args.get("combadge_version", default=DEFAULT_COMBADGE_VERSION)
     os_type = request.args.get("os_type", default="linux")
     combadge_path = get_combadge_path(combadge_version, os_type=os_type)
     if combadge_path is None:

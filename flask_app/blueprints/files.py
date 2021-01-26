@@ -108,16 +108,17 @@ def get_all() -> Response:
 
         query = query.offset(offset).limit(limit)
 
-    return jsonify(
-        {"files": [_dictify_file(f) for f in query], "meta": {"total": total}}
-    )
+    return jsonify({"files": [_dictify_file(f) for f in query], "meta": {"total": total}})
 
 
 @files.route("", methods=["POST"])
 @validate_schema(
     {
         "type": "object",
-        "properties": {"beam_id": {"type": "number"}, "file_name": {"type": "string"},},
+        "properties": {
+            "beam_id": {"type": "number"},
+            "file_name": {"type": "string"},
+        },
         "required": ["beam_id", "file_name"],
     }
 )

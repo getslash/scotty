@@ -35,9 +35,7 @@ def get_all() -> Response:
     for param in request.values:
         param_values = request.values[param]
         if param == "tag":
-            beam_query = beam_query.filter(
-                Beam.tags.any(Tag.tag.in_(param_values.split(";")))
-            )
+            beam_query = beam_query.filter(Beam.tags.any(Tag.tag.in_(param_values.split(";"))))
         elif param == "pinned":
             pinned = db.session.query(distinct(Pin.beam_id))
             beam_query = beam_query.filter(Beam.id.in_(pinned))
@@ -50,9 +48,7 @@ def get_all() -> Response:
         elif param == "email":
             user = db.session.query(User).filter_by(email=param_values).first()
             beam_query = (
-                beam_query.filter_by(initiator=user.id)
-                if user
-                else beam_query.filter(false())
+                beam_query.filter_by(initiator=user.id) if user else beam_query.filter(false())
             )
         elif param == "issue":
             issue_ids = param_values.split(";")
@@ -66,9 +62,7 @@ def get_all() -> Response:
 
     beams_obj = [
         b.to_dict(current_app.config["VACUUM_THRESHOLD"])
-        for b in beam_query.order_by(Beam.id.desc())
-        .limit(per_page)
-        .offset((page - 1) * per_page)
+        for b in beam_query.order_by(Beam.id.desc()).limit(per_page).offset((page - 1) * per_page)
     ]
 
     total_pages = page + 1 if len(beams_obj) == per_page else page
@@ -117,11 +111,7 @@ def create(user: User) -> ServerResponse:
     elif request.json["beam"]["auth_method"] == "stored_key":
         if "stored_key" not in request.json["beam"]:
             return "No stored key was specified", http.client.CONFLICT
-        key = (
-            db.session.query(Key)
-            .filter_by(id=int(request.json["beam"]["stored_key"]))
-            .first()
-        )
+        key = db.session.query(Key).filter_by(id=int(request.json["beam"]["stored_key"])).first()
         if not key:
             return "Invalid stored key id", http.client.CONFLICT
         ssh_key = key.key
@@ -155,11 +145,7 @@ def create(user: User) -> ServerResponse:
     )
 
     if request.json["beam"].get("type") is not None:
-        type_obj = (
-            db.session.query(BeamType)
-            .filter_by(name=request.json["beam"]["type"])
-            .first()
-        )
+        type_obj = db.session.query(BeamType).filter_by(name=request.json["beam"]["type"]).first()
         if not type_obj:
             return "Invalid beam type", http.client.CONFLICT
 

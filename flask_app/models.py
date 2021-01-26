@@ -86,14 +86,10 @@ class Tracker(BaseModel):
 
 
 class Issue(BaseModel):
-    __table_args__ = (
-        db.UniqueConstraint("tracker_id", "id_in_tracker", name="uix_unique_issue"),
-    )
+    __table_args__ = (db.UniqueConstraint("tracker_id", "id_in_tracker", name="uix_unique_issue"),)
 
     id = db.Column(db.Integer, primary_key=True)
-    tracker_id = db.Column(
-        db.Integer, db.ForeignKey("tracker.id", ondelete="CASCADE"), index=True
-    )
+    tracker_id = db.Column(db.Integer, db.ForeignKey("tracker.id", ondelete="CASCADE"), index=True)
     tracker = db.relationship("Tracker")
     id_in_tracker = db.Column(db.String, nullable=False, index=True)
     open = db.Column(db.Boolean, nullable=False)
@@ -157,14 +153,11 @@ class Beam(BaseModel):
         if any(i.open for i in self.issues):
             return None
 
-        threshold = (
-            self.type.vacuum_threshold if self.type is not None else default_threshold
-        )
+        threshold = self.type.vacuum_threshold if self.type is not None else default_threshold
         days = (
             threshold
             - (
-                flux.current_timeline.datetime.utcnow()
-                - datetime.combine(self.start, time(0, 0))
+                flux.current_timeline.datetime.utcnow() - datetime.combine(self.start, time(0, 0))
             ).days
         )
         return max(days, 0)

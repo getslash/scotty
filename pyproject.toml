@@ -134,3 +134,7 @@ flask_migrate = ">=2.5.3"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.black]
+line-length = 100
+py36 = false

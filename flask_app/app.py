@@ -45,9 +45,7 @@ def create_app(config=None):
     app.config["COMBADGE_CONTACT_TIMEOUT"] = 60 * 60
     app.config["SHA512SUM"] = "/usr/bin/sha512sum"
     app.config["STORAGE_PATH"] = os.environ.get("STORAGE_PATH")
-    _CONF_D_PATH = os.environ.get(
-        "CONFIG_DIRECTORY", os.path.join(ROOT_DIR, "..", "conf.d")
-    )
+    _CONF_D_PATH = os.environ.get("CONFIG_DIRECTORY", os.path.join(ROOT_DIR, "..", "conf.d"))
 
     configs = [os.path.join(ROOT_DIR, "app.yml")]
 
@@ -96,18 +94,8 @@ def create_app(config=None):
 
     models.db.init_app(app)
 
+    from .blueprints import auth, beams, files, issues, keys, trackers, user_datastore, users, views
     from .errors import errors
-    from .blueprints import (
-        auth,
-        beams,
-        files,
-        issues,
-        trackers,
-        user_datastore,
-        users,
-        views,
-        keys,
-    )
 
     Security(app, user_datastore, register_blueprint=False)
 

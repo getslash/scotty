@@ -63,7 +63,12 @@ def login():
     token = _get_token_serializer().dumps({"user_id": user.id})
     login_user(user)
 
-    return jsonify({"id": user.id, "auth_token": token,})
+    return jsonify(
+        {
+            "id": user.id,
+            "auth_token": token,
+        }
+    )
 
 
 @auth.route("/logout", methods=["POST"])
@@ -97,9 +102,7 @@ def restore():
 def _get_anonymous_user():
     user = user_datastore.get_user("anonymous@getslash.github.io")
     if not user:
-        user = user_datastore.create_user(
-            email="anonymous@getslash.github.io", name="Anonymous"
-        )
+        user = user_datastore.create_user(email="anonymous@getslash.github.io", name="Anonymous")
         user_datastore.db.session.commit()
 
     return user
