@@ -143,9 +143,7 @@ def beam_up(
         ) as remote_host, RemoteCombadge(
             remote_host=remote_host, combadge_version=combadge_version
         ) as remote_combadge:
-            remote_combadge.run(
-                beam_id=beam_id, directory=directory, transporter=transporter
-            )
+            remote_combadge.run(beam_id=beam_id, directory=directory, transporter=transporter)
 
         logger.info(f"{beam_id}: Detached from combadge")
     except Exception as e:
@@ -185,9 +183,7 @@ def mark_timeout() -> None:
         .filter(~Beam.combadge_contacted, Beam.start < timed_out)
     )
     for beam in dead_beams:
-        logger.info(
-            "Combadge of {} did not contact for more than {}".format(beam.id, timeout)
-        )
+        logger.info("Combadge of {} did not contact for more than {}".format(beam.id, timeout))
         beam.set_completed(True)
         beam.error = "Combadge didn't contact the transporter"
 
@@ -248,7 +244,9 @@ def get_pending_query():
         func.trunc(extract("epoch", now) - extract("epoch", Beam.start)) / days_factor
     )
     vacuum_threshold = case(
-        [(Beam.type_id.is_(None), current_app.config["VACUUM_THRESHOLD"]),],
+        [
+            (Beam.type_id.is_(None), current_app.config["VACUUM_THRESHOLD"]),
+        ],
         else_=BeamType.vacuum_threshold,
     )
 
@@ -310,9 +308,7 @@ def delete_beam(beam_id: int) -> None:
 @needs_app_context
 def refresh_issue_trackers() -> None:
     trackers = db.session.query(Tracker)
-    active_beams_ids = db.session.query(Beam.id).filter(
-        ~Beam.pending_deletion, ~Beam.deleted
-    )
+    active_beams_ids = db.session.query(Beam.id).filter(~Beam.pending_deletion, ~Beam.deleted)
     issues_of_active_beams = (
         db.session.query(beam_issues.c.issue_id)
         .filter(beam_issues.c.beam_id.in_(active_beams_ids))
@@ -394,14 +390,10 @@ def validate_checksum() -> None:
         assert not file_.beam.pending_deletion
         full_path = os.path.join(storage_path, file_.storage_name)
         checksum = _checksum(full_path)
-        assert (
-            checksum == file_.checksum
-        ), "Expected checksum of {} is {}. Got {} instead".format(
+        assert checksum == file_.checksum, "Expected checksum of {} is {}. Got {} instead".format(
             full_path, file_.checksum, checksum
         )
-        logger.info(
-            "{} validated (last validated: {})".format(full_path, file_.last_validated)
-        )
+        logger.info("{} validated (last validated: {})".format(full_path, file_.last_validated))
         file_.last_validated = flux.current_timeline.datetime.utcnow()
 
     db.session.commit()
@@ -421,9 +413,7 @@ def scrub() -> None:
         for beam_file in beam.files:
             if not beam_file.storage_name and not beam_file.size:
                 errors.append(
-                    "{} has no storage name and a size greated than 0".format(
-                        beam_file.id
-                    )
+                    "{} has no storage name and a size greated than 0".format(beam_file.id)
                 )
                 beam_file.size = 0
                 continue
@@ -470,9 +460,7 @@ def scrub() -> None:
 @needs_app_context
 def check_free_space() -> None:
     if "FREE_SPACE_THRESHOLD" not in current_app.config:
-        logger.info(
-            "Free space checking is disabled as FREE_SPACE_THRESHOLD is not defined"
-        )
+        logger.info("Free space checking is disabled as FREE_SPACE_THRESHOLD is not defined")
         return
 
     percent = psutil.disk_usage(current_app.config["STORAGE_PATH"]).percent

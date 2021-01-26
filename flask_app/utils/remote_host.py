@@ -2,12 +2,12 @@ import functools
 from io import StringIO
 
 import logbook
-from paramiko import AutoAddPolicy, RSAKey, SFTPClient, SSHClient
+from paramiko import AutoAddPolicy, PKey, RSAKey, SFTPClient, SSHClient
 
 logger = logbook.Logger(__name__)
 
 
-def create_key(s: str) -> str:
+def create_key(s: str) -> PKey:
     f = StringIO()
     f.write(s)
     f.seek(0)
@@ -27,9 +27,7 @@ class RemoteHost:
 
     @functools.lru_cache(maxsize=None)
     def get_os_type(self) -> str:
-        return (
-            self.exec_ssh_command("uname", raise_on_failure=False) or "windows"
-        ).lower()
+        return (self.exec_ssh_command("uname", raise_on_failure=False) or "windows").lower()
 
     def get_temp_dir(self) -> str:
         return self.exec_ssh_command(self._TEMPDIR_COMMAND)

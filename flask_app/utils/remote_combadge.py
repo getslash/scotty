@@ -95,7 +95,5 @@ class RemoteCombadge:
         self._remote_host.exec_ssh_command(combadge_command)
 
     def ping(self):
-        _, stdout, stderr = self._remote_host.raw_exec_ssh_command(
-            self._remote_combadge_path
-        )
+        _, stdout, stderr = self._remote_host.raw_exec_ssh_command(self._remote_combadge_path)
         return "usage" in (stdout.read().decode() + stderr.read().decode()).lower()

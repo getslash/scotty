@@ -113,9 +113,7 @@ class TestingScotty(Scotty):
 
     def pin(self, beam_obj, should_pin):
         data = {"beam_id": beam_obj.id, "should_pin": should_pin}
-        self._session.put(
-            "{}/pin".format(self._url), data=json.dumps(data)
-        ).raise_for_status()
+        self._session.put("{}/pin".format(self._url), data=json.dumps(data)).raise_for_status()
 
     def check_if_beam_deleted(self, beam_obj, deleted):
         assert beam_obj.deleted == deleted
@@ -200,9 +198,7 @@ def issue_factory(tracker):
 def beam_factory(scotty, local_beam_dir):
     class BeamFactory:
         def get(self, combadge_version):
-            beam_data = scotty.beam_up(
-                local_beam_dir, combadge_version=combadge_version
-            )
+            beam_data = scotty.beam_up(local_beam_dir, combadge_version=combadge_version)
             beam = scotty.get_beam(beam_data)
             return beam
 
@@ -250,18 +246,14 @@ def beam(scotty, local_beam_dir):
 
 @pytest.fixture
 def short_beam(scotty, local_beam_dir, beam_types):
-    beam = _wait_for_beam(
-        scotty.beam_up(local_beam_dir, beam_type="short"), scotty=scotty
-    )
+    beam = _wait_for_beam(scotty.beam_up(local_beam_dir, beam_type="short"), scotty=scotty)
     beam_type = beam_types["short"]
     return BeamInfo(beam, beam_type)
 
 
 @pytest.fixture
 def long_beam(scotty, local_beam_dir, beam_types):
-    beam = _wait_for_beam(
-        scotty.beam_up(local_beam_dir, beam_type="long"), scotty=scotty
-    )
+    beam = _wait_for_beam(scotty.beam_up(local_beam_dir, beam_type="long"), scotty=scotty)
     beam_type = beam_types["long"]
     return BeamInfo(beam, beam_type)
 

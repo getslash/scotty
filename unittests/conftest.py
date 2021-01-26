@@ -147,7 +147,12 @@ def expired_beam_date(now, vacuum_threshold):
 
 @pytest.fixture
 def tracker(db_session):
-    tracker = Tracker(config="{}", name="JIRA", type="jira", url="https://mock-jira",)
+    tracker = Tracker(
+        config="{}",
+        name="JIRA",
+        type="jira",
+        url="https://mock-jira",
+    )
     db_session.add(tracker)
     db_session.commit()
     return tracker

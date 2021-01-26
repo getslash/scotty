@@ -115,9 +115,7 @@ def test_beam_with_issue_unassigned(scotty, short_beam, issue):
     scotty.check_if_beam_deleted(beam, True)
 
 
-def test_multiple_issues(
-    tracker, scotty, beam, server_config, long_term_beam, issue_factory
-):
+def test_multiple_issues(tracker, scotty, beam, server_config, long_term_beam, issue_factory):
     vacuum_threshold = server_config["VACUUM_THRESHOLD"]
     beam, _ = beam
 
@@ -202,12 +200,8 @@ def test_multiple_issues_and_multiple_beams(
     combadge_version,
 ):
     vacuum_threshold = server_config["VACUUM_THRESHOLD"]
-    beam1 = scotty.get_beam(
-        scotty.beam_up(local_beam_dir, combadge_version=combadge_version)
-    )
-    beam2 = scotty.get_beam(
-        scotty.beam_up(local_beam_dir, combadge_version=combadge_version)
-    )
+    beam1 = scotty.get_beam(scotty.beam_up(local_beam_dir, combadge_version=combadge_version))
+    beam2 = scotty.get_beam(scotty.beam_up(local_beam_dir, combadge_version=combadge_version))
     states = {beam1: False, beam2: False}
     issue1 = issue_factory.get()
     issue2 = issue_factory.get()
