@@ -5,7 +5,7 @@ description = ""
 authors = ["Dor Amram <damram@infinidat.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.9"
 aiohttp = ">=3.6"
 alembic = ">=1.1"
 amqp = ">=2.5"

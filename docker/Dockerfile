@@ -12,7 +12,7 @@ ADD ./webapp/ ./frontend/
 RUN cd ./frontend/ && yarn install
 RUN cd ./frontend/ && node_modules/.bin/ember build --environment production
 
-FROM python:3.7
+FROM python:3.9
 
 ENV POETRY_VERSION=1.0.3
 
