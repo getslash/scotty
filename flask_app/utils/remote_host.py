@@ -2,12 +2,12 @@ import functools
 from io import StringIO
 
 import logbook
-from paramiko import AutoAddPolicy, RSAKey, SFTPClient, SSHClient
+from paramiko import AutoAddPolicy, PKey, RSAKey, SFTPClient, SSHClient
 
 logger = logbook.Logger(__name__)
 
 
-def create_key(s: str) -> str:
+def create_key(s: str) -> PKey:
     f = StringIO()
     f.write(s)
     f.seek(0)
