@@ -43,14 +43,6 @@ python-versions = ">=3.6"
 vine = "5.0.0"
 
 [[package]]
-name = "anyjson"
-version = "0.3.3"
-description = "Wraps the best available JSON implementation available in a common interface"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "appdirs"
 version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
@@ -1935,7 +1927,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "a46da3148ad0d1ee0510c95047571c1598af9bb1f0930cc62d2b0054bc96b301"
+content-hash = "3a9de795ecb6d8a92aa7dba8eeda0190f6a7829147b715ec6680f3fd5b7734f2"
 
 [metadata.files]
 aiohttp = [
@@ -1984,9 +1976,6 @@ alembic = [
 amqp = [
     {file = "amqp-5.0.3-py3-none-any.whl", hash = "sha256:2c58528a05dcbf2ae080f3141b6a5bf467949fad9234edd8b9085b8db2e325fe"},
     {file = "amqp-5.0.3.tar.gz", hash = "sha256:1733ebf713050504fd9d2ebc661f1fc95b3588f99ee87d2e39c84c27bfd815dc"},
-]
-anyjson = [
-    {file = "anyjson-0.3.3.tar.gz", hash = "sha256:37812d863c9ad3e35c0734c42e0bf0320ce8c3bed82cd20ad54cb34d158157ba"},
 ]
 appdirs = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},

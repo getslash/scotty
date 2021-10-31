@@ -97,7 +97,7 @@ fn beam_path(transporter: &mut TcpStream, path: &Path) -> CombadgeResult<()> {
     if !path.exists() {
         return Ok(());
     } else if path.is_file() {
-        beam_file(transporter, path.parent(), &path)?;
+        beam_file(transporter, path.parent(), path)?;
     } else if path.is_dir() {
         trace!("Path is a directory: {:?}", path);
         for entry in WalkDir::new(path)
@@ -107,7 +107,7 @@ fn beam_path(transporter: &mut TcpStream, path: &Path) -> CombadgeResult<()> {
         {
             trace!("Entry: {:?}", entry);
             if entry.path().is_file() {
-                beam_file(transporter, Some(&path), &entry.path())?;
+                beam_file(transporter, Some(path), entry.path())?;
             }
         }
     } else {
@@ -163,8 +163,8 @@ fn beam_file(
     debug!("Beaming file: {:?}", path);
 
     transporter.write_u8(ClientMessages::StartBeamingFile as u8)?;
-    let should_compress = should_compress_file(&path);
-    let textual_path = get_textual_path(&path, base_path, should_compress);
+    let should_compress = should_compress_file(path);
+    let textual_path = get_textual_path(path, base_path, should_compress);
     let path_as_bytes = textual_path.as_bytes();
     transporter.write_u16::<byteorder::BigEndian>(path_as_bytes.len() as u16)?;
     transporter.write_all(path_as_bytes)?;
