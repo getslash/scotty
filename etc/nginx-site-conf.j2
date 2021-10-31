@@ -4,15 +4,21 @@ server {
     server_name {{ hostname.split('.')[0] }};
     rewrite ^ http://{{hostname}}$request_uri? permanent;
 }
+# server {
+#    listen 80 default_server;
+#    server_name {{hostname}};
+#    return 307 https://$host$request_uri;
+# }
+#
 
 {% endif %}
+
 
 server {
     {% if hostname %}
     server_name {{ hostname }};
     {% endif %}
-
-    ## regular http - disable for https
+    
     listen 80;
 
     gzip_static on;
@@ -21,6 +27,17 @@ server {
     gzip_types text/plain text/xml text/css application/x-javascript application/javascript;
     gzip_vary on;
     gzip_disable "MSIE [1-6]\.(?!.*SV1)";
+
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+
+    ssl_certificate /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_tickets off;
 
     access_log /var/log/nginx/access.log;
     error_log /var/log/nginx/error.log warn;

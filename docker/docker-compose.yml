@@ -38,6 +38,8 @@ services:
     volumes:
       - "/var/scotty:/var/scotty"
       - "/var/log/nginx:/var/log/nginx"
+      - "/etc/nginx/ssl:/etc/nginx/ssl"
+      - "/opt/scotty/etc:/src/etc"
     environment:
       - SCOTTY_HOSTNAME=
     command: ["dockerize",
@@ -47,6 +49,7 @@ services:
               ".venv/bin/python", "manage.py", "docker-nginx-start"]
     ports:
       - "80:80"
+      - "443:443"
 
   celery:
       image: getslash/scotty
