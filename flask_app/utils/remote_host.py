@@ -2,7 +2,7 @@ import functools
 from io import StringIO
 
 import logbook
-from paramiko import AutoAddPolicy, PKey, RSAKey, SFTPClient, SSHClient
+from paramiko import AuthenticationException, AutoAddPolicy, PKey, RSAKey, SFTPClient, SSHClient
 
 logger = logbook.Logger(__name__)
 
@@ -76,7 +76,7 @@ class RemoteHost:
 
         try:
             self._ssh_client.connect(self._host, **kwargs)
-        except paramiko.AuthenticationException:
+        except AuthenticationException:
             self._ssh_client.connect(
                 self._host, disabled_algorithms={"keys": ["rsa-sha2-256", "rsa-sha2-512"]}, **kwargs
             )
