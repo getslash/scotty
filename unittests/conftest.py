@@ -203,7 +203,7 @@ class MockSSHClient:
                 self.stdout.write(b"/tmp")
             else:
                 user = self.connect_args["username"]
-                self.stdout.write(fr"C:\Users\{user}\AppData\Local\Temp".encode())
+                self.stdout.write(rf"C:\Users\{user}\AppData\Local\Temp".encode())
         self.stdout.seek(0)
         self.stdin.seek(0)
         self.stderr.seek(0)

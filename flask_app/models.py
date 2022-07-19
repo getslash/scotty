@@ -19,7 +19,6 @@ if TYPE_CHECKING:
         def __init__(self, *args: Any, **kwargs: Any):
             pass
 
-
 else:
     BaseModel = db.Model
 
