@@ -81,7 +81,12 @@ class RemoteHost:
             self._ssh_client.connect(self._host, **kwargs)
         except AuthenticationException:
             self._ssh_client.connect(
-                self._host, disabled_algorithms={"keys": ["rsa-sha2-256", "rsa-sha2-512"]}, **kwargs
+                self._host,
+                disabled_algorithms={
+                    "keys": ["rsa-sha2-256", "rsa-sha2-512"],
+                    "pubkeys": ["rsa-sha2-256", "rsa-sha2-512"],
+                },
+                **kwargs,
             )
 
         return self
