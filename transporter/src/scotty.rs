@@ -57,7 +57,7 @@ impl<'a> BeamUpdateRequest<'a> {
     }
 }
 
-#[allow(clippy::enum-variant-names)] quick_error! {
+quick_error! {
     #[derive(Debug)]
     pub enum ScottyError {
         SerdeError(err: serde_json::Error) {
