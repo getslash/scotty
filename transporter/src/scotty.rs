@@ -56,7 +56,7 @@ impl<'a> BeamUpdateRequest<'a> {
     }
 }
 
-#[allow(clippy::enum-variant-names)]
+#[allow(clippy::enum_variant_names)]
 quick_error! {
     #[derive(Debug)]
     pub enum ScottyError {
