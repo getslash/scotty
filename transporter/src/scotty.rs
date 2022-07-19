@@ -1,3 +1,5 @@
+#[allow(clippy::enum_variant_names)]
+
 use super::{BeamId, Mtime};
 use reqwest::Error as HttpError;
 use reqwest::{Client, Method, Response, StatusCode};
@@ -56,7 +58,6 @@ impl<'a> BeamUpdateRequest<'a> {
     }
 }
 
-#[allow(clippy::enum_variant_names)]
 quick_error! {
     #[derive(Debug)]
     pub enum ScottyError {
