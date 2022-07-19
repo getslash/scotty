@@ -157,7 +157,7 @@ def test_beam_up(
     assert len(mock_ssh_client.instances) == 1
     uuid_part = uuid4.hex[:_COMBADGE_UUID_PART_LENGTH]
     ext = ".exe" if os_type == "windows" else ""
-    remote_dir = fr"C:\Users\root\AppData\Local\Temp" if os_type == "windows" else "/tmp"
+    remote_dir = rf"C:\Users\root\AppData\Local\Temp" if os_type == "windows" else "/tmp"
     sep = "\\" if os_type == "windows" else "/"
     combadge = f"{remote_dir}{sep}combadge_{uuid_part}{ext}"
     env_vars = "RUST_LOG=trace " if os_type != "windows" else ""
