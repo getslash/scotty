@@ -30,7 +30,10 @@ class RemoteHost:
         return (self.exec_ssh_command("uname", raise_on_failure=False) or "windows").lower()
 
     def get_temp_dir(self) -> str:
-        return self.exec_ssh_command(self._TEMPDIR_COMMAND)
+        try:
+            return self.exec_ssh_command(self._TEMPDIR_COMMAND)
+        except RuntimeError:
+            return self.exec_ssh_command(self._TEMPDIR_COMMAND.replace("python", "python3"))
 
     def exec_ssh_command(self, command, raise_on_failure=True):
         _, stdout, stderr = self.raw_exec_ssh_command(command)
