@@ -1,4 +1,4 @@
-#[allow(clippy::enum_variant_names)]
+#![allow(clippy::enum_variant_names)]
 use super::{BeamId, Mtime};
 use reqwest::Error as HttpError;
 use reqwest::{Client, Method, Response, StatusCode};
