@@ -49,6 +49,7 @@ def app_context(monkeypatch, storage_path, vacuum_threshold):
             "TRANSPORTER_HOST": "scotty",
             "TESTING": True,
             "DEBUG": True,
+            "SECRET_KEY": "fake-secret-key",
         }
     )
     app_context = app.app_context()
