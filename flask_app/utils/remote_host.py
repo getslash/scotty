@@ -74,7 +74,11 @@ class RemoteHost:
         else:
             raise ValueError(f"Invalid auth method: {self._auth_method}")
 
-        self._ssh_client.connect(self._host, **kwargs)
+        try:
+            self._ssh_client.connect(self._host, **kwargs)
+        except paramiko.AuthenticationException:
+            self._ssh_client.connect(self._host, disabled_algorithms={'keys': ['rsa-sha2-256', 'rsa-sha2-512']}, **kwargs)
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
