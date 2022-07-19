@@ -2,7 +2,7 @@ import functools
 from io import StringIO
 
 import logbook
-from paramiko import AutoAddPolicy, PKey, RSAKey, SFTPClient, SSHClient
+from paramiko import AuthenticationException, AutoAddPolicy, PKey, RSAKey, SFTPClient, SSHClient
 
 logger = logbook.Logger(__name__)
 
@@ -30,7 +30,10 @@ class RemoteHost:
         return (self.exec_ssh_command("uname", raise_on_failure=False) or "windows").lower()
 
     def get_temp_dir(self) -> str:
-        return self.exec_ssh_command(self._TEMPDIR_COMMAND)
+        try:
+            return self.exec_ssh_command(self._TEMPDIR_COMMAND)
+        except RuntimeError:
+            return self.exec_ssh_command(self._TEMPDIR_COMMAND.replace("python", "python3"))
 
     def exec_ssh_command(self, command, raise_on_failure=True):
         _, stdout, stderr = self.raw_exec_ssh_command(command)
@@ -74,7 +77,18 @@ class RemoteHost:
         else:
             raise ValueError(f"Invalid auth method: {self._auth_method}")
 
-        self._ssh_client.connect(self._host, **kwargs)
+        try:
+            self._ssh_client.connect(self._host, **kwargs)
+        except AuthenticationException:
+            self._ssh_client.connect(
+                self._host,
+                disabled_algorithms={
+                    "keys": ["rsa-sha2-256", "rsa-sha2-512"],
+                    "pubkeys": ["rsa-sha2-256", "rsa-sha2-512"],
+                },
+                **kwargs,
+            )
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
