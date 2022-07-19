@@ -1,5 +1,5 @@
 [MESSAGES CONTROL]
-disable=R,broad-except,protected-access,unused-argument,missing-docstring,invalid-name,wrong-import-order,bad-continuation,global-statement,unsubscriptable-object,consider-using-f-string,unspecified-encoding,method-cache-max-size-none
+disable=R,broad-except,protected-access,unused-argument,missing-docstring,invalid-name,wrong-import-order,bad-continuation,global-statement,unsubscriptable-object,consider-using-f-string,unspecified-encoding,method-cache-max-size-none,use-maxsplit-arg,consider-using-dict-items
 
 [FORMAT]
 max-line-length=150
