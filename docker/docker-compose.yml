@@ -5,7 +5,7 @@ services:
     build:
       context: ..
       dockerfile: ./docker/Dockerfile
-    image: getslash/scotty
+    image: getslash/scotty:$VERSION
     command: [
         "dockerize",
         "-timeout", "60s",
@@ -39,7 +39,7 @@ services:
     image: "redis"
 
   nginx:
-    image: getslash/scotty
+    image: getslash/scotty:$VERSION
     volumes:
       - "/var/scotty:/var/scotty"
       - "/var/log/nginx:/var/log/nginx"
@@ -54,30 +54,30 @@ services:
       - "80:80"
 
   celery:
-      image: getslash/scotty
-      command: ["dockerize",
+    image: getslash/scotty:$VERSION
+    command: ["dockerize",
                 "-timeout", "300s",
                 "-wait", "tcp://redis:6379",
                 "-wait", "tcp://db:5432",
                 ".env/bin/celery", "-A" ,"flask_app.tasks", "worker", "--loglevel=info",
                 "-Q", "celery", "--concurrency", "20", "-Ofair"]
-      volumes:
-        - "/opt/scotty/conf.d:/conf"
-        - "/var/scotty:/var/scotty"
-      environment:
-        - SCOTTY_REDIS_SERVER=redis
-        - SQLALCHEMY_DATABASE_URI=postgresql://scotty@db/scotty
-        - CONFIG_DIRECTORY=/conf
-        - SCOTTY_CELERY_BROKER_URL=amqp://guest:guest@rabbitmq
-      depends_on:
-        - db
-        - redis
-        - rabbitmq
-      logging:
-        driver: journald
+    volumes:
+      - "/opt/scotty/conf.d:/conf"
+      - "/var/scotty:/var/scotty"
+    environment:
+      - SCOTTY_REDIS_SERVER=redis
+      - SQLALCHEMY_DATABASE_URI=postgresql://scotty@db/scotty
+      - CONFIG_DIRECTORY=/conf
+      - SCOTTY_CELERY_BROKER_URL=amqp://guest:guest@rabbitmq
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    logging:
+      driver: journald
 
   transporter:
-    image: getslash/scotty
+    image: getslash/scotty:$VERSION
     command: ["dockerize",
               "-timeout", "300s",
               "-wait", "tcp://webapp:8000",
@@ -94,7 +94,7 @@ services:
       driver: journald
 
   celery_beat:
-    image: getslash/scotty
+    image: getslash/scotty:$VERSION
     command: ["dockerize",
               "-timeout", "300s",
               "-wait", "tcp://redis:6379",
